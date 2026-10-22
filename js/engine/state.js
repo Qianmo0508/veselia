@@ -13,8 +13,8 @@ function saveSettings(s) {
   applySettings(s); if(window.AudioEngine) AudioEngine.updateSettings(s);
 }
 function applySettings(s) {
-  if(s.theme === 'dark') document.body.classList.add('dark');
-  else document.body.classList.remove('dark');
+  // 使用 html 的 data-theme 属性来控制，彻底解决冲突
+  document.documentElement.setAttribute('data-theme', s.theme);
   document.documentElement.style.setProperty('--font-scale', s.fontSize);
   if(s.anims) document.body.classList.remove('no-anims'); else document.body.classList.add('no-anims');
 }
