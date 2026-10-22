@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   workshop.js · 剧情工坊全表单
+   workshop.js · 剧情工坊全表单（含批量导入）
    依赖 index.html 暴露的 window.NF
    ═══════════════════════════════════════════════════════════ */
 (function () {
@@ -11,10 +11,10 @@
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   /* ─── 状态 ─── */
-  let wsType = 'chapter';       // chapter | dungeon | location | bond | gift | cg
+  let wsType = 'chapter';
   let wsEditKey = null;
   let wsFormData = null;
-  let wsEditKind = null;        // 记录的原始类型（编辑时区分 chapter vs dungeon）
+  let wsEditKind = null;
 
   /* ─── 空表单工厂 ─── */
   function blankChapter(kind) {
@@ -24,20 +24,12 @@
       lines: [{ type:'n', cn:'' }]
     };
   }
-  function blankLocation() {
-    return { name:'', region:'索姆尼亚帝国', bg:'city', desc:'', entries: [] };
-  }
-  function blankBond() {
-    return { charId:'cash', mode:'chat', title:'', need:0, lines:[{ who:'cash', en:'', cn:'' }] };
-  }
-  function blankGift() {
-    return { name:'', icon:'✦', cost:10, aff:5, likes:[], desc:'' };
-  }
-  function blankCG() {
-    return { charId:'cash', title:'', subtitle:'', need:30, lines:[{ cn:'' }] };
-  }
+  function blankLocation() { return { name:'', region:'索姆尼亚帝国', bg:'city', desc:'', entries: [] }; }
+  function blankBond() { return { charId:'cash', mode:'chat', title:'', need:0, lines:[{ who:'cash', en:'', cn:'' }] }; }
+  function blankGift() { return { name:'', icon:'✦', cost:10, aff:5, likes:[], desc:'' }; }
+  function blankCG() { return { charId:'cash', title:'', subtitle:'', need:30, lines:[{ cn:'' }] }; }
 
-  /* ─── 角色/背景/小游戏 选项表 ─── */
+  /* ─── 常量 ─── */
   const CHAR_IDS = ['tavana','movioa','lidia','elsia','fiman','cash','reifina','cassi'];
   const BGS = ['city','tavern','grove','manor','archive','church','castle','dream'];
   const MGS = [
@@ -47,6 +39,203 @@
     { id:'puzzle', name:'光影拼图' },
     { id:'dream', name:'梦域副本' }
   ];
+
+  /* ═══════════════════════════════════════════════════════════
+     批量导入 · 文本解析
+     ═══════════════════════════════════════════════════════════ */
+  const CHAR_ALIASES = {
+    'fiman': ['fiman','Fiman','菲曼','菲曼·卡桑拉'],
+    'cash':  ['cash','Cash','卡什','卡什·洛克威尔','Kash'],
+    'tavana':['tavana','Tavana','塔瓦娜','塔瓦娜·卡伊','塔瓦娜·凯','Kay'],
+    'movioa':['movioa','Movioa','莫维奥娅','莫维奥娅·沃特森','Watson'],
+    'lidia': ['lidia','Lidia','莉迪亚','莉迪亚·简','Jane'],
+    'elsia': ['elsia','Elsia','艾尔丝娅','艾尔丝亚','艾尔丝娅·简'],
+    'reifina':['reifina','Reifina','瑞菲纳'],
+    'cassi': ['cassi','Cassi','卡修斯尔'],
+    'morpheus':['morpheus','Morpheus','摩耳甫斯','梦魇']
+  };
+  function matchCharId(name) {
+    if (!name) return name;
+    const n = name.trim();
+    for (const id in CHAR_ALIASES) {
+      if (CHAR_ALIASES[id].some(a => a === n || a.toLowerCase() === n.toLowerCase())) return id;
+    }
+    for (const id in CHAR_ALIASES) {
+      if (CHAR_ALIASES[id].some(a => n.includes(a) || a.includes(n))) return id;
+    }
+    return n;
+  }
+
+  function parseBulkText(text) {
+    const result = { title:'', subtitle:'', location:'', bg:'city', lines:[] };
+    if (!text) return result;
+    const rawLines = text.split(/\r?\n/);
+    for (let raw of rawLines) {
+      const line = raw.trim();
+      if (!line) continue;
+      /* 标题 */
+      if (line.startsWith('## ')) { result.subtitle = line.slice(3).trim(); continue; }
+      if (line.startsWith('#')) { result.title = line.replace(/^#+\s*/, '').trim(); continue; }
+      /* 地点 */
+      if (line.startsWith('@')) { result.location = line.slice(1).trim(); continue; }
+      /* 背景 */
+      if (line.startsWith('!')) { result.bg = line.slice(1).trim(); continue; }
+      /* 分隔符 */
+      if (/^[-=*]{3,}$/.test(line)) continue;
+      /* 主角内心独白（括号开头结尾） */
+      if (/^[（(].+[）)]$/.test(line)) {
+        result.lines.push({ type:'me', cn: line.slice(1, -1).trim(), en:'' });
+        continue;
+      }
+      /* 冒号分隔 */
+      const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
+      if (colonMatch) {
+        const who = colonMatch[1].trim();
+        let body = colonMatch[2].trim();
+        if (!body) continue;
+        /* 双语分隔 */
+        let en = '', cn = body;
+        const pipeIdx = body.indexOf('|');
+        if (pipeIdx >= 0) {
+          en = body.slice(0, pipeIdx).trim();
+          cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim();
+        }
+        const isMe = ['我','主角','你','我(主角)','主人公'].includes(who);
+        if (isMe) {
+          result.lines.push({ type:'me', cn, en });
+        } else {
+          result.lines.push({ type:'s', who: matchCharId(who), char: who, cn, en });
+        }
+        continue;
+      }
+      /* 其他 → 旁白 */
+      result.lines.push({ type:'n', cn: line });
+    }
+    return result;
+  }
+
+  function renderBulkPreview(box, result) {
+    if (!result) { box.innerHTML = ''; return; }
+    let html = '';
+    /* 头部信息 */
+    const meta = [];
+    if (result.title) meta.push('标题：' + esc(result.title));
+    if (result.subtitle) meta.push('副标题：' + esc(result.subtitle));
+    if (result.location) meta.push('地点：' + esc(result.location));
+    if (result.bg && result.bg !== 'city') meta.push('背景：' + esc(result.bg));
+    if (meta.length) {
+      html += '<div style="font-size:11px;color:var(--gold-d);letter-spacing:.08em;padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--line);line-height:1.7;">' + meta.join('　·　') + '</div>';
+    }
+    /* 对话行 */
+    if (!result.lines.length) {
+      html += '<p style="color:var(--text-d);font-style:italic;font-size:12px;">尚未输入任何内容。</p>';
+    } else {
+      result.lines.forEach((l, i) => {
+        const isNarr = l.type === 'n';
+        const isMe = l.type === 'me';
+        let speaker = '';
+        if (l.type === 's') {
+          const ch = NF.CHARS[l.who];
+          speaker = ch ? ch.name : (l.char || l.who || '？？？');
+        } else if (isMe) speaker = NF.state()?.player?.name || '记者';
+        html += '<div style="padding:8px 0;' + (i>0?'border-top:1px dashed rgba(201,169,97,.1);':'') + '">' +
+          '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:3px;">' +
+            (isNarr ? '旁白' : (isMe ? '主角 · ' + esc(speaker) : '角色 · ' + esc(speaker))) +
+          '</div>';
+        if (l.en) html += '<div style="font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--gold-b);line-height:1.6;">' + esc(l.en) + '</div>';
+        if (l.cn) html += '<div style="font-size:12.5px;color:' + (isNarr?'var(--text-d)':'var(--text)') + ';line-height:1.75;' + (isNarr?'font-style:italic;':'') + '">' + esc(l.cn) + '</div>';
+        html += '</div>';
+      });
+      html += '<div style="text-align:center;font-size:11px;color:var(--gold-d);padding-top:10px;margin-top:10px;border-top:1px dashed var(--line);letter-spacing:.14em;">共 ' + result.lines.length + ' 行</div>';
+    }
+    box.innerHTML = html;
+  }
+
+  const BULK_TEMPLATE =
+`# 第三章 · 夜与晨
+## 落日之都的第二日
+@日不落酒馆 · 吧台
+!tavern
+
+暮色像一层薄薄的灰纱，覆在落日之都的煤气灯上。
+青石板路还留着午后雨水的痕迹。
+
+菲曼：Evening, stranger. | 「晚上好，陌生人。」
+菲曼：You look like you just walked out of a storm. | 「你看起来像刚从一场风暴里走出来。」
+
+我：我是王翼来的记者。 | I'm a reporter from the Wing.
+
+（她看了我一眼。她似乎知道些什么。）
+
+---
+
+菲曼：「进来吧。」`;
+
+  function openBulkImport(formBox, main) {
+    const modal = NF.openModal({
+      title: '✎ 批 量 导 入',
+      wide: true,
+      body:
+        '<div class="ws-hint" style="margin-bottom:14px;line-height:1.95;font-size:11.5px;">' +
+          '<b style="color:var(--gold-b);"># 标题</b>　<b style="color:var(--gold-b);">## 副标题</b>　<b style="color:var(--gold-b);">@地点</b>　<b style="color:var(--gold-b);">!背景</b>（city/tavern/grove/manor/archive/church/castle/dream）<br>' +
+          '<b style="color:var(--gold-b);">角色名：英文 | 中文</b>　角色台词（竖线分隔双语，中文可只写一个）<br>' +
+          '<b style="color:var(--gold-b);">我：内容</b>　主角台词　　<b style="color:var(--gold-b);">（括号包起来）</b>　主角内心独白<br>' +
+          '<b style="color:var(--gold-b);">其他没冒号的行</b>　自动当旁白　　<b style="color:var(--gold-b);">---</b>　分隔线（忽略）' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">' +
+          '<button class="mini-btn" id="biInsertTpl">插入示例模板</button>' +
+          '<button class="mini-btn" id="biClear">清空</button>' +
+          '<span style="flex:1"></span>' +
+          '<select class="inp" id="biMode" style="max-width:160px;font-size:12px;padding:6px 10px;">' +
+            '<option value="append">追加到末尾</option>' +
+            '<option value="replace">替换全部对话</option>' +
+          '</select>' +
+        '</div>' +
+        '<textarea class="inp" id="biText" placeholder="在此粘贴你写好的文字…" style="min-height:220px;font-family:ui-monospace,\'Courier New\',monospace;font-size:12.5px;line-height:1.75;resize:vertical;"></textarea>' +
+        '<div style="margin-top:16px;font-family:var(--f-deco);font-size:11px;letter-spacing:.24em;color:var(--gold-d);">◈ PREVIEW · 解 析 预 览</div>' +
+        '<div id="biPreview" style="max-height:260px;overflow-y:auto;border:1px solid var(--line);background:rgba(0,0,0,.25);padding:14px;margin-top:10px;"></div>',
+      footHTML:'<button class="btn ghost" id="biCancel">取消</button><button class="btn primary" id="biOk">解 析 并 导 入</button>',
+      onMount: (w) => {
+        const textarea = w.querySelector('#biText');
+        const preview = w.querySelector('#biPreview');
+        const update = () => {
+          const result = parseBulkText(textarea.value);
+          renderBulkPreview(preview, result);
+        };
+        textarea.oninput = update;
+        update();
+
+        w.querySelector('#biClear').onclick = () => { textarea.value = ''; update(); NF.Sfx.click(); };
+        w.querySelector('#biInsertTpl').onclick = () => { textarea.value = BULK_TEMPLATE; update(); NF.Sfx.click(); };
+        w.querySelector('#biCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
+        w.querySelector('#biOk').onclick = () => {
+          const text = textarea.value.trim();
+          if (!text) { NF.toast('请先粘贴文字','warn'); return; }
+          const result = parseBulkText(text);
+          if (!result.lines.length) { NF.toast('没有解析出任何对话行','warn'); return; }
+          const mode = w.querySelector('#biMode').value;
+          if (mode === 'replace') {
+            wsFormData.lines = result.lines;
+          } else {
+            if (wsFormData.lines.length === 1 && !wsFormData.lines[0].cn && !wsFormData.lines[0].en) {
+              wsFormData.lines = result.lines;
+            } else {
+              wsFormData.lines = wsFormData.lines.concat(result.lines);
+            }
+          }
+          if (result.title && !wsFormData.title) wsFormData.title = result.title;
+          if (result.subtitle && !wsFormData.subtitle) wsFormData.subtitle = result.subtitle;
+          if (result.location && !wsFormData.location) wsFormData.location = result.location;
+          if (result.bg && result.bg !== 'city') wsFormData.bg = result.bg;
+          NF.Sfx.success();
+          NF.toast('◈ 已导入 ' + result.lines.length + ' 行对话','ok');
+          NF.closeModal(w);
+          renderForm(main);
+        };
+        setTimeout(() => textarea.focus(), 100);
+      }
+    });
+  }
 
   /* ═══════════════════════════════════════════════════════════
      主渲染
@@ -63,7 +252,7 @@
       { id:'cg',       label:'特殊CG' }
     ];
     main.innerHTML =
-      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同 key 会覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。</div>' +
+      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同 key 会覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字。</div>' +
       '<div class="ws-type-tabs">' +
         types.map(t => '<button class="ws-type-btn ' + (wsType===t.id?'on':'') + '" data-type="' + t.id + '">' + t.label + '</button>').join('') +
       '</div>' +
@@ -84,13 +273,9 @@
     renderList(main);
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     表单渲染（按类型分发）
-     ═══════════════════════════════════════════════════════════ */
   function renderForm(main) {
     const box = main.querySelector('#wsForm');
     if (!box) return;
-
     if (wsType === 'chapter' || wsType === 'dungeon') renderChapterForm(box, main);
     else if (wsType === 'location') renderLocationForm(box, main);
     else if (wsType === 'bond') renderBondForm(box, main);
@@ -111,7 +296,14 @@
       '<div class="ws-field"><label>背 景</label><select class="inp" id="wsBg">' +
         BGS.map(b => '<option value="' + b + '" ' + (wsFormData.bg===b?'selected':'') + '>' + b + '</option>').join('') +
       '</select></div>' +
-      '<div class="ws-field"><label>对 话 <b>（每行独立）</b></label>' +
+      '<div class="ws-field">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap;">' +
+          '<label style="margin:0;">对 话 <b>（每行独立）</b></label>' +
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+            '<button class="mini-btn" id="wsBulkImport" style="background:rgba(201,169,97,.12);border-color:var(--gold);color:var(--gold-b);">📋 批量导入</button>' +
+            '<button class="mini-btn danger" id="wsClearLines">🗑 清空对话</button>' +
+          '</div>' +
+        '</div>' +
         '<p class="ws-hint">旁白只填中文；角色台词填「角色 + 英文 + 中文」；主角台词填「英文 + 中文」。</p>' +
         '<div class="ws-lines" id="wsLines"></div>' +
         '<button class="ws-add-line" id="wsAddLine">＋ 添 加 一 行</button>' +
@@ -128,6 +320,13 @@
     box.querySelector('#wsLoc').oninput = (e) => wsFormData.location = e.target.value;
     box.querySelector('#wsBg').onchange = (e) => wsFormData.bg = e.target.value;
     box.querySelector('#wsAddLine').onclick = () => { NF.Sfx.click(); wsFormData.lines.push({ type:'n', cn:'' }); renderForm(main); };
+    box.querySelector('#wsBulkImport').onclick = () => { NF.Sfx.click(); openBulkImport(box, main); };
+    box.querySelector('#wsClearLines').onclick = () => {
+      if (!confirm('确定清空所有对话行？')) return;
+      NF.Sfx.click();
+      wsFormData.lines = [{ type:'n', cn:'' }];
+      renderForm(main);
+    };
     box.querySelector('#wsCancel').onclick = () => { NF.Sfx.click(); wsFormData=null; wsEditKey=null; wsEditKind=null; renderForm(main); };
     box.querySelector('#wsSave').onclick = () => saveChapter(box);
   }
@@ -208,10 +407,9 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─────────────── 地点表单（含 entries 编辑） ─────────────── */
+  /* ─────────────── 地点表单 ─────────────── */
   function renderLocationForm(box, main) {
     if (!wsFormData) wsFormData = blankLocation();
-
     box.innerHTML =
       '<div class="ws-field"><label>地 点 名 称 <b>（必填）</b></label><input class="inp" id="wsLocName" value="' + esc(wsFormData.name) + '" placeholder="例如：映月镇"></div>' +
       '<div class="ws-field"><label>所 属 区 域</label><input class="inp" id="wsLocRegion" value="' + esc(wsFormData.region) + '" placeholder="例如：索姆尼亚帝国"></div>' +
@@ -233,11 +431,7 @@
     box.querySelector('#wsLocRegion').oninput = (e) => wsFormData.region = e.target.value;
     box.querySelector('#wsLocBg').onchange = (e) => wsFormData.bg = e.target.value;
     box.querySelector('#wsLocDesc').oninput = (e) => wsFormData.desc = e.target.value;
-    box.querySelector('#wsLocAddEntry').onclick = () => {
-      NF.Sfx.click();
-      wsFormData.entries.push({ type:'scene', id:'', name:'', icon:'◆', desc:'' });
-      renderForm(main);
-    };
+    box.querySelector('#wsLocAddEntry').onclick = () => { NF.Sfx.click(); wsFormData.entries.push({ type:'scene', id:'', name:'', icon:'◆', desc:'' }); renderForm(main); };
     box.querySelector('#wsCancel').onclick = () => { NF.Sfx.click(); wsFormData=null; wsEditKey=null; wsEditKind=null; renderForm(main); };
     box.querySelector('#wsSave').onclick = () => saveLocation(box);
   }
@@ -246,41 +440,32 @@
     const card = document.createElement('div');
     card.className = 'ws-line-card';
     const type = entry.type || 'scene';
-    // 生成 id 选择器内容
     let idSelector = '';
     if (type === 'scene') {
       const sceneIds = Object.keys(NF.SCENES).filter(k => !k.startsWith('__'));
-      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' +
-        '<option value="">（选择场景）</option>' +
-        sceneIds.map(k => '<option value="' + k + '" ' + (entry.id===k?'selected':'') + '>' + k + '</option>').join('') +
-      '</select>';
+      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;"><option value="">（选择场景）</option>' +
+        sceneIds.map(k => '<option value="' + k + '" ' + (entry.id===k?'selected':'') + '>' + k + '</option>').join('') + '</select>';
     } else if (type === 'character') {
       idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' +
-        CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') +
-      '</select>';
+        CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') + '</select>';
     } else if (type === 'minigame') {
       idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' +
-        MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') +
-      '</select>';
+        MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') + '</select>';
     }
     card.innerHTML =
-      '<div class="ws-line-head">' +
-        '<span class="ws-line-num">入口 ' + (i+1) + '</span>' +
+      '<div class="ws-line-head"><span class="ws-line-num">入口 ' + (i+1) + '</span>' +
         '<select class="ws-line-type ws-entry-type">' +
           '<option value="scene" ' + (type==='scene'?'selected':'') + '>剧情</option>' +
           '<option value="minigame" ' + (type==='minigame'?'selected':'') + '>小游戏</option>' +
           '<option value="character" ' + (type==='character'?'selected':'') + '>角色对话</option>' +
         '</select>' +
-        '<button class="ws-line-del">×</button>' +
-      '</div>' +
-      '<div class="ws-line-body">' +
-        idSelector +
+        '<button class="ws-line-del">×</button></div>' +
+      '<div class="ws-line-body">' + idSelector +
         '<input class="inp ws-entry-name" placeholder="入口名称（如：坐到吧台前）" value="' + esc(entry.name||'') + '" style="margin-bottom:8px;">' +
         '<input class="inp ws-entry-icon" placeholder="图标单字符（如 ♖）" value="' + esc(entry.icon||'') + '" maxlength="2" style="margin-bottom:8px;">' +
         '<input class="inp ws-entry-desc" placeholder="入口描述（可选）" value="' + esc(entry.desc||'') + '">' +
       '</div>';
     box.appendChild(card);
-
     card.querySelector('.ws-entry-type').onchange = (e) => {
       entry.type = e.target.value;
       if (entry.type === 'character') entry.id = 'cash';
@@ -293,17 +478,12 @@
     card.querySelector('.ws-entry-name').oninput = (e) => entry.name = e.target.value;
     card.querySelector('.ws-entry-icon').oninput = (e) => entry.icon = e.target.value;
     card.querySelector('.ws-entry-desc').oninput = (e) => entry.desc = e.target.value;
-    card.querySelector('.ws-line-del').onclick = () => {
-      NF.Sfx.click();
-      wsFormData.entries.splice(i, 1);
-      renderForm(main);
-    };
+    card.querySelector('.ws-line-del').onclick = () => { NF.Sfx.click(); wsFormData.entries.splice(i, 1); renderForm(main); };
   }
 
   function saveLocation(formBox) {
     const name = formBox.querySelector('#wsLocName').value.trim();
     if (!name) { NF.toast('请填地点名','warn'); return; }
-    // 过滤掉没填 id 的无效入口
     const entries = (wsFormData.entries || []).filter(e => e.id && e.name);
     const key = wsEditKey || ('loc_' + Date.now());
     const data = {
@@ -559,10 +739,7 @@
       html += '<div class="ws-pack" data-key="' + esc(item.key) + '" data-type="' + item._type + '" data-kind="' + (item._kind||'') + '">' +
         '<div class="ws-pack-head"><div class="ws-pack-title">' + esc(name) + '</div><div style="font-size:11px;color:var(--gold-d);">' + typeLabel + '</div></div>' +
         '<div class="ws-pack-meta">' + time + '</div>' +
-        '<div class="ws-pack-actions">' +
-          '<button class="mini-btn" data-a="edit">编辑</button>' +
-          '<button class="mini-btn danger" data-a="del">删除</button>' +
-        '</div>' +
+        '<div class="ws-pack-actions"><button class="mini-btn" data-a="edit">编辑</button><button class="mini-btn danger" data-a="del">删除</button></div>' +
       '</div>';
     });
     html += '</div>';
@@ -604,16 +781,10 @@
     });
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     暴露给 index.html
-     ═══════════════════════════════════════════════════════════ */
   window.Workshop = { render };
-
-  /* 兜底：DOM 就绪后如果还在工坊页则立即渲染 */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       if ($('#screen-workshop')?.classList.contains('active')) render();
     });
   }
-
 })();
