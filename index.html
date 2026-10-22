@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<!-- ★ 修复①：GSAP 改为 async，绝不阻塞页面解析；加载失败也不影响核心功能 -->
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" onerror="window.__gsapFailed=true"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -50,9 +51,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
 .screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;opacity:0;}
+/* ★ 修复②：active 状态下强制 opacity:1，即使动画失败也可见 */
 .screen.active{display:flex;opacity:1;}
 
-/* ============ 通用装饰 ============ */
 .frame{position:relative;border:1px solid var(--line);background:linear-gradient(165deg,var(--panel2),var(--panel));}
 .frame::before,.frame::after{content:'❖';position:absolute;font-size:11px;color:var(--gold);opacity:.85;line-height:1;pointer-events:none;}
 .frame::before{top:-6px;left:-6px;}
@@ -61,7 +62,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .divider::before,.divider::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
 .divider span{white-space:nowrap;}
 
-/* ============ 按钮 ============ */
 .btn{background:transparent;border:1px solid var(--line-s);color:var(--text);
   font-family:var(--f-cn);font-size:calc(13px * var(--font-scale));letter-spacing:.18em;
   padding:12px 18px;cursor:pointer;transition:all .28s cubic-bezier(.16,1,.3,1);
@@ -75,7 +75,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;color:#ffb0c4;}
 .btn:disabled{opacity:.35;cursor:not-allowed;}
 
-/* ============ 标题页 ============ */
 #screen-title{align-items:center;justify-content:center;padding:24px;}
 .title-card{position:relative;max-width:520px;width:100%;padding:44px 30px 34px;
   text-align:center;border:1px solid var(--line-s);
@@ -98,7 +97,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .title-foot::before{content:'— ';color:var(--gold-d);}
 .title-foot::after{content:' —';color:var(--gold-d);}
 
-/* ============ 顶栏 ============ */
 .topbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:calc(var(--safe-t) + 10px) 14px 10px;height:calc(52px + var(--safe-t));
   background:linear-gradient(180deg,var(--panel2),var(--panel));
@@ -111,7 +109,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .tb-title{font-family:var(--f-deco);font-size:13px;letter-spacing:.18em;color:var(--gold-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .tb-loc{font-size:11px;letter-spacing:.14em;color:var(--text-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-/* ============ 游戏主界面 ============ */
 #screen-game{display:none;flex-direction:column;}
 #screen-game.active{display:flex;}
 .stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;
@@ -209,7 +206,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .choice-btn.danger{border-color:rgba(160,60,80,.5);}
 .choice-btn.danger .choice-idx{color:#d08a9c;}
 
-/* ============ 底部导航 ============ */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;
   display:flex;align-items:center;justify-content:space-around;
   height:calc(var(--nav-h) + var(--safe-b));
@@ -229,7 +225,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .nav-btn.active::after{content:'';position:absolute;bottom:calc(var(--safe-b) + 3px);left:50%;transform:translateX(-50%);
   width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,169,97,.8);}
 
-/* ============ 地图 ============ */
 #screen-map{display:none;flex-direction:column;}
 #screen-map.active{display:flex;}
 .map-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 16px);}
@@ -256,7 +251,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   color:var(--gold-d);border:1px solid var(--line);padding:2px 7px;}
 .map-card-tag.hot{border-color:rgba(160,60,80,.6);color:#d08a9c;}
 
-/* ============ 记录 ============ */
 #screen-log{display:none;flex-direction:column;}
 #screen-log.active{display:flex;}
 .log-main{flex:1;overflow:hidden;display:flex;flex-direction:column;
@@ -299,7 +293,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .log-entry.narr .le-cn{color:#a89e8e;font-style:italic;}
 .log-entry.choice .le-cn{color:var(--gold);padding-left:10px;border-left:2px solid var(--line-s);}
 
-/* ============ 设置 ============ */
 #screen-settings{display:none;flex-direction:column;}
 #screen-settings.active{display:flex;}
 .set-main{flex:1;overflow-y:auto;padding:16px 16px calc(var(--nav-h) + var(--safe-b) + 16px);}
@@ -357,7 +350,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .mini-btn.danger{border-color:rgba(160,60,80,.5);color:#c07a92;}
 .mini-btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;}
 
-/* ============ 弹窗 ============ */
 .modal-layer{position:fixed;inset:0;z-index:1000;display:none;align-items:center;
   justify-content:center;padding:18px;background:rgba(4,2,7,.85);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
@@ -386,7 +378,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .modal-foot{flex:0 0 auto;padding:14px 20px;border-top:1px solid var(--line);
   display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
 
-/* ============ Toast ============ */
 .toast-layer{position:fixed;top:calc(var(--safe-t) + 64px);left:50%;transform:translateX(-50%);
   z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;
   pointer-events:none;width:92%;max-width:440px;}
@@ -402,7 +393,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .toast.out{animation:toastOut .35s forwards;}
 @keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
 
-/* ============ 小游戏通用 ============ */
 .mini-wrap{padding:6px 0;}
 .mini-title{text-align:center;font-family:var(--f-deco);font-size:15px;letter-spacing:.2em;
   color:var(--gold-b);margin-bottom:6px;}
@@ -415,7 +405,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   min-height:280px;overflow:hidden;}
 [data-theme="day"] .mini-stage{background:rgba(255,255,255,.35);}
 
-/* 证据链 */
 .evidence-area{position:relative;height:340px;touch-action:none;}
 .ev-card{position:absolute;width:88px;padding:7px 6px;border:1px solid var(--line-s);
   background:linear-gradient(160deg,var(--panel2),var(--panel));cursor:pointer;
@@ -426,7 +415,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .ev-card.done{border-color:rgba(120,180,120,.7);background:rgba(120,180,120,.08);pointer-events:none;opacity:.7;}
 .ev-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
 
-/* QTE 倒酒 */
 .pour-stage{position:relative;height:280px;display:flex;align-items:flex-end;justify-content:center;gap:30px;padding-bottom:10px;}
 .glass{position:relative;width:90px;height:220px;border:1px solid var(--line-s);
   border-top:none;background:rgba(0,0,0,.4);overflow:hidden;
@@ -446,7 +434,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .pour-btn:active,.pour-btn.pouring{background:rgba(201,169,97,.3);letter-spacing:.36em;}
 .pour-feedback{text-align:center;margin-top:12px;font-size:12px;letter-spacing:.1em;min-height:18px;}
 
-/* 棋局 */
 .chess-board{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;
   max-width:340px;margin:0 auto;aspect-ratio:1;padding:8px;
   border:1px solid var(--line-s);background:rgba(0,0,0,.3);}
@@ -468,7 +455,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .chess-cell.valid::after{content:'◦';color:var(--gold);font-size:20px;position:absolute;opacity:.85;}
 .chess-cell.death:hover{background:rgba(160,60,80,.5);}
 
-/* 拼图 */
 .puzzle-stage{position:relative;width:280px;height:280px;margin:0 auto;
   border:2px solid var(--line-s);background:rgba(0,0,0,.4);overflow:hidden;touch-action:none;}
 [data-theme="day"] .puzzle-stage{background:rgba(255,255,255,.3);}
@@ -480,14 +466,12 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .puzzle-tile.empty{background:transparent;border:none;cursor:default;}
 .puzzle-tile .sym{opacity:.9;text-shadow:0 0 12px rgba(201,169,97,.5);}
 
-/* 骰子 */
 .dice-area{text-align:center;padding:16px 0;}
 .dice{width:100px;height:100px;margin:0 auto 18px;border:2px solid var(--gold);
   display:flex;align-items:center;justify-content:center;font-family:var(--f-deco);
   font-size:42px;color:var(--gold-b);background:radial-gradient(circle,rgba(201,169,97,.15),transparent);
   box-shadow:0 0 30px rgba(201,169,97,.3);transform-style:preserve-3d;}
 
-/* 战斗 */
 .battle-bar{margin-bottom:12px;}
 .battle-name{font-size:12px;color:var(--text);letter-spacing:.1em;margin-bottom:5px;display:flex;justify-content:space-between;}
 .battle-track{height:8px;background:rgba(0,0,0,.4);border:1px solid var(--line);position:relative;}
@@ -497,10 +481,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .battle-actions{display:flex;gap:10px;margin-top:14px;}
 .battle-actions .btn{flex:1;padding:14px 8px;letter-spacing:.2em;}
 
-/* 角色互动 */
 .dialog-choices{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
 
-/* 通用输入 */
 .inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line-s);color:var(--gold-b);
   font-family:var(--f-cn);font-size:15px;padding:11px 14px;letter-spacing:.08em;
   outline:none;transition:all .25s;}
@@ -519,11 +501,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .ending-card .e-desc{font-size:14px;line-height:2;color:var(--text);text-align:left;
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 4px;margin-bottom:16px;}
 
-/* 空状态 */
 .empty{text-align:center;padding:40px 20px;color:var(--text-d);font-size:13px;
   font-style:italic;letter-spacing:.08em;line-height:1.9;}
 
-/* 响应式 */
 @media (max-width:380px){
   .title-main{font-size:36px;}
   .map-grid{grid-template-columns:1fr;}
@@ -537,8 +517,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 <body>
 <div id="app">
 
-  <!-- ==================== 标题页 ==================== -->
-  <section class="screen" id="screen-title">
+  <!-- ★ 修复③：标题页直接带 active，不再依赖 JS 补类 -->
+  <section class="screen active" id="screen-title">
     <div class="title-card frame">
       <span class="corner tl">❖</span>
       <span class="corner tr">❖</span>
@@ -562,7 +542,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     </div>
   </section>
 
-  <!-- ==================== 游戏主界面 ==================== -->
   <section class="screen" id="screen-game">
     <div class="topbar">
       <div class="tb-left">
@@ -584,7 +563,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     </main>
   </section>
 
-  <!-- ==================== 地图 ==================== -->
   <section class="screen" id="screen-map">
     <div class="topbar">
       <div class="tb-left">
@@ -596,7 +574,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <main class="map-main" id="mapMain"></main>
   </section>
 
-  <!-- ==================== 记录 ==================== -->
   <section class="screen" id="screen-log">
     <div class="topbar">
       <div class="tb-left">
@@ -611,7 +588,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     </main>
   </section>
 
-  <!-- ==================== 设置 ==================== -->
   <section class="screen" id="screen-settings">
     <div class="topbar">
       <div class="tb-left">
@@ -623,7 +599,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
     <main class="set-main" id="setMain"></main>
   </section>
 
-  <!-- ==================== 底部导航 ==================== -->
   <nav class="bottom-nav" id="bottomNav" style="display:none;">
     <button class="nav-btn active" data-nav="game">
       <span class="nav-ico">◇</span><span class="nav-lbl">主页</span>
@@ -646,18 +621,51 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 <script>
 'use strict';
-/* ============================================================
-   常量与工具
-   ============================================================ */
+
+/* ★ 修复④：全局错误捕获，出错时不再静默黑屏，而是弹提示 */
+window.addEventListener('error', function (ev) {
+  try {
+    var layer = document.getElementById('toastLayer');
+    if (!layer) return;
+    var el = document.createElement('div');
+    el.className = 'toast warn';
+    el.textContent = '脚本错误：' + (ev.message || '未知');
+    layer.appendChild(el);
+    setTimeout(function () { el.classList.add('out'); setTimeout(function(){ el.remove(); }, 400); }, 5000);
+  } catch (e) {}
+});
+
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-/* ============================================================
-   角色数据
-   ============================================================ */
+/* ★ 修复⑤：所有 GSAP 调用都走这个守卫，GSAP 没加载也能安全降级 */
+const HAS_GSAP = () => !!(window.gsap && !window.__gsapFailed);
+function animIn(el, from, to) {
+  if (!el) return;
+  if (HAS_GSAP() && settings.animations) {
+    try { gsap.fromTo(el, from, to); } catch (e) { el.style.opacity = 1; }
+  } else {
+    el.style.opacity = 1;
+    el.style.transform = 'none';
+  }
+}
+function animOut(el, to, onDone) {
+  if (!el) { onDone && onDone(); return; }
+  if (HAS_GSAP() && settings.animations) {
+    try {
+      gsap.to(el, Object.assign({}, to, { onComplete: onDone }));
+    } catch (e) {
+      el.style.opacity = 0;
+      onDone && onDone();
+    }
+  } else {
+    el.style.opacity = 0;
+    onDone && onDone();
+  }
+}
+
 const CHARS = {
   narrator:  { name: '', en: '', sym: '✦' },
   me:        { name: '我', en: 'Me', sym: '◇' },
@@ -689,9 +697,6 @@ const CHARS = {
                color: '#7a4fa0' }
 };
 
-/* ============================================================
-   存档状态
-   ============================================================ */
 const STORAGE_KEY = 'nightfalling_save_v1';
 const SETTINGS_KEY = 'nightfalling_settings_v1';
 
@@ -702,7 +707,7 @@ const defaultSettings = {
   shake: true,
   sfxOn: true,
   sfxVol: 65,
-  textSpeed: 25,   // ms per char
+  textSpeed: 25,
   autoPlay: false,
   skipRead: false,
   confirmChoice: true
@@ -716,16 +721,13 @@ let state = {
   flags: {},
   readLines: {},
   log: [],
-  currentScene: null,      // 当前场景 id
+  currentScene: null,
   currentLineIdx: 0,
   screen: 'title'
 };
 
 let settings = { ...defaultSettings };
 
-/* ============================================================
-   存档读写
-   ============================================================ */
 function saveGame() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -759,37 +761,44 @@ function loadGame() {
     return true;
   } catch (e) { return false; }
 }
-function saveSettings() {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
-}
+/* ★ 修复⑥：不再污染 defaultSettings；settings.theme/fontSize 做兜底 */
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (raw) settings = Object.assign(defaultSettings, JSON.parse(raw));
-  } catch (e) {}
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      settings = Object.assign({}, defaultSettings, parsed);
+    } else {
+      settings = Object.assign({}, defaultSettings);
+    }
+  } catch (e) {
+    settings = Object.assign({}, defaultSettings);
+  }
   applySettings();
 }
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
 function applySettings() {
-  document.documentElement.setAttribute('data-theme', settings.theme);
-  document.documentElement.style.setProperty('--font-scale', settings.fontSize);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', settings.theme === 'day' ? '#ece4d2' : '#0a0810');
+  try {
+    const theme = (settings.theme === 'day' || settings.theme === 'night') ? settings.theme : 'night';
+    document.documentElement.setAttribute('data-theme', theme);
+    const scale = typeof settings.fontSize === 'number' && settings.fontSize > 0 ? settings.fontSize : 1;
+    document.documentElement.style.setProperty('--font-scale', scale);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'day' ? '#ece4d2' : '#0a0810');
+  } catch (e) { console.warn('applySettings', e); }
 }
 
-/* ============================================================
-   Web Audio 合成音效
-   ============================================================ */
 const Sfx = {
   ctx: null,
   init() {
     if (this.ctx) return;
-    try {
-      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) { console.warn('AudioContext unavailable'); }
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   },
   ensure() {
     if (!this.ctx) this.init();
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(function(){});
   },
   vol() {
     if (!settings.sfxOn) return 0;
@@ -800,41 +809,39 @@ const Sfx = {
     if (!this.ctx) return;
     const v = this.vol() * vol;
     if (v <= 0) return;
-    const t = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, t);
-    if (sweep) osc.frequency.exponentialRampToValueAtTime(sweep, t + dur);
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(v, t + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(t);
-    osc.stop(t + dur + 0.05);
+    try {
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      if (sweep) osc.frequency.exponentialRampToValueAtTime(sweep, t + dur);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(v, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t + dur + 0.05);
+    } catch (e) {}
   },
   noise(dur = 0.12, vol = 0.15) {
     this.ensure();
     if (!this.ctx) return;
     const v = this.vol() * vol;
     if (v <= 0) return;
-    const t = this.ctx.currentTime;
-    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-    const src = this.ctx.createBufferSource();
-    src.buffer = buf;
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(v, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 2000;
-    src.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    src.start(t);
+    try {
+      const t = this.ctx.currentTime;
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      const src = this.ctx.createBufferSource(); src.buffer = buf;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(v, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass'; filter.frequency.value = 2000;
+      src.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+      src.start(t);
+    } catch (e) {}
   },
   click() { this.tone(720, 0.06, 'triangle', 0.1); },
   page()  { this.noise(0.1, 0.1); },
@@ -847,9 +854,7 @@ const Sfx = {
     this.tone(220, 0.18, 'sawtooth', 0.12, 110);
     setTimeout(() => this.tone(160, 0.28, 'sawtooth', 0.1, 80), 120);
   },
-  dice() {
-    for (let i = 0; i < 5; i++) setTimeout(() => this.noise(0.05, 0.06), i * 55);
-  },
+  dice() { for (let i = 0; i < 5; i++) setTimeout(() => this.noise(0.05, 0.06), i * 55); },
   hit() { this.tone(90, 0.16, 'square', 0.14, 50); this.noise(0.08, 0.1); },
   unlock() {
     this.tone(880, 0.1, 'sine', 0.12);
@@ -857,19 +862,14 @@ const Sfx = {
   }
 };
 
-/* ============================================================
-   震动反馈
-   ============================================================ */
 function vibrate(ms) {
   if (!settings.shake) return;
   if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {}
 }
 
-/* ============================================================
-   Toast
-   ============================================================ */
 function toast(msg, type = '', dur = 2400) {
   const layer = $('#toastLayer');
+  if (!layer) return;
   const el = document.createElement('div');
   el.className = 'toast ' + type;
   el.textContent = msg;
@@ -880,12 +880,10 @@ function toast(msg, type = '', dur = 2400) {
   }, dur);
 }
 
-/* ============================================================
-   弹窗系统（保证永远能关）
-   ============================================================ */
 let modalStack = [];
 function openModal(opt) {
   const layer = $('#modalLayer');
+  if (!layer) return { el: null, close: function(){} };
   const wrap = document.createElement('div');
   wrap.className = 'modal';
   wrap.innerHTML = `
@@ -902,16 +900,19 @@ function openModal(opt) {
 
   const close = () => closeModal(wrap);
   wrap.querySelector('.modal-close').onclick = () => { Sfx.click(); close(); };
-  // 点击遮罩层空白处关闭
-  layer.onclick = (e) => {
-    if (e.target === layer) { Sfx.click(); close(); }
-  };
+  layer.onclick = (e) => { if (e.target === layer) { Sfx.click(); close(); } };
 
-  if (opt.onMount) opt.onMount(wrap);
+  if (opt.onMount) {
+    try { opt.onMount(wrap); } catch (e) {
+      console.warn('onMount error', e);
+      toast('内容加载出错', 'warn');
+    }
+  }
   return { el: wrap, close };
 }
 function closeModal(el) {
   const layer = $('#modalLayer');
+  if (!layer) return;
   const target = el || modalStack[modalStack.length - 1];
   if (!target) { layer.classList.remove('open'); layer.innerHTML = ''; modalStack = []; return; }
   const idx = modalStack.indexOf(target);
@@ -921,14 +922,13 @@ function closeModal(el) {
 }
 function closeAllModals() {
   const layer = $('#modalLayer');
+  if (!layer) return;
   layer.classList.remove('open');
   layer.innerHTML = '';
   modalStack = [];
 }
 
-/* ============================================================
-   页面切换
-   ============================================================ */
+/* ★ 修复⑦：showScreen 用安全的动画函数，不再直接调用 gsap */
 function showScreen(name) {
   const cur = document.querySelector('.screen.active');
   const nxt = document.getElementById('screen-' + name);
@@ -937,25 +937,22 @@ function showScreen(name) {
   state.screen = name;
 
   const doSwap = () => {
-    if (cur) cur.classList.remove('active');
+    if (cur) { cur.classList.remove('active'); cur.style.opacity = ''; }
     nxt.classList.add('active');
-    if (settings.animations) {
-      gsap.fromTo(nxt, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.32, ease: 'power2.out' });
-    } else {
-      nxt.style.opacity = 1;
+    nxt.style.opacity = '1';
+    if (HAS_GSAP() && settings.animations) {
+      animIn(nxt, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.32, ease: 'power2.out' });
     }
   };
-  if (settings.animations && cur) {
-    gsap.to(cur, {
-      opacity: 0, duration: 0.18, ease: 'power1.in', onComplete: () => {
-        cur.style.opacity = ''; doSwap();
-      }
-    });
+
+  if (HAS_GSAP() && settings.animations && cur && name !== 'game') {
+    animOut(cur, { opacity: 0, duration: 0.18, ease: 'power1.in' }, doSwap);
   } else {
     doSwap();
   }
 
-  $('#bottomNav').style.display = (name === 'title') ? 'none' : 'flex';
+  const nav = $('#bottomNav');
+  if (nav) nav.style.display = (name === 'title') ? 'none' : 'flex';
   updateNav(name);
   if (name === 'map') renderMap();
   if (name === 'log') renderLog();
@@ -969,27 +966,10 @@ function updateNav(name) {
 }
 
 /* ============================================================
-   章节 / 场景数据结构
+   场景数据
    ============================================================ */
-/* 场景结构：
-{
-  id: 'xxx',
-  bg: 'city|tavern|grove|manor|archive|church|castle|dream',
-  loc: '地点名',
-  lines: [
-    { t:'n', cn:'旁白' },
-    { t:'d', who:'tavana', en:'...', cn:'「...」' },
-    { t:'me', cn:'内心独白' }
-  ],
-  choices: [ { cn:'选项', next:'场景id', set:{flag:1}, act:'...' } ],
-  next: '下一个场景id',
-  onEnd: '动作'
-}
-*/
-
 const SCENES = {};
 
-/* ---- 序章 ---- */
 SCENES.prologue_1 = {
   bg: 'city', loc: '落日之都 · 城门',
   lines: [
@@ -1017,9 +997,9 @@ SCENES.prologue_2 = {
     { t: 'd', who: 'fiman', en: "Fiman. I run this place. Fancy a drink? Or are you here for... something else?", cn: '「菲曼。这店是我开的。来一杯？还是说……你是为了别的事来的？」' }
   ],
   choices: [
-    { cn: '「我是王翼来的记者，想调查『魇』。」', next: 'prologue_3a', set: { honest: 1 } },
-    { cn: '「先来一杯吧。走了太久的路。」', next: 'prologue_3b' },
-    { cn: '「这里是不是死过很多人？」', next: 'prologue_3c' }
+    { cn: '「我是王翼来的记者，想调查『魇』。」', next: 'prologue_3a', set: { honest: 1, aff: { fiman: 5 } } },
+    { cn: '「先来一杯吧。走了太久的路。」', next: 'prologue_3b', set: { aff: { fiman: 3 } } },
+    { cn: '「这里是不是死过很多人？」', next: 'prologue_3c', set: { aff: { fiman: 2 } } }
   ]
 };
 
@@ -1032,7 +1012,6 @@ SCENES.prologue_3a = {
     { t: 'd', who: 'fiman', en: "Come in. First drink's on the house. Then we talk.", cn: '「进来吧。第一杯我请。然后我们再谈。」' },
     { t: 'n', cn: '她掀开吧台的活动板，示意你进来。' }
   ],
-  set: { metFiman: 1, aff: { fiman: 5 } },
   next: 'prologue_4'
 };
 
@@ -1040,12 +1019,11 @@ SCENES.prologue_3b = {
   bg: 'tavern', loc: '日不落酒馆 · 吧台',
   lines: [
     { t: 'me', cn: '先来一杯吧。走了太久的路。' },
-    { t: 'd', who: 'fiman', en: 'A woman after my own heart. What'll it be?', cn: '「合我心意。喝点什么？」' },
+    { t: 'd', who: 'fiman', en: 'A woman after my own heart. What\'ll it be?', cn: '「合我心意。喝点什么？」' },
     { t: 'me', cn: '威士忌。加冰。' },
     { t: 'n', cn: '她转身从胡桃木酒柜上取下一瓶，动作利落。' },
     { t: 'd', who: 'fiman', en: 'You picked the only bottle I do not water down. Good instinct.', cn: '「你挑了我唯一不掺水的那瓶。直觉不错。」' }
   ],
-  set: { aff: { fiman: 3 } },
   next: 'prologue_4'
 };
 
@@ -1058,7 +1036,6 @@ SCENES.prologue_3c = {
     { t: 'd', who: 'fiman', en: "Everyone in this city has lost someone. But nobody talks about it. Not here.", cn: '「这座城里每个人都失去过谁。但没人愿意谈。至少不在这儿。」' },
     { t: 'n', cn: '她把酒杯推到你面前。' }
   ],
-  set: { aff: { fiman: 2 } },
   next: 'prologue_4'
 };
 
@@ -1126,11 +1103,11 @@ SCENES.prologue_8 = {
   ],
   onEnd: () => {
     toast('◈ 序章完成 · 地图已解锁', 'ok');
+    saveGame();
     setTimeout(() => showScreen('map'), 800);
   }
 };
 
-/* ---- 梦目院 · 初见 ---- */
 SCENES.manor_1 = {
   bg: 'manor', loc: '梦目院总部 · 大厅',
   lines: [
@@ -1193,7 +1170,6 @@ SCENES.manor_3 = {
   }
 };
 
-/* ---- 日不落酒馆 · 闲聊 ---- */
 SCENES.tavern_chat = {
   bg: 'tavern', loc: '日不落酒馆 · 吧台',
   lines: [
@@ -1214,7 +1190,7 @@ SCENES.tavern_talk1 = {
     { t: 'd', who: 'fiman', en: "And people like me—we keep the lights on and the glasses clean.", cn: '「像我们这样的人——就负责让灯亮着，让杯子干净。」' },
     { t: 'me', cn: '（她说这话时，笑容没有一点疲惫。这就是她的方式。）' }
   ],
-  next: 'tavern_end'
+  onEnd: () => { setTimeout(() => showScreen('map'), 400); }
 };
 
 SCENES.tavern_talk2 = {
@@ -1226,7 +1202,7 @@ SCENES.tavern_talk2 = {
     { t: 'd', who: 'fiman', en: "The Sunset Never Falls. Because if you can still see the sunset, you made it through the day.", cn: '「日不落。因为只要你还看得见日落，就说明你又撑过了一天。」' }
   ],
   set: { heardGrandma: 1 },
-  next: 'tavern_end'
+  onEnd: () => { setTimeout(() => showScreen('map'), 400); }
 };
 
 SCENES.tavern_mix = {
@@ -1239,16 +1215,6 @@ SCENES.tavern_mix = {
   onEnd: () => { openPourGame(); }
 };
 
-SCENES.tavern_end = {
-  bg: 'tavern', loc: '日不落酒馆 · 吧台',
-  lines: [
-    { t: 'n', cn: '菲曼把一只杯子放到你面前，杯壁挂着水珠。' },
-    { t: 'd', who: 'fiman', en: "On the house. Don't tell anyone.", cn: '「这杯我请。别告诉别人。」' }
-  ],
-  onEnd: () => { showScreen('map'); }
-};
-
-/* ---- 卡什 ---- */
 SCENES.kash_chat = {
   bg: 'tavern', loc: '日不落酒馆 · 角落',
   lines: [
@@ -1275,7 +1241,7 @@ SCENES.kash_deep = {
     { t: 'd', who: 'kash', en: "Don't tell anyone, alright? I have a reputation to maintain.", cn: '「别告诉别人，好吗？我还要维持形象呢。」' }
   ],
   set: { kashSecret: 1, aff: { kash: 8 } },
-  next: 'kash_end'
+  onEnd: () => { setTimeout(() => showScreen('map'), 400); }
 };
 
 SCENES.kash_talk1 = {
@@ -1284,7 +1250,7 @@ SCENES.kash_talk1 = {
     { t: 'd', who: 'kash', en: "The dream fields? I know enough to stay out of them. Mostly.", cn: '「梦域？我知道的刚好够我离它们远点。大部分时候。」' },
     { t: 'd', who: 'kash', en: "What I do know is—they're growing. Fast. And the Bureau is running out of people who can walk in and out.", cn: '「我确定的是——它们在长。很快。梦目院快没人能进得去又出得来了。」' }
   ],
-  next: 'kash_end'
+  onEnd: () => { setTimeout(() => showScreen('map'), 400); }
 };
 
 SCENES.kash_talk2 = {
@@ -1294,16 +1260,7 @@ SCENES.kash_talk2 = {
     { t: 'n', cn: '你差点把酒喷出来。' },
     { t: 'd', who: 'kash', en: "What? I'm a very lovable person. Ask anyone. Except her.", cn: '「怎么？我是个非常可爱的人。问问别人。除了她。」' }
   ],
-  next: 'kash_end'
-};
-
-SCENES.kash_end = {
-  bg: 'tavern', loc: '日不落酒馆 · 角落',
-  lines: [
-    { t: 'n', cn: '卡什举起杯子，朝空气敬了一下。' },
-    { t: 'd', who: 'kash', en: "To survival. And to looking good while doing it.", cn: '「敬活着。敬活着的时候还好看。」' }
-  ],
-  onEnd: () => { showScreen('map'); }
+  onEnd: () => { setTimeout(() => showScreen('map'), 400); }
 };
 
 /* ============================================================
@@ -1318,6 +1275,7 @@ function stopTyping() {
 }
 
 function typeInto(el, text, onDone) {
+  if (!el) { onDone && onDone(); return; }
   stopTyping();
   typing.el = el;
   typing.full = text;
@@ -1357,14 +1315,15 @@ function playScene(sceneId) {
   if (scene.set) applySet(scene.set);
 
   showScreen('game');
-  $('#sceneBg').className = 'scene-bg bg-' + (scene.bg || 'city');
-  $('#locLabel').textContent = scene.loc || '未知之地';
-  $('#topLoc').textContent = scene.loc || '——';
+  const bg = $('#sceneBg');
+  if (bg) bg.className = 'scene-bg bg-' + (scene.bg || 'city');
+  if ($('#locLabel')) $('#locLabel').textContent = scene.loc || '未知之地';
+  if ($('#topLoc')) $('#topLoc').textContent = scene.loc || '——';
 
-  $('#dialogInner').innerHTML = '';
-  $('#choices').classList.remove('active');
-  $('#choicesInner').innerHTML = '';
-  $('#contHint').style.display = 'none';
+  if ($('#dialogInner')) $('#dialogInner').innerHTML = '';
+  if ($('#choices')) $('#choices').classList.remove('active');
+  if ($('#choicesInner')) $('#choicesInner').innerHTML = '';
+  if ($('#contHint')) $('#contHint').style.display = 'none';
 
   renderLine(0);
 }
@@ -1388,7 +1347,6 @@ function renderLine(idx) {
   const lines = scene.lines || [];
 
   if (idx >= lines.length) {
-    // 所有台词结束
     if (scene.choices && scene.choices.length) {
       showChoices(scene.choices);
       return;
@@ -1408,6 +1366,7 @@ function renderLine(idx) {
   state.currentLineIdx = idx;
   const line = lines[idx];
   const inner = $('#dialogInner');
+  if (!inner) return;
   const div = document.createElement('div');
   div.className = 'line';
 
@@ -1436,7 +1395,7 @@ function renderLine(idx) {
   }
 
   scrollToBottom();
-  $('#contHint').style.display = 'none';
+  if ($('#contHint')) $('#contHint').style.display = 'none';
 }
 
 let autoPlayTimer = null;
@@ -1447,11 +1406,12 @@ function onLineDone() {
   const lines = scene.lines || [];
   const isLast = state.currentLineIdx >= lines.length - 1;
 
-  if (isLast && ((scene.choices && scene.choices.length) || scene.next || scene.onEnd)) {
-    // 等玩家点击
-    if (!scene.choices) $('#contHint').style.display = 'block';
-  } else {
-    $('#contHint').style.display = 'block';
+  if ($('#contHint')) {
+    if (isLast && ((scene.choices && scene.choices.length) || scene.next || scene.onEnd)) {
+      if (!scene.choices) $('#contHint').style.display = 'block';
+    } else {
+      $('#contHint').style.display = 'block';
+    }
   }
 
   if (settings.autoPlay) {
@@ -1471,7 +1431,6 @@ function advanceLine() {
   if (!scene) return;
 
   if (scene.choices && scene.choices.length && state.currentLineIdx >= (scene.lines || []).length - 1) {
-    // 已经在最后一行，显示选项
     showChoices(scene.choices);
     return;
   }
@@ -1487,37 +1446,44 @@ function advanceLine() {
 
 function scrollToBottom() {
   const el = $('#dialogScroll');
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
+  if (!el) return;
+  requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
 }
 
 function showChoices(choices) {
   const box = $('#choices');
   const inner = $('#choicesInner');
+  if (!box || !inner) return;
   inner.innerHTML = '<div class="choice-head">抉 择</div>';
+  let visibleCount = 0;
   choices.forEach((c, i) => {
     if (c.cond && !c.cond()) return;
+    visibleCount++;
     const btn = document.createElement('button');
     btn.className = 'choice-btn' + (c.danger ? ' danger' : '');
     const sym = '①②③④⑤⑥⑦⑧⑨⑩'.charAt(i) || '◆';
     btn.innerHTML = `<span class="choice-idx">${sym}</span><span>${esc(c.cn)}</span>`;
     btn.onclick = () => {
       Sfx.click();
-      if (settings.confirmChoice) {
-        confirmChoice(c);
-      } else {
-        selectChoice(c);
-      }
+      if (settings.confirmChoice) confirmChoice(c);
+      else selectChoice(c);
     };
     inner.appendChild(btn);
   });
+  if (!visibleCount) {
+    if (SCENES[state.currentScene] && SCENES[state.currentScene].next) {
+      playScene(SCENES[state.currentScene].next);
+    } else {
+      showScreen('map');
+    }
+    return;
+  }
   box.classList.add('active');
   box.scrollTop = 0;
-  $('#contHint').style.display = 'none';
+  if ($('#contHint')) $('#contHint').style.display = 'none';
 
-  if (settings.animations) {
-    gsap.fromTo(box, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+  if (HAS_GSAP() && settings.animations) {
+    animIn(box, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
   }
 }
 
@@ -1541,20 +1507,15 @@ function confirmChoice(c) {
 
 function selectChoice(c) {
   state.log.push({ type: 'choice', text: c.cn });
-  $('#choices').classList.remove('active');
-  $('#choicesInner').innerHTML = '';
+  if ($('#choices')) $('#choices').classList.remove('active');
+  if ($('#choicesInner')) $('#choicesInner').innerHTML = '';
 
   if (c.set) applySet(c.set);
-
-  if (c.act) { c.act(); return; }
+  if (c.act) { try { c.act(); } catch (e) { console.warn(e); } return; }
   if (c.next) { playScene(c.next); return; }
-  if (c.ending) { showScreen('map'); return; }
   showScreen('map');
 }
 
-/* ============================================================
-   日志
-   ============================================================ */
 function pushLog(speaker, cn, en) {
   if (!state.log) state.log = [];
   state.log.push({ speaker, cn, en });
@@ -1587,7 +1548,8 @@ const MAP_DATA = [
 
 function renderMap() {
   const main = $('#mapMain');
-  $('#mapSilver').textContent = '银镑 ' + state.stats.silver;
+  if (!main) return;
+  if ($('#mapSilver')) $('#mapSilver').textContent = '银镑 ' + state.stats.silver;
   let html = '';
   MAP_DATA.forEach(reg => {
     html += `<div class="map-region">
@@ -1623,26 +1585,13 @@ function renderMap() {
 
 function handleSpotClick(spot) {
   switch (spot.action) {
-    case 'tavern':
-      openCharacterSelect('tavern');
-      break;
-    case 'manor':
-      playScene('manor_1');
-      break;
-    case 'archive':
-      openEvidenceGame();
-      break;
-    case 'church':
-      openPuzzleGame();
-      break;
-    case 'grove':
-      openDreamRogue();
-      break;
-    case 'chess':
-      openChessGame();
-      break;
-    default:
-      toast('此处暂无内容', 'warn');
+    case 'tavern': openCharacterSelect('tavern'); break;
+    case 'manor': playScene('manor_1'); break;
+    case 'archive': openEvidenceGame(); break;
+    case 'church': openPuzzleGame(); break;
+    case 'grove': openDreamRogue(); break;
+    case 'chess': openChessGame(); break;
+    default: toast('此处暂无内容', 'warn');
   }
 }
 
@@ -1650,10 +1599,7 @@ function handleSpotClick(spot) {
    角色选择
    ============================================================ */
 function openCharacterSelect(place) {
-  const list = place === 'tavern'
-    ? ['fiman', 'kash']
-    : ['tavana', 'movioa', 'lidia', 'elsia', 'kash', 'reifina'];
-
+  const list = place === 'tavern' ? ['fiman', 'kash'] : ['tavana', 'movioa', 'lidia', 'elsia', 'kash', 'reifina'];
   let html = '<div class="char-grid">';
   list.forEach(id => {
     const c = CHARS[id];
@@ -1681,8 +1627,7 @@ function openCharacterSelect(place) {
         card.onclick = () => {
           Sfx.click();
           closeModal(wrap);
-          const id = card.dataset.char;
-          setTimeout(() => openCharacterMenu(id), 200);
+          setTimeout(() => openCharacterMenu(card.dataset.char), 200);
         };
       });
     }
@@ -1810,25 +1755,21 @@ function startCharacterDialogue(id, mode) {
   }
   const lines = data[mode];
 
-  // 用游戏界面播放
   showScreen('game');
-  $('#sceneBg').className = 'scene-bg bg-tavern';
-  $('#locLabel').textContent = c.name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊');
-  $('#topLoc').textContent = c.name;
-  $('#dialogInner').innerHTML = '';
-  $('#choices').classList.remove('active');
-  $('#contHint').style.display = 'none';
+  if ($('#sceneBg')) $('#sceneBg').className = 'scene-bg bg-tavern';
+  if ($('#locLabel')) $('#locLabel').textContent = c.name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊');
+  if ($('#topLoc')) $('#topLoc').textContent = c.name;
+  if ($('#dialogInner')) $('#dialogInner').innerHTML = '';
+  if ($('#choices')) $('#choices').classList.remove('active');
+  if ($('#contHint')) $('#contHint').style.display = 'none';
 
-  // 临时构造场景
   const tmpId = '__tmp_char_' + id + '_' + mode;
   SCENES[tmpId] = {
     bg: 'tavern',
     loc: c.name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊'),
     lines: lines.map(l => ({
       t: l.who === 'me' ? 'me' : 'd',
-      who: l.who,
-      en: l.en,
-      cn: l.cn
+      who: l.who, en: l.en, cn: l.cn
     })),
     onEnd: () => {
       const gain = mode === 'deep' ? 10 : 5;
@@ -1844,6 +1785,7 @@ function startCharacterDialogue(id, mode) {
 
 function giveGift(id) {
   const c = CHARS[id];
+  if (!c) return;
   const gifts = [
     { name: '银杏叶书签', cost: 5, aff: 4, icon: '✦' },
     { name: '旧唱片', cost: 10, aff: 7, icon: '♬' },
@@ -1869,11 +1811,7 @@ function giveGift(id) {
       wrap.querySelectorAll('.save-slot').forEach((el, i) => {
         el.onclick = () => {
           const g = gifts[i];
-          if (state.stats.silver < g.cost) {
-            Sfx.fail();
-            toast('银镑不足', 'warn');
-            return;
-          }
+          if (state.stats.silver < g.cost) { Sfx.fail(); toast('银镑不足', 'warn'); return; }
           state.stats.silver -= g.cost;
           state.affection[id] = (state.affection[id] || 0) + g.aff;
           Sfx.success();
@@ -1888,18 +1826,17 @@ function giveGift(id) {
 }
 
 /* ============================================================
-   小游戏 1：档案室 · 证据链连线
+   小游戏 1：证据链连线
    ============================================================ */
 function openEvidenceGame() {
   const cards = [
-    { id: 'a', ico: '🪶', name: '染血的\n乌鸦羽毛' },
-    { id: 'b', ico: '♜', name: '封印战场\n焦土样本' },
-    { id: 'c', ico: '✉', name: '第三日\n战报' },
-    { id: 'd', ico: '☽', name: '梦域扩张\n地图' },
-    { id: 'e', ico: '♔', name: '缇斯·沃特森\n身份记录' },
-    { id: 'f', ico: '☠', name: '未归之人\n名单' }
+    { id: 'a', ico: '🪶', name: '染血的<br>乌鸦羽毛' },
+    { id: 'b', ico: '♜', name: '封印战场<br>焦土样本' },
+    { id: 'c', ico: '✉', name: '第三日<br>战报' },
+    { id: 'd', ico: '☽', name: '梦域扩张<br>地图' },
+    { id: 'e', ico: '♔', name: '缇斯·沃特森<br>身份记录' },
+    { id: 'f', ico: '☠', name: '未归之人<br>名单' }
   ];
-  // 正确配对
   const pairs = [['a', 'e'], ['b', 'c'], ['d', 'f']];
 
   openModal({
@@ -1919,17 +1856,14 @@ function openEvidenceGame() {
     footHTML: `<button class="btn ghost" id="evClose">关 闭</button>`,
     onMount: (wrap) => {
       const area = wrap.querySelector('#evArea');
+      if (!area) return;
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('class', 'ev-svg');
       area.appendChild(svg);
 
-      let san = 100;
-      let found = 0;
-      let selected = null;
-      let connections = [];
+      let san = 100, found = 0, selected = null;
       const positions = {};
 
-      // 随机位置
       const W = area.clientWidth || 300;
       const H = area.clientHeight || 340;
       cards.forEach((c, i) => {
@@ -1940,50 +1874,42 @@ function openEvidenceGame() {
         const y = 10 + Math.floor(i / 2) * (H / 3) + Math.random() * 20;
         el.style.left = clamp(x, 4, W - 92) + 'px';
         el.style.top = clamp(y, 4, H - 70) + 'px';
-        el.innerHTML = `<div class="ev-ico">${c.ico}</div>${c.name.replace(/\n/g, '<br>')}`;
+        el.innerHTML = `<div class="ev-ico">${c.ico}</div>${c.name}`;
         area.appendChild(el);
-        positions[c.id] = { el, x: 0, y: 0 };
+        positions[c.id] = { el };
 
         el.onclick = () => {
           if (el.classList.contains('done')) return;
           if (!selected) {
-            selected = c.id;
-            el.classList.add('sel');
-            Sfx.click();
+            selected = c.id; el.classList.add('sel'); Sfx.click();
           } else if (selected === c.id) {
-            el.classList.remove('sel');
-            selected = null;
-            Sfx.click();
+            el.classList.remove('sel'); selected = null; Sfx.click();
           } else {
             const p = pairs.find(pr =>
               (pr[0] === selected && pr[1] === c.id) || (pr[1] === selected && pr[0] === c.id));
             const fromEl = positions[selected].el;
             const toEl = el;
             if (p) {
-              // 正确
               Sfx.success();
               fromEl.classList.remove('sel');
               fromEl.classList.add('done');
               toEl.classList.add('done');
               drawLine(fromEl, toEl, '#c9a961');
               found++;
-              wrap.querySelector('#evDone').textContent = found + ' / 3';
+              const doneEl = wrap.querySelector('#evDone');
+              if (doneEl) doneEl.textContent = found + ' / 3';
               selected = null;
-              if (found >= 3) {
-                setTimeout(() => winEvidence(wrap), 500);
-              }
+              if (found >= 3) setTimeout(() => winEvidence(wrap), 500);
             } else {
-              // 错误
               Sfx.fail();
               san -= 15;
               if (settings.shake) vibrate(120);
-              wrap.querySelector('#evSan').textContent = san;
+              const sanEl = wrap.querySelector('#evSan');
+              if (sanEl) sanEl.textContent = san;
               drawLine(fromEl, toEl, '#c04060', true);
               fromEl.classList.remove('sel');
               selected = null;
-              if (san <= 0) {
-                setTimeout(() => failEvidence(wrap), 500);
-              }
+              if (san <= 0) setTimeout(() => failEvidence(wrap), 500);
             }
           }
         };
@@ -2005,9 +1931,7 @@ function openEvidenceGame() {
         line.setAttribute('stroke-dasharray', '5,3');
         line.setAttribute('opacity', temp ? '0.6' : '0.9');
         svg.appendChild(line);
-        if (temp) {
-          setTimeout(() => line.remove(), 600);
-        }
+        if (temp) setTimeout(() => line.remove(), 600);
       }
 
       function winEvidence(wrap) {
@@ -2056,8 +1980,7 @@ function openEvidenceGame() {
 
       wrap.querySelector('#evClose').onclick = () => { Sfx.click(); closeModal(wrap); };
       wrap.querySelector('#evReset').onclick = () => {
-        Sfx.click();
-        closeModal(wrap);
+        Sfx.click(); closeModal(wrap);
         setTimeout(openEvidenceGame, 200);
       };
     }
@@ -2065,7 +1988,7 @@ function openEvidenceGame() {
 }
 
 /* ============================================================
-   小游戏 2：日不落酒馆 · QTE 倒酒
+   小游戏 2：QTE 倒酒
    ============================================================ */
 function openPourGame() {
   openModal({
@@ -2095,17 +2018,12 @@ function openPourGame() {
       const roundEl = wrap.querySelector('#pourRound');
       const errEl = wrap.querySelector('#pourErr');
 
-      let level = 0;       // 0-100
-      let round = 1;       // 1: 40ml, 2: 60ml
-      let pouring = false;
-      let timer = null;
-      let done1 = false;
-
+      let level = 0, round = 1, pouring = false, timer = null, done1 = false;
       const target1 = 40, target2 = 60;
 
       function setLevel(v) {
         level = clamp(v, 0, 100);
-        liquid.style.height = level + '%';
+        if (liquid) liquid.style.height = level + '%';
       }
 
       function startPour() {
@@ -2113,7 +2031,6 @@ function openPourGame() {
         if (round === 2 && !done1) return;
         pouring = true;
         btn.classList.add('pouring');
-        Sfx.tone(180, 0.05, 'sine', 0.03);
         timer = setInterval(() => {
           setLevel(level + 0.8);
           if (level >= 100) stopPour();
@@ -2124,49 +2041,40 @@ function openPourGame() {
         if (!pouring) return;
         pouring = false;
         btn.classList.remove('pouring');
-        clearInterval(timer);
-        timer = null;
+        clearInterval(timer); timer = null;
 
         if (round === 1) {
           const err = Math.abs(level - target1);
-          errEl.textContent = err.toFixed(1) + 'ml';
+          if (errEl) errEl.textContent = err.toFixed(1) + 'ml';
           if (err <= 4) {
             Sfx.success();
-            fb.style.color = '#9dd0a0';
-            fb.textContent = '◈ 完美！威士忌 40ml 达成。';
-            done1 = true;
-            round = 2;
-            roundEl.textContent = '2 / 2';
-            setTimeout(() => {
-              fb.textContent = '继续：柠檬汁 60ml。';
-            }, 1200);
+            if (fb) { fb.style.color = '#9dd0a0'; fb.textContent = '◈ 完美！威士忌 40ml 达成。'; }
+            done1 = true; round = 2;
+            if (roundEl) roundEl.textContent = '2 / 2';
+            setTimeout(() => { if (fb) fb.textContent = '继续：柠檬汁 60ml。'; }, 1200);
           } else {
             Sfx.fail();
-            fb.style.color = '#d08a9c';
-            fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。酒液倒掉了，重新开始。';
+            if (fb) { fb.style.color = '#d08a9c'; fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。重新开始。'; }
             setTimeout(() => {
               setLevel(0);
-              errEl.textContent = '--';
-              fb.textContent = '';
+              if (errEl) errEl.textContent = '--';
+              if (fb) fb.textContent = '';
             }, 1400);
           }
         } else {
           const err = Math.abs(level - target2);
-          errEl.textContent = err.toFixed(1) + 'ml';
+          if (errEl) errEl.textContent = err.toFixed(1) + 'ml';
           if (err <= 5) {
             Sfx.success();
             setTimeout(() => winPour(wrap), 400);
           } else {
             Sfx.fail();
-            fb.style.color = '#d08a9c';
-            fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。重新开始。';
+            if (fb) { fb.style.color = '#d08a9c'; fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。重新开始。'; }
             setTimeout(() => {
-              setLevel(0);
-              round = 1;
-              done1 = false;
-              roundEl.textContent = '1 / 2';
-              errEl.textContent = '--';
-              fb.textContent = '';
+              setLevel(0); round = 1; done1 = false;
+              if (roundEl) roundEl.textContent = '1 / 2';
+              if (errEl) errEl.textContent = '--';
+              if (fb) fb.textContent = '';
             }, 1400);
           }
         }
@@ -2210,17 +2118,10 @@ function winPour(wrap) {
 }
 
 /* ============================================================
-   小游戏 3：伊林堡 · 棋局走位
+   小游戏 3：棋局走位
    ============================================================ */
 function openChessGame() {
-  // 棋盘数据：true = 死亡格
-  const death = {
-    '1-0': true,
-    '2-1': true,
-    '3-2': true,
-    '1-2': true,
-    '2-0': false
-  };
+  const death = { '1-0': true, '2-1': true, '3-2': true, '1-2': true };
   const GOAL = { r: 3, c: 3 };
 
   openModal({
@@ -2245,10 +2146,7 @@ function openChessGame() {
       const sanEl = wrap.querySelector('#chSan');
       const stateEl = wrap.querySelector('#chState');
 
-      let pos = { r: 0, c: 0 };
-      let moves = 0;
-      let san = 100;
-      let playing = true;
+      let pos = { r: 0, c: 0 }, moves = 0, san = 100, playing = true;
       const MAX_MOVES = 5;
 
       function render() {
@@ -2257,31 +2155,23 @@ function openChessGame() {
           for (let c = 0; c < 4; c++) {
             const cell = document.createElement('div');
             cell.className = 'chess-cell ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
-            cell.dataset.r = r;
-            cell.dataset.c = c;
-
+            cell.dataset.r = r; cell.dataset.c = c;
             if (death[r + '-' + c]) cell.classList.add('death');
             if (r === GOAL.r && c === GOAL.c) cell.classList.add('goal');
             if (r === pos.r && c === pos.c) cell.classList.add('player');
 
-            // 合法移动检查
             if (playing && !death[r + '-' + c]) {
               const dr = r - pos.r;
               const dc = Math.abs(c - pos.c);
               if (dr === 1 && dc <= 1) {
                 cell.classList.add('valid');
                 cell.onclick = () => moveTo(r, c);
-              } else if (death[r + '-' + c]) {
-                cell.onclick = () => hitDeath(r, c);
               }
             } else if (playing && death[r + '-' + c]) {
               const dr = r - pos.r;
               const dc = Math.abs(c - pos.c);
-              if (dr === 1 && dc <= 1) {
-                cell.onclick = () => hitDeath(r, c);
-              }
+              if (dr === 1 && dc <= 1) cell.onclick = () => hitDeath(r, c);
             }
-
             board.appendChild(cell);
           }
         }
@@ -2292,18 +2182,10 @@ function openChessGame() {
         Sfx.click();
         moves++;
         pos = { r, c };
-        movesEl.textContent = moves + ' / ' + MAX_MOVES;
+        if (movesEl) movesEl.textContent = moves + ' / ' + MAX_MOVES;
         render();
-
-        if (r === GOAL.r && c === GOAL.c) {
-          playing = false;
-          setTimeout(winChess, 300);
-          return;
-        }
-        if (moves >= MAX_MOVES) {
-          playing = false;
-          setTimeout(failChess, 400);
-        }
+        if (r === GOAL.r && c === GOAL.c) { playing = false; setTimeout(winChess, 300); return; }
+        if (moves >= MAX_MOVES) { playing = false; setTimeout(failChess, 400); }
       }
 
       function hitDeath(r, c) {
@@ -2311,14 +2193,10 @@ function openChessGame() {
         Sfx.fail();
         if (settings.shake) vibrate(150);
         san -= 25;
-        sanEl.textContent = Math.max(0, san);
-        stateEl.textContent = '受伤';
-        stateEl.style.color = '#d08a9c';
-        setTimeout(() => { stateEl.textContent = '前进'; stateEl.style.color = ''; }, 700);
-        if (san <= 0) {
-          playing = false;
-          setTimeout(failChess, 400);
-        }
+        if (sanEl) sanEl.textContent = Math.max(0, san);
+        if (stateEl) { stateEl.textContent = '受伤'; stateEl.style.color = '#d08a9c'; }
+        setTimeout(() => { if (stateEl) { stateEl.textContent = '前进'; stateEl.style.color = ''; } }, 700);
+        if (san <= 0) { playing = false; setTimeout(failChess, 400); }
       }
 
       function winChess() {
@@ -2371,20 +2249,11 @@ function openChessGame() {
 }
 
 /* ============================================================
-   小游戏 4：卡特琳教堂 · 滑块拼图
+   小游戏 4：滑块拼图
    ============================================================ */
 function openPuzzleGame() {
   const SYMS = ['✦', '☽', '♔', '❖', '✧', '✶', '☩', '♕'];
-  // 3x3 滑块拼图：0 代表空格
   let tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
-  // 打乱（保证可解，用随机合法移动）
-  for (let i = 0; i < 60; i++) {
-    const emptyIdx = tiles.indexOf(0);
-    const neighbors = getNeighbors(emptyIdx);
-    const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
-    tiles[emptyIdx] = tiles[pick];
-    tiles[pick] = 0;
-  }
 
   function getNeighbors(i) {
     const r = Math.floor(i / 3), c = i % 3;
@@ -2395,6 +2264,17 @@ function openPuzzleGame() {
     if (c < 2) out.push(i + 1);
     return out;
   }
+
+  function shuffle() {
+    for (let i = 0; i < 60; i++) {
+      const emptyIdx = tiles.indexOf(0);
+      const neighbors = getNeighbors(emptyIdx);
+      const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+      tiles[emptyIdx] = tiles[pick];
+      tiles[pick] = 0;
+    }
+  }
+  shuffle();
 
   openModal({
     title: '卡 特 琳 教 堂 · 光 影 拼 图',
@@ -2412,10 +2292,9 @@ function openPuzzleGame() {
     onMount: (wrap) => {
       const stage = wrap.querySelector('#puzzleStage');
       const movesEl = wrap.querySelector('#pzMoves');
-      const stateEl = wrap.querySelector('#pzState');
       let moves = 0;
 
-      function render(animate) {
+      function render() {
         stage.innerHTML = '';
         tiles.forEach((v, i) => {
           const el = document.createElement('div');
@@ -2427,9 +2306,6 @@ function openPuzzleGame() {
           el.innerHTML = `<span class="sym">${SYMS[v - 1]}</span>`;
           el.dataset.idx = i;
           el.onclick = () => tryMove(i);
-          if (animate) {
-            el.style.transition = 'all .28s cubic-bezier(.16,1,.3,1)';
-          }
           stage.appendChild(el);
         });
       }
@@ -2443,8 +2319,8 @@ function openPuzzleGame() {
         tiles[emptyIdx] = tiles[idx];
         tiles[idx] = 0;
         moves++;
-        movesEl.textContent = moves;
-        render(true);
+        if (movesEl) movesEl.textContent = moves;
+        render();
         setTimeout(checkWin, 300);
       }
 
@@ -2481,30 +2357,23 @@ function openPuzzleGame() {
         });
       }
 
-      render(false);
+      render();
       wrap.querySelector('#pzClose').onclick = () => { Sfx.click(); closeModal(wrap); };
       wrap.querySelector('#pzReset').onclick = () => {
         Sfx.click();
         tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
-        for (let i = 0; i < 60; i++) {
-          const emptyIdx = tiles.indexOf(0);
-          const neighbors = getNeighbors(emptyIdx);
-          const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
-          tiles[emptyIdx] = tiles[pick];
-          tiles[pick] = 0;
-        }
-        moves = 0; movesEl.textContent = 0;
-        render(false);
+        shuffle();
+        moves = 0; if (movesEl) movesEl.textContent = 0;
+        render();
       };
     }
   });
 }
 
 /* ============================================================
-   梦域 Roguelike：规则怪谈 + D20 + 战斗
+   梦域 Roguelike
    ============================================================ */
 function openDreamRogue() {
-  // 规则怪谈
   openModal({
     title: '梦 域 · 规 则 怪 谈',
     body: `
@@ -2537,13 +2406,8 @@ function openDreamRogue() {
 
 function startDreamRogue() {
   const battle = {
-    playerSan: 100,
-    playerHp: 100,
-    enemyHp: 100,
-    enemySan: 100,
-    turn: 0,
-    over: false,
-    diceRolled: false
+    playerSan: 100, playerHp: 100, enemyHp: 100,
+    turn: 0, over: false, diceRolled: false
   };
 
   openModal({
@@ -2551,23 +2415,19 @@ function startDreamRogue() {
     body: `
       <div class="mini-title">☽ 焦 土 残 影 ☾</div>
       <div class="mini-sub">梦域的守卫正在苏醒。</div>
-
       <div class="battle-bar">
         <div class="battle-name"><span>你</span><span>HP <b id="bPhp">100</b> · SAN <b id="bPsan">100</b></span></div>
         <div class="battle-track"><div class="battle-fill hp" id="bPhpBar" style="width:100%"></div></div>
         <div class="battle-track" style="margin-top:4px;"><div class="battle-fill san" id="bPsanBar" style="width:100%"></div></div>
       </div>
-
       <div class="battle-bar">
         <div class="battle-name"><span>焦土残影</span><span>HP <b id="bEhp">100</b></span></div>
         <div class="battle-track"><div class="battle-fill" id="bEhpBar" style="width:100%"></div></div>
       </div>
-
       <div class="dice-area">
         <div class="dice" id="drDice">?</div>
         <div style="font-size:11px;color:var(--text-d);letter-spacing:.1em;" id="drDiceMsg">掷骰以决定行动成败</div>
       </div>
-
       <div style="display:flex;gap:10px;">
         <button class="btn" id="drRoll" style="flex:1;">掷 骰</button>
         <button class="btn" id="drAttack" style="flex:1;" disabled>攻 击</button>
@@ -2593,17 +2453,16 @@ function startDreamRogue() {
       let lastRoll = 0;
 
       function updateBars() {
-        phpEl.textContent = Math.max(0, battle.playerHp);
-        psanEl.textContent = Math.max(0, battle.playerSan);
-        ehpEl.textContent = Math.max(0, battle.enemyHp);
-        phpBar.style.width = clamp(battle.playerHp, 0, 100) + '%';
-        psanBar.style.width = clamp(battle.playerSan, 0, 100) + '%';
-        ehpBar.style.width = clamp(battle.enemyHp, 0, 100) + '%';
+        if (phpEl) phpEl.textContent = Math.max(0, battle.playerHp);
+        if (psanEl) psanEl.textContent = Math.max(0, battle.playerSan);
+        if (ehpEl) ehpEl.textContent = Math.max(0, battle.enemyHp);
+        if (phpBar) phpBar.style.width = clamp(battle.playerHp, 0, 100) + '%';
+        if (psanBar) psanBar.style.width = clamp(battle.playerSan, 0, 100) + '%';
+        if (ehpBar) ehpBar.style.width = clamp(battle.enemyHp, 0, 100) + '%';
       }
 
       function rollDice() {
-        if (battle.over) return;
-        if (battle.diceRolled) { msgEl.textContent = '本回合已经掷过骰了。'; return; }
+        if (battle.over || battle.diceRolled) return;
         Sfx.dice();
         rollBtn.disabled = true;
         let count = 0;
@@ -2614,8 +2473,9 @@ function startDreamRogue() {
             clearInterval(interval);
             lastRoll = Math.floor(Math.random() * 20) + 1;
             diceEl.textContent = lastRoll;
-            if (settings.animations) {
-              gsap.fromTo(diceEl, { scale: 0.8, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' });
+            /* ★ GSAP 安全动画 */
+            if (HAS_GSAP() && settings.animations) {
+              try { gsap.fromTo(diceEl, { scale: 0.8, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' }); } catch (e) {}
             }
             if (lastRoll > 10) {
               Sfx.success();
@@ -2654,15 +2514,10 @@ function startDreamRogue() {
           logEl.textContent = '你稳住了心神。理智 +8。';
           Sfx.tone(523, 0.15, 'sine', 0.12);
         }
-
         updateBars();
 
-        if (battle.enemyHp <= 0) {
-          setTimeout(() => endBattle('win'), 500);
-          return;
-        }
+        if (battle.enemyHp <= 0) { setTimeout(() => endBattle('win'), 500); return; }
 
-        // 敌方反击
         setTimeout(() => {
           const dmg = 8 + Math.floor(Math.random() * 12);
           battle.playerSan -= dmg;
@@ -2671,12 +2526,10 @@ function startDreamRogue() {
           Sfx.hit();
           if (settings.shake) vibrate(80);
           updateBars();
-
           if (battle.playerSan <= 0 || battle.playerHp <= 0) {
             setTimeout(() => endBattle('lose'), 400);
             return;
           }
-
           battle.diceRolled = false;
           rollBtn.disabled = false;
           msgEl.textContent = '新回合。再次掷骰。';
@@ -2764,23 +2617,20 @@ function renderLog() {
     { id: 'endings', label: '结局' }
   ];
   const tabsEl = $('#logTabs');
+  if (!tabsEl) return;
   tabsEl.innerHTML = tabs.map(t =>
     `<button class="log-tab ${t.id === logTab ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`
   ).join('');
   tabsEl.querySelectorAll('.log-tab').forEach(btn => {
-    btn.onclick = () => {
-      Sfx.click();
-      logTab = btn.dataset.tab;
-      renderLog();
-    };
+    btn.onclick = () => { Sfx.click(); logTab = btn.dataset.tab; renderLog(); };
   });
 
   const body = $('#logBody');
+  if (!body) return;
   if (logTab === 'char') {
     let html = '<div class="char-grid">';
     Object.keys(CHARS).forEach(id => {
       if (id === 'narrator' || id === 'me') return;
-      if (!state.flags['met_' + id] && !state.affection[id] && id !== 'fiman' && id !== 'kash') return;
       const c = CHARS[id];
       const aff = state.affection[id] || 0;
       html += `<div class="char-card">
@@ -2798,11 +2648,11 @@ function renderLog() {
     });
     html += '</div>';
     body.innerHTML = html;
-    $('#logSub').textContent = '已结识 ' + Object.keys(state.affection).length + ' 人';
+    if ($('#logSub')) $('#logSub').textContent = '已结识 ' + Object.keys(state.affection).length + ' 人';
   } else if (logTab === 'story') {
     if (!state.log || !state.log.length) {
       body.innerHTML = '<div class="empty">还没有任何记录。<br>故事从你踏进落日之都的那一刻开始。</div>';
-      $('#logSub').textContent = '——';
+      if ($('#logSub')) $('#logSub').textContent = '——';
       return;
     }
     body.innerHTML = state.log.slice().reverse().map(l => {
@@ -2814,14 +2664,14 @@ function renderLog() {
         <div class="le-cn">${esc(l.cn || l.text || '')}</div>
       </div>`;
     }).join('');
-    $('#logSub').textContent = state.log.length + ' 条记录';
+    if ($('#logSub')) $('#logSub').textContent = state.log.length + ' 条记录';
   } else if (logTab === 'intel') {
     const intels = [
       { name: '封印并不完全稳固', desc: '封印战场遗址的乌鸦烙印纹路清晰得像昨天才烙上去的。伸手去碰，指尖会感到一阵冰凉——像是碰到了什么还活着的东西。', done: state.flags.archiveDone || state.flags.chessDone },
       { name: '摩耳甫斯在等待时机', desc: '档案卷宗上只写了一行字：「他还会醒。」封印是暂时的。摩耳甫斯在梦域深处，他只是在等——等有人把他放出来。', done: state.flags.archiveDone },
       { name: '缇斯是莫维奥娅的哥哥', desc: '被梦魇选中的容器，是副院长的亲哥哥。莫维奥娅不愿提起这个名字。', done: state.flags.kashSecret || state.flags.archiveDone },
       { name: '梦域正在扩张', desc: '西边的梦域又扩了。有个村子一夜之间所有人都没醒过来。管理院的人进去了，但据说进去的人也没全出来。', done: state.flags.dreamWin },
-      { name: '能看见日落的人，是幸福的', desc: '菲曼的奶奶给酒馆起了这个名字。因为只要你还看得见日落，就说明你又撑过了一天。', done: state.affection.fiman >= 5 }
+      { name: '能看见日落的人，是幸福的', desc: '菲曼的奶奶给酒馆起了这个名字。因为只要你还看得见日落，就说明你又撑过了一天。', done: (state.affection.fiman || 0) >= 5 }
     ];
     body.innerHTML = intels.map(i => `
       <div class="char-card" style="margin-bottom:10px;">
@@ -2831,7 +2681,7 @@ function renderLog() {
         </div>
       </div>
     `).join('');
-    $('#logSub').textContent = intels.filter(i => i.done).length + ' / ' + intels.length;
+    if ($('#logSub')) $('#logSub').textContent = intels.filter(i => i.done).length + ' / ' + intels.length;
   } else if (logTab === 'endings') {
     body.innerHTML = `
       <div class="empty">
@@ -2841,7 +2691,7 @@ function renderLog() {
         <div style="margin-top:14px;font-size:12px;">继续你的旅程，解锁不同的结局。</div>
       </div>
     `;
-    $('#logSub').textContent = '结局';
+    if ($('#logSub')) $('#logSub').textContent = '结局';
   }
 }
 
@@ -2849,38 +2699,27 @@ function renderLog() {
    设置页
    ============================================================ */
 function renderSettings() {
-  $('#setUid').textContent = state.uid;
+  if ($('#setUid')) $('#setUid').textContent = state.uid;
   const main = $('#setMain');
+  if (!main) return;
 
   const html = `
     <div class="set-group">
       <div class="set-group-head">账 号 与 角 色</div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">UID</div>
-          <div class="set-label-d">本机唯一标识</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">UID</div><div class="set-label-d">本机唯一标识</div></div>
         <div class="set-ctrl"><span style="font-size:11px;color:var(--gold-d);letter-spacing:.08em;">${esc(state.uid)}</span></div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">主控姓名</div>
-          <div class="set-label-d">剧情中显示的正式名称</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">主控姓名</div><div class="set-label-d">剧情中显示的正式名称</div></div>
         <div class="set-ctrl"><input class="set-input" id="setName" value="${esc(state.player.name)}" maxlength="10"></div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">角色昵称</div>
-          <div class="set-label-d">其他角色称呼你的方式</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">角色昵称</div><div class="set-label-d">其他角色称呼你的方式</div></div>
         <div class="set-ctrl"><input class="set-input" id="setNick" value="${esc(state.player.nick)}" maxlength="10"></div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">主控性别</div>
-          <div class="set-label-d">会影响部分剧情细节</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">主控性别</div><div class="set-label-d">会影响部分剧情细节</div></div>
         <div class="set-ctrl">
           <div class="seg" id="setGender">
             <button data-v="女" class="${state.player.gender === '女' ? 'active' : ''}">女</button>
@@ -2890,10 +2729,7 @@ function renderSettings() {
         </div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">性格标签</div>
-          <div class="set-label-d">影响部分内心独白</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">性格标签</div><div class="set-label-d">影响部分内心独白</div></div>
         <div class="set-ctrl">
           <div class="seg" id="setPers">
             ${['冷静', '共情', '直率', '谨慎'].map(p => `<button data-v="${p}" class="${state.player.personality === p ? 'active' : ''}">${p}</button>`).join('')}
@@ -2901,17 +2737,11 @@ function renderSettings() {
         </div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">切换账号</div>
-          <div class="set-label-d">重新生成 UID 并返回标题</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">切换账号</div><div class="set-label-d">重新生成 UID 并返回标题</div></div>
         <div class="set-ctrl"><button class="mini-btn" id="setNewAcc">切换</button></div>
       </div>
       <div class="set-row">
-        <div class="set-label">
-          <div class="set-label-t">登出</div>
-          <div class="set-label-d">返回游戏封面页</div>
-        </div>
+        <div class="set-label"><div class="set-label-t">登出</div><div class="set-label-d">返回游戏封面页</div></div>
         <div class="set-ctrl"><button class="mini-btn" id="setLogout">登出</button></div>
       </div>
     </div>
@@ -3014,19 +2844,15 @@ function renderSettings() {
       </div>
     </div>
   `;
-
   main.innerHTML = html;
 
-  // 绑定事件
   main.querySelector('#setName').onchange = (e) => {
     state.player.name = (e.target.value || '记者').trim().slice(0, 10) || '记者';
-    saveGame();
-    toast('◈ 姓名已更新', 'ok');
+    saveGame(); toast('◈ 姓名已更新', 'ok');
   };
   main.querySelector('#setNick').onchange = (e) => {
     state.player.nick = (e.target.value || '记者').trim().slice(0, 10) || '记者';
-    saveGame();
-    toast('◈ 昵称已更新', 'ok');
+    saveGame(); toast('◈ 昵称已更新', 'ok');
   };
   main.querySelectorAll('#setGender button').forEach(b => {
     b.onclick = () => {
@@ -3050,15 +2876,9 @@ function renderSettings() {
     if (!confirm('切换账号将生成新的 UID 并返回标题。当前进度已保存。')) return;
     saveGame();
     state.uid = 'UID: ' + Math.floor(10000000 + Math.random() * 89999999);
-    saveGame();
-    Sfx.click();
-    backToTitle();
+    saveGame(); Sfx.click(); backToTitle();
   };
-  main.querySelector('#setLogout').onclick = () => {
-    Sfx.click();
-    saveGame();
-    backToTitle();
-  };
+  main.querySelector('#setLogout').onclick = () => { Sfx.click(); saveGame(); backToTitle(); };
 
   main.querySelectorAll('#setTheme button').forEach(b => {
     b.onclick = () => {
@@ -3066,35 +2886,28 @@ function renderSettings() {
       settings.theme = b.dataset.v;
       main.querySelectorAll('#setTheme button').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
-      applySettings();
-      saveSettings();
+      applySettings(); saveSettings();
     };
   });
-
   main.querySelector('#setFontSize').oninput = (e) => {
     settings.fontSize = parseFloat(e.target.value);
     main.querySelector('#fontSizeVal').textContent = Math.round(settings.fontSize * 100) + '%';
-    applySettings();
-    saveSettings();
+    applySettings(); saveSettings();
   };
   main.querySelector('#setAnim').onclick = (e) => {
     settings.animations = !settings.animations;
     e.target.classList.toggle('on', settings.animations);
-    Sfx.click();
-    saveSettings();
+    Sfx.click(); saveSettings();
   };
   main.querySelector('#setShake').onclick = (e) => {
     settings.shake = !settings.shake;
     e.target.classList.toggle('on', settings.shake);
-    Sfx.click();
-    saveSettings();
+    Sfx.click(); saveSettings();
   };
   main.querySelector('#setSfxOn').onclick = (e) => {
     settings.sfxOn = !settings.sfxOn;
     e.target.classList.toggle('on', settings.sfxOn);
-    Sfx.ensure();
-    Sfx.click();
-    saveSettings();
+    Sfx.ensure(); Sfx.click(); saveSettings();
   };
   main.querySelector('#setSfxVol').oninput = (e) => {
     settings.sfxVol = parseInt(e.target.value);
@@ -3113,8 +2926,7 @@ function renderSettings() {
   main.querySelector('#setAuto').onclick = (e) => {
     settings.autoPlay = !settings.autoPlay;
     e.target.classList.toggle('on', settings.autoPlay);
-    Sfx.click();
-    saveSettings();
+    Sfx.click(); saveSettings();
     if (settings.autoPlay && state.screen === 'game' && !typing.active) {
       clearTimeout(autoPlayTimer);
       autoPlayTimer = setTimeout(advanceLine, 2000);
@@ -3123,14 +2935,12 @@ function renderSettings() {
   main.querySelector('#setSkip').onclick = (e) => {
     settings.skipRead = !settings.skipRead;
     e.target.classList.toggle('on', settings.skipRead);
-    Sfx.click();
-    saveSettings();
+    Sfx.click(); saveSettings();
   };
   main.querySelector('#setConfirm').onclick = (e) => {
     settings.confirmChoice = !settings.confirmChoice;
     e.target.classList.toggle('on', settings.confirmChoice);
-    Sfx.click();
-    saveSettings();
+    Sfx.click(); saveSettings();
   };
 
   main.querySelector('#setSave').onclick = () => { Sfx.click(); openSaveManager(); };
@@ -3147,8 +2957,10 @@ function renderSettings() {
         w.querySelector('#rsCancel').onclick = () => { Sfx.click(); closeModal(w); };
         w.querySelector('#rsConfirm').onclick = () => {
           Sfx.fail();
-          localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem('nightfalling_slots_v1');
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('nightfalling_slots_v1');
+          } catch (e) {}
           closeModal(w);
           toast('◈ 已重置所有进度', 'warn');
           setTimeout(() => { location.reload(); }, 900);
@@ -3159,9 +2971,7 @@ function renderSettings() {
   main.querySelector('#setAbout').onclick = () => { Sfx.click(); openAbout(); };
   main.querySelector('#setTitle').onclick = () => {
     if (confirm('返回标题界面？当前进度将自动保存。')) {
-      Sfx.click();
-      saveGame();
-      backToTitle();
+      Sfx.click(); saveGame(); backToTitle();
     }
   };
 }
@@ -3170,11 +2980,8 @@ function renderSettings() {
    存档管理
    ============================================================ */
 const SLOT_KEY = 'nightfalling_slots_v1';
-
 function getSlots() {
-  try {
-    return JSON.parse(localStorage.getItem(SLOT_KEY) || '{}');
-  } catch (e) { return {}; }
+  try { return JSON.parse(localStorage.getItem(SLOT_KEY) || '{}'); } catch (e) { return {}; }
 }
 function setSlots(slots) {
   try { localStorage.setItem(SLOT_KEY, JSON.stringify(slots)); } catch (e) {}
@@ -3226,7 +3033,7 @@ function openSaveManager() {
             const slots2 = getSlots();
             slots2[slot] = {
               ts: Date.now(),
-              loc: $('#locLabel').textContent,
+              loc: $('#locLabel') ? $('#locLabel').textContent : '',
               silver: state.stats.silver,
               data: JSON.parse(JSON.stringify({
                 player: state.player, stats: state.stats,
@@ -3236,35 +3043,26 @@ function openSaveManager() {
                 uid: state.uid
               }))
             };
-            setSlots(slots2);
-            Sfx.success();
+            setSlots(slots2); Sfx.success();
             toast('◈ 已保存至存档 ' + slot, 'ok');
-            closeModal(wrap);
-            setTimeout(openSaveManager, 200);
+            closeModal(wrap); setTimeout(openSaveManager, 200);
           } else if (action === 'load') {
-            const slots2 = getSlots();
-            const s = slots2[slot];
+            const s = getSlots()[slot];
             if (!s) return;
             Sfx.success();
             Object.assign(state, JSON.parse(JSON.stringify(s.data)));
-            saveGame();
-            closeModal(wrap);
+            saveGame(); closeModal(wrap);
             toast('◈ 已读取存档 ' + slot, 'ok');
             setTimeout(() => {
-              if (state.currentScene && SCENES[state.currentScene]) {
-                playScene(state.currentScene);
-              } else {
-                showScreen('map');
-              }
+              if (state.currentScene && SCENES[state.currentScene]) playScene(state.currentScene);
+              else showScreen('map');
             }, 300);
           } else if (action === 'del') {
             if (!confirm('确定删除此存档？')) return;
             const slots2 = getSlots();
             delete slots2[slot];
-            setSlots(slots2);
-            Sfx.click();
-            closeModal(wrap);
-            setTimeout(openSaveManager, 200);
+            setSlots(slots2); Sfx.click();
+            closeModal(wrap); setTimeout(openSaveManager, 200);
           }
         };
       });
@@ -3296,13 +3094,8 @@ function exportSave() {
       wrap.querySelector('#expCopy').onclick = () => {
         const ta = wrap.querySelector('#expTa');
         ta.select();
-        try {
-          document.execCommand('copy');
-          Sfx.success();
-          toast('◈ 已复制到剪贴板', 'ok');
-        } catch (e) {
-          toast('复制失败，请手动选择', 'warn');
-        }
+        try { document.execCommand('copy'); Sfx.success(); toast('◈ 已复制到剪贴板', 'ok'); }
+        catch (e) { toast('复制失败，请手动选择', 'warn'); }
       };
     }
   });
@@ -3325,8 +3118,7 @@ function openImportModal() {
           if (d.state) {
             Object.assign(state, d.state);
             if (d.slots) setSlots(d.slots);
-            saveGame();
-            Sfx.success();
+            saveGame(); Sfx.success();
             toast('◈ 存档导入成功', 'ok');
             closeModal(wrap);
             setTimeout(() => {
@@ -3345,9 +3137,6 @@ function openImportModal() {
   });
 }
 
-/* ============================================================
-   关于
-   ============================================================ */
 function openAbout() {
   openModal({
     title: '关 于 本 作',
@@ -3377,26 +3166,48 @@ function openAbout() {
   });
 }
 
-/* ============================================================
-   返回标题
-   ============================================================ */
+function openArchiveModal() {
+  openModal({
+    title: '档 案 馆',
+    body: `
+      <div style="text-align:center;padding:16px 0;">
+        <div style="font-size:42px;color:var(--gold);opacity:.6;margin-bottom:16px;">❖</div>
+        <div style="font-family:var(--f-deco);font-size:14px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:10px;">永 久 档 案</div>
+        <p style="font-size:12.5px;line-height:1.9;color:var(--text);">
+          档案馆记录你解锁的一切——人物、地点、势力、情报、结局。<br>
+          跨周目、跨存档永久保留。
+        </p>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
+          <div style="font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:8px;">已收集</div>
+          <div style="font-family:var(--f-deco);font-size:20px;color:var(--gold-b);letter-spacing:.1em;">
+            ${Object.keys(state.affection).length} 人物 · ${Object.keys(state.flags).length} 情报
+          </div>
+        </div>
+      </div>
+    `,
+    footHTML: `<button class="btn primary" id="arcOk">关闭</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#arcOk').onclick = () => { Sfx.click(); closeModal(wrap); };
+    }
+  });
+}
+
 function backToTitle() {
   closeAllModals();
   stopTyping();
   clearTimeout(autoPlayTimer);
   showScreen('title');
-  $('#bottomNav').style.display = 'none';
+  const nav = $('#bottomNav');
+  if (nav) nav.style.display = 'none';
 }
 
 /* ============================================================
    事件绑定
    ============================================================ */
 function bindEvents() {
-  // 标题页按钮
   $$('#screen-title [data-act]').forEach(btn => {
     btn.onclick = () => {
-      Sfx.ensure();
-      Sfx.click();
+      try { Sfx.ensure(); Sfx.click(); } catch (e) {}
       const act = btn.dataset.act;
       if (act === 'new') {
         openModal({
@@ -3434,21 +3245,15 @@ function bindEvents() {
               state.affection = {};
               state.flags = {};
               state.stats = { silver: 0, sanity: 100 };
-              saveGame();
-              Sfx.success();
-              closeModal(wrap);
+              saveGame(); Sfx.success(); closeModal(wrap);
               setTimeout(() => playScene('prologue_1'), 300);
             };
           }
         });
       } else if (act === 'continue') {
-        if (loadGame() && state.currentScene) {
-          if (SCENES[state.currentScene]) {
-            playScene(state.currentScene);
-            toast('◈ 已继续上次进度', 'ok');
-          } else {
-            showScreen('map');
-          }
+        if (loadGame() && state.currentScene && SCENES[state.currentScene]) {
+          playScene(state.currentScene);
+          toast('◈ 已继续上次进度', 'ok');
         } else {
           toast('没有可继续的进度', 'warn');
         }
@@ -3460,68 +3265,38 @@ function bindEvents() {
     };
   });
 
-  // 底部导航
   $$('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       Sfx.click();
       const nav = btn.dataset.nav;
       if (nav === 'game') {
-        if (state.currentScene && SCENES[state.currentScene]) {
-          showScreen('game');
-        } else {
-          showScreen('map');
-        }
+        if (state.currentScene && SCENES[state.currentScene]) showScreen('game');
+        else showScreen('map');
       } else {
         showScreen(nav);
       }
     };
   });
 
-  // 点击推进
-  $('#stage').addEventListener('click', (e) => {
-    if (e.target.closest('button')) return;
-    if ($('.choices').classList.contains('active')) return;
-    if (state.screen !== 'game') return;
-    advanceLine();
-  });
+  const stage = $('#stage');
+  if (stage) {
+    stage.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      const ch = $('#choices');
+      if (ch && ch.classList.contains('active')) return;
+      if (state.screen !== 'game') return;
+      advanceLine();
+    });
+  }
 
-  // 键盘
   document.addEventListener('keydown', (e) => {
-    if (modalStack.length) {
-      if (e.key === 'Escape') closeModal();
-      return;
-    }
+    if (modalStack.length) { if (e.key === 'Escape') closeModal(); return; }
     if (state.screen === 'game') {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
-        if (!$('.choices').classList.contains('active')) advanceLine();
+        const ch = $('#choices');
+        if (!ch || !ch.classList.contains('active')) advanceLine();
       }
-    }
-  });
-}
-
-function openArchiveModal() {
-  openModal({
-    title: '档 案 馆',
-    body: `
-      <div style="text-align:center;padding:16px 0;">
-        <div style="font-size:42px;color:var(--gold);opacity:.6;margin-bottom:16px;">❖</div>
-        <div style="font-family:var(--f-deco);font-size:14px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:10px;">永 久 档 案</div>
-        <p style="font-size:12.5px;line-height:1.9;color:var(--text);">
-          档案馆记录你解锁的一切——人物、地点、势力、情报、结局。<br>
-          跨周目、跨存档永久保留。
-        </p>
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
-          <div style="font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:8px;">已收集</div>
-          <div style="font-family:var(--f-deco);font-size:20px;color:var(--gold-b);letter-spacing:.1em;">
-            ${Object.keys(state.affection).length} 人物 · ${Object.keys(state.flags).length} 情报
-          </div>
-        </div>
-      </div>
-    `,
-    footHTML: `<button class="btn primary" id="arcOk">关闭</button>`,
-    onMount: (wrap) => {
-      wrap.querySelector('#arcOk').onclick = () => { Sfx.click(); closeModal(wrap); };
     }
   });
 }
@@ -3530,28 +3305,39 @@ function openArchiveModal() {
    初始化
    ============================================================ */
 (function init() {
-  loadSettings();
-  bindEvents();
+  try {
+    /* ★ 修复⑧：先保证标题页可见，再执行其他初始化 —— 即使后续抛错，玩家也能看到标题 */
+    const title = document.getElementById('screen-title');
+    if (title) { title.classList.add('active'); title.style.opacity = '1'; }
 
-  // 初始显示标题页
-  document.getElementById('screen-title').classList.add('active');
-  $('#bottomNav').style.display = 'none';
+    try { loadSettings(); } catch (e) { console.warn('loadSettings', e); }
+    try { bindEvents(); } catch (e) { console.warn('bindEvents', e); }
 
-  // 预加载用户设置
-  updateNav('game');
+    updateNav('game');
 
-  console.log('%c入魇 · Nightfalling', 'color:#c9a961;font-size:18px;font-family:Georgia;letter-spacing:6px;');
-  console.log('%c「能看见日落的人，是幸福的。」', 'color:#8a8070;font-size:11px;font-style:italic;');
-  console.log('%cv1.0.0 · 引擎就绪', 'color:#7a6636;font-size:10px;');
+    console.log('%c入魇 · Nightfalling', 'color:#c9a961;font-size:18px;font-family:Georgia;letter-spacing:6px;');
+    console.log('%c「能看见日落的人，是幸福的。」', 'color:#8a8070;font-size:11px;font-style:italic;');
+    console.log('%cv1.0.0 · 引擎就绪 · GSAP=' + (HAS_GSAP() ? 'loaded' : 'fallback'), 'color:#7a6636;font-size:10px;');
 
-  // 首次用户交互时初始化音频
-  const initAudio = () => {
-    Sfx.ensure();
-    document.removeEventListener('touchstart', initAudio);
-    document.removeEventListener('click', initAudio);
-  };
-  document.addEventListener('touchstart', initAudio, { once: true });
-  document.addEventListener('click', initAudio, { once: true });
+    const initAudio = () => {
+      try { Sfx.ensure(); } catch (e) {}
+      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('click', initAudio);
+    };
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('click', initAudio, { once: true });
+  } catch (e) {
+    console.error('init error', e);
+    try {
+      const layer = document.getElementById('toastLayer');
+      if (layer) {
+        const el = document.createElement('div');
+        el.className = 'toast warn';
+        el.textContent = '初始化异常：' + (e.message || '未知');
+        layer.appendChild(el);
+      }
+    } catch (e2) {}
+  }
 })();
 </script>
 </body>
