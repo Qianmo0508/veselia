@@ -1757,6 +1757,7 @@ function applyBranchEffects(fx){
   if (fx.aff) for (const k in fx.aff) state.affection[k] = (state.affection[k] || 0) + fx.aff[k];
   if (fx.silver) state.stats.silver = (state.stats.silver || 0) + fx.silver;
   if (fx.flags) for (const k in fx.flags) state.flags[k] = true;
+  if (fx.unlock) for (const key of fx.unlock) state.flags[key] = true;
   saveNow();
 }
 
