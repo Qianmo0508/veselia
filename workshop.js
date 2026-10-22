@@ -81,26 +81,31 @@
      ═══════════════════════════════════════════════════════════ */
 
   /* 解析效果串：{aff:cash+5} {silver+20} {flag:metCash} */
-  function parseEffects(str) {
-    const fx = {};
-    if (!str) return fx;
-    const affRe = /\{aff:([a-z]+)([+-])(\d+)\}/g;
-    let m;
-    while ((m = affRe.exec(str)) !== null) {
-      if (!fx.aff) fx.aff = {};
-      fx.aff[m[1]] = (fx.aff[m[1]] || 0) + (m[2] === '+' ? parseInt(m[3]) : -parseInt(m[3]));
-    }
-    const silverRe = /\{silver([+-])(\d+)\}/g;
-    while ((m = silverRe.exec(str)) !== null) {
-      fx.silver = (fx.silver || 0) + (m[1] === '+' ? parseInt(m[2]) : -parseInt(m[2]));
-    }
-    const flagRe = /\{flag:([a-zA-Z0-9_]+)\}/g;
-    while ((m = flagRe.exec(str)) !== null) {
-      if (!fx.flags) fx.flags = {};
-      fx.flags[m[1]] = true;
-    }
-    return fx;
+function parseEffects(str) {
+  const fx = {};
+  if (!str) return fx;
+  const affRe = /\{aff:([a-z]+)([+-])(\d+)\}/g;
+  let m;
+  while ((m = affRe.exec(str)) !== null) {
+    if (!fx.aff) fx.aff = {};
+    fx.aff[m[1]] = (fx.aff[m[1]] || 0) + (m[2] === '+' ? parseInt(m[3]) : -parseInt(m[3]));
   }
+  const silverRe = /\{silver([+-])(\d+)\}/g;
+  while ((m = silverRe.exec(str)) !== null) {
+    fx.silver = (fx.silver || 0) + (m[1] === '+' ? parseInt(m[2]) : -parseInt(m[2]));
+  }
+  const flagRe = /\{flag:([a-zA-Z0-9_]+)\}/g;
+  while ((m = flagRe.exec(str)) !== null) {
+    if (!fx.flags) fx.flags = {};
+    fx.flags[m[1]] = true;
+  }
+  const unlockRe = /\{unlock:([a-zA-Z0-9_]+)\}/g;
+  while ((m = unlockRe.exec(str)) !== null) {
+    if (!fx.unlock) fx.unlock = [];
+    if (!fx.unlock.includes(m[1])) fx.unlock.push(m[1]);
+  }
+  return fx;
+}
 
   /* 解析条件串（!之后的部分）：
      aff.cash>=20 | flag.metCash | silver>=50 | vars.xxx==yyy */
