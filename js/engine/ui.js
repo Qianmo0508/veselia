@@ -3,7 +3,7 @@ const UI = {
   init(){ 
     this.app = document.getElementById('app'); loadSettings(); AudioEngine.init(); 
     document.addEventListener('pointerdown', (e) => {
-      if(e.target.closest('.btn') || e.target.closest('.nav-item') || e.target.closest('.sub-chip') || e.target.closest('.char-card')) AudioEngine.playClick();
+      if(e.target.closest('.btn') || e.target.closest('.nav-item') || e.target.closest('.sub-chip') || e.target.closest('.char-card') || e.target.closest('.quick-btn')) AudioEngine.playClick();
     });
     this.showTitle(); 
   },
@@ -22,6 +22,7 @@ const UI = {
               <div class="user-currency">✦ ${acc.currency.silver} 银镑</div>
             </div>
           </div>
+          <button class="top-settings-btn" onclick="UI.switchTab('settings')">⚙️</button>
         </div>`;
     }
     let navBar = '';
@@ -51,29 +52,56 @@ const UI = {
     else this.showHome();
   },
   toast(msg){ let layer = document.getElementById('toast'); if(!layer){ layer = document.createElement('div'); layer.id = 'toast'; document.body.appendChild(layer); } const el = document.createElement('div'); el.className = 'toast-msg'; el.textContent = msg; layer.appendChild(el); setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000); },
+  
   showTitle(){
-    this.renderLayout(`<div class="title-wrap" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--panel-bg)"><div class="title-logo">入魇</div><div class="title-sub">Nightfalling</div><button class="btn btn-primary" onclick="UI.showLogin()">进 入 大 陆</button></div>`, false);
+    this.renderLayout(`<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--panel-bg)"><div class="title-logo">Nightfalling</div><div class="title-sub" style="letter-spacing:0.5em;text-indent:0.5em;">入魇</div><button class="btn btn-primary" onclick="UI.showLogin()">进 入 大 陆</button></div>`, false);
   },
   showLogin(){
     const accs = loadAccounts();
     let listHTML = accs.length ? accs.map(a => `<div class="sub-chip" style="width:100%;display:flex;flex-direction:column;gap:4px;margin-bottom:10px;padding:15px;" onclick="setCurrentAccount('${a.id}');UI.showHome()"><div style="display:flex;justify-content:space-between;width:100%"><span style="font-size:1.1rem;font-weight:bold">${a.avatar} ${this.esc(a.nick)}</span><span style="color:var(--accent)">主控: ${this.esc(a.hero.name)}</span></div><div style="font-size:0.8rem;color:var(--text-dim);text-align:left;">上次在线：${this.getLocNameById(a.progress.currentLoc)}</div></div>`).join('') : '<div style="text-align:center;color:var(--text-dim);padding:20px">暂无账号</div>';
     this.renderLayout(`<div style="height:100%;display:flex;flex-direction:column;align-items:center;padding-top:60px"><h2 style="color:var(--accent);margin-bottom:20px;font-family:var(--f-en)">Select Archive</h2><div style="width:100%;max-width:340px">${listHTML}</div><button class="btn" style="margin-top:20px" onclick="UI.showCreate()">创建新账号</button></div>`, false);
   },
-  showCreate(){ this.renderLayout(`<div style="padding:40px 20px;max-width:400px;margin:0 auto"><h2 style="color:var(--accent);text-align:center;margin-bottom:20px">创建新账号</h2><div class="form-group"><label>账号昵称</label><input id="fNick" placeholder="输入昵称"></div><div class="form-group"><label>主控姓名</label><input id="fHero" value="记者"></div><div class="form-group"><label>主控性别</label><select id="fGender"><option>不限</option><option>女</option><option>男</option></select></div><div class="form-group"><label>头像符号</label><input id="fAvatar" value="◈" maxlength="2"></div><button class="btn btn-primary" style="width:100%;margin-top:20px" onclick="UI.doCreate()">开始旅程</button></div>`, false); },
+  showCreate(){ this.renderLayout(`<div style="padding:40px 20px;max-width:400px;margin:0 auto"><h2 style="color:var(--accent);text-align:center;margin-bottom:20px;font-family:var(--f-en)">Create Account</h2><div class="form-group"><label>账号昵称</label><input id="fNick" placeholder="输入昵称"></div><div class="form-group"><label>主控姓名</label><input id="fHero" value="记者"></div><div class="form-group"><label>主控性别</label><select id="fGender"><option>不限</option><option>女</option><option>男</option></select></div><div class="form-group"><label>头像符号</label><input id="fAvatar" value="◈" maxlength="2"></div><button class="btn btn-primary" style="width:100%;margin-top:20px" onclick="UI.doCreate()">开始旅程</button></div>`, false); },
   doCreate() { const nick = document.getElementById('fNick').value || '旅人'; const hero = document.getElementById('fHero').value || '记者'; const gender = document.getElementById('fGender').value; const avatar = document.getElementById('fAvatar').value || '◈'; createAccount(nick, hero, gender, avatar); this.toast('账号已创建'); this.showHome(); },
   
+  // --- 华丽的主界面 ---
   showHome(){
     const acc = currentAccount(); if(!acc) return;
-    const d = new Date(); const timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    
     this.renderLayout(`
       <div class="home-container">
-        <div class="home-clock">${timeStr}</div>
-        <div class="home-date">${d.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}</div>
-        <div class="home-quest">
-          <h3>当前目标 · Objective</h3>
-          <p>你目前身在 <b style="color:var(--accent)">${this.getLocNameById(acc.progress.currentLoc)}</b>。<br>请前往【大陆】地图，收集关于“封印松动”的线索，或前往日不落酒馆寻找梦目院的同伴。</p>
-          <div style="margin-top:15px;font-size:0.8rem;color:var(--text-dim);font-family:var(--f-en);font-style:italic;">"The nightmare awaits."</div>
+        
+        <!-- 华丽排版标题 -->
+        <div class="home-header">
+          <div class="home-title-en">Nightfalling</div>
+          <div class="home-title-cn">入 魇</div>
         </div>
+
+        <!-- 快捷入口 -->
+        <div class="quick-links">
+          <div class="quick-btn" onclick="UI.switchTab('map')">
+            <span>🗺️</span><div>大陆地图</div>
+          </div>
+          <div class="quick-btn" onclick="UI.showLocation({id:'tavern'})">
+            <span>🍷</span><div>日不落酒馆</div>
+          </div>
+        </div>
+
+        <!-- 当前目标（花边框） -->
+        <div class="deco-box home-quest">
+          <h3>Objective · 主线目标</h3>
+          <p>你目前身在 <b style="color:var(--accent)">${this.getLocNameById(acc.progress.currentLoc)}</b>。<br>
+          请前往【大陆】收集“封印松动”的线索，或前往【日不落酒馆】与同伴交流。
+          </p>
+        </div>
+
+        <!-- 关于本作（花边框） -->
+        <div class="deco-box about-box">
+          <h3 style="margin-bottom:10px;">World Info · 世界观</h3>
+          维塞利亚大陆，自魇灾降临以来已历三百七十年。魇境如潮水般涨落，吞噬每一个沉睡的灵魂。你是来自王翼国度的记者，奉命调查笼罩大陆的“魇”事件。在索姆尼亚与王翼之间，在梦目院与萨克拉教会之间，你会遇见一些人，也会失去一些人。<br><br>
+          <span style="color:var(--accent);font-size:0.75rem;letter-spacing:0.1em;">◆ 点击上方按钮进入地图或酒馆 ◆</span>
+        </div>
+
       </div>
     `);
   },
@@ -86,7 +114,7 @@ const UI = {
     const acc = currentAccount(); const logs = acc.progress.chatLogs; let html = '<div style="padding:20px;">'; let hasLogs = false;
     for(let charId in logs) {
       hasLogs = true; const charData = CHARACTERS.find(c => c.id === charId) || {name: charId};
-      html += `<h3 style="color:var(--accent);margin:15px 0 10px;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:5px;">与 ${charData.name} 的记忆</h3>`;
+      html += `<h3 style="color:var(--accent);margin:15px 0 10px;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:5px;font-family:var(--f-en)">Memory with ${charData.en}</h3>`;
       logs[charId].forEach(log => { html += `<div style="font-size:0.9rem;color:var(--text-dim);margin-bottom:8px;line-height:1.6;">「${log.text}」</div>`; });
     }
     if(!hasLogs) html += '<div style="text-align:center;color:var(--text-dim);margin-top:50px;">尚无记忆</div>';
@@ -106,8 +134,6 @@ const UI = {
           <div class="setting-item"><span class="setting-label">字号大小</span><input type="range" min="0.85" max="1.3" step="0.15" value="${s.fontSize}" onchange="UI.changeSetting('fontSize', this.value)"></div>
         </div>
         <div class="settings-group"><h3>声音设置</h3>
-          <div class="setting-item"><span class="setting-label">背景音乐 (预留)</span><label class="switch"><input type="checkbox" ${s.bgmOn?'checked':''} onchange="UI.changeSetting('bgmOn', this.checked)"><span class="slider"></span></label></div>
-          <div class="setting-item"><span class="setting-label">音乐音量</span><input type="range" min="0" max="100" value="${s.bgmVol}" onchange="UI.changeSetting('bgmVol', this.value)"></div>
           <div class="setting-item"><span class="setting-label">合成音效</span><label class="switch"><input type="checkbox" ${s.sfxOn?'checked':''} onchange="UI.changeSetting('sfxOn', this.checked)"><span class="slider"></span></label></div>
           <div class="setting-item"><span class="setting-label">音效音量</span><input type="range" min="0" max="100" value="${s.sfxVol}" onchange="UI.changeSetting('sfxVol', this.value)"></div>
         </div>
@@ -119,7 +145,15 @@ const UI = {
     `);
   },
   saveProfile(key, val) { const acc = currentAccount(); if(!acc) return; if(key === 'nick') acc.nick = val || '旅人'; if(key === 'hero') acc.hero.name = val || '记者'; if(key === 'avatar') acc.avatar = val || '◈'; saveAccount(acc); this.toast('已更新'); this.showSettings(); },
-  changeSetting(key, val) { let s = JSON.parse(localStorage.getItem('veselia_set_v1')); s[key] = val; saveSettings(s); if(key === 'theme') { if(document.getElementById('mapCanvas')) Map.draw(); this.showSettings(); } if(key === 'sfxOn') AudioEngine.playClick(); },
+  changeSetting(key, val) { 
+    let s = JSON.parse(localStorage.getItem('veselia_set_v1')); s[key] = val; saveSettings(s); 
+    if(key === 'theme') { 
+      // 重绘页面以应用新主题
+      this.showSettings(); 
+      if(document.getElementById('mapCanvas')) Map.draw();
+    } 
+    if(key === 'sfxOn') AudioEngine.playClick(); 
+  },
   showLocation(loc) {
     if(!loc) return; updateLocation(loc.id);
     if(loc.unlocked === false){ const mystery = (loc.mystery || ['此处尚不可入。']).map(p => `<p>${this.esc(p)}</p>`).join(''); this.openModal(loc.name, `<div class="loc-title">${this.esc(loc.name)}</div><div class="loc-en">${this.esc(loc.en || '')}</div><div class="loc-desc mystery">${mystery}</div>`); return; }
