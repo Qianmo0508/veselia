@@ -4,82 +4,2739 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0a0810">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <title>入魇 · Nightfalling</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" onerror="window.__gsapFailed=true"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   §1 基础变量
+   ═══════════════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --f-deco:"Cinzel Decorative","Noto Serif SC",serif;
+  --f-en:"Cormorant Garamond",Georgia,serif;
+  --f-cn:"Noto Serif SC","Songti SC","STSong",serif;
+  --f-sym:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols",serif;
+  --gold:#c9a961;--gold-b:#e8d5a0;--gold-d:#7a6636;
+  --bg:#0a0810;--panel:#16121f;--panel2:#1c1428;
+  --text:#ded5c4;--text-d:#8a8070;
+  --accent:#8b2f4f;
+  --line:rgba(201,169,97,.22);--line-s:rgba(201,169,97,.45);
+  --font-scale:1;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --nav-h:62px;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --ease-soft:cubic-bezier(.32,.72,.28,1);
+  --ease-bounce:cubic-bezier(.34,1.56,.64,1);
+}
+[data-theme="day"]{
+  --gold:#8b6f2f;--gold-b:#4a3818;--gold-d:#8c7038;
+  --bg:#f0e6d0;--panel:#fffcf2;--panel2:#fbf3e2;
+  --text:#1e1810;--text-d:#5a4a30;
+  --line:rgba(139,111,47,.3);--line-s:rgba(139,111,47,.6);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--f-cn);-webkit-font-smoothing:antialiased;font-size:calc(15px * var(--font-scale));}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 12% 6%,rgba(90,50,120,.22),transparent 55%),
+             radial-gradient(ellipse at 88% 94%,rgba(139,47,79,.18),transparent 55%),
+             radial-gradient(ellipse at 50% 50%,rgba(20,14,32,.5),transparent 80%);}
+[data-theme="day"] body::before{background:
+  radial-gradient(ellipse at 12% 6%,rgba(190,160,90,.22),transparent 55%),
+  radial-gradient(ellipse at 88% 94%,rgba(180,140,90,.18),transparent 55%),
+  radial-gradient(ellipse at 50% 50%,rgba(255,250,235,.6),transparent 80%);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.008) 2px,rgba(255,255,255,.008) 3px);}
+.symbol-font{font-family:var(--f-sym);}
+
+#app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;opacity:0;}
+.screen.active{display:flex;opacity:1;}
+
+/* ═══════════════════════════════════════════════════════════
+   §2 通用组件（含所有装饰）
+   ═══════════════════════════════════════════════════════════ */
+/* —— 卡片：❖ 双角 + 内框 —— */
+.frame{position:relative;border:1px solid var(--line);background:linear-gradient(165deg,var(--panel2),var(--panel));}
+.frame::before,.frame::after{content:'❖';position:absolute;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;line-height:1;pointer-events:none;transition:all .4s var(--ease);}
+.frame::before{top:-7px;left:-7px;}
+.frame::after{bottom:-7px;right:-7px;}
+.frame:hover::before{transform:rotate(90deg) scale(1.15);opacity:1;}
+.frame:hover::after{transform:rotate(-90deg) scale(1.15);opacity:1;}
+
+/* —— 内框装饰（用于头像/图标/缩略图）—— */
+.inner-frame{position:relative;}
+.inner-frame::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);pointer-events:none;}
+
+/* —— 分隔线：— ◈ — —— */
+.divider{display:flex;align-items:center;gap:10px;color:var(--gold-d);font-size:11px;letter-spacing:.3em;margin:16px 0;font-family:var(--f-sym);}
+.divider::before,.divider::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.divider > span{font-family:var(--f-sym);}
+
+/* —— 按钮 —— */
+.btn{background:transparent;border:1px solid var(--line-s);color:var(--text);
+  font-family:var(--f-cn);font-size:calc(13px * var(--font-scale));letter-spacing:.18em;
+  padding:13px 20px;cursor:pointer;transition:all .3s var(--ease);position:relative;overflow:hidden;}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(201,169,97,.15),transparent);transform:translateX(-100%);transition:transform .55s var(--ease);}
+.btn:hover::before{transform:translateX(100%);}
+.btn:hover,.btn:active{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.1);box-shadow:0 0 22px rgba(201,169,97,.25);letter-spacing:.22em;}
+.btn.primary{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.08);}
+.btn.ghost{border-color:var(--line);color:var(--text-d);font-size:calc(12px * var(--font-scale));padding:9px 14px;}
+.btn.danger{border-color:rgba(160,60,80,.6);color:#d08a9c;}
+.btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;color:#ffb0c4;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.mini-btn{background:none;border:1px solid var(--line-s);color:var(--text-d);
+  font-family:var(--f-cn);font-size:11px;letter-spacing:.08em;padding:6px 12px;cursor:pointer;transition:all .28s var(--ease);}
+.mini-btn:hover{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.08);}
+.mini-btn.danger{border-color:rgba(160,60,80,.5);color:#c07a92;}
+.mini-btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;color:#ffb0c4;}
+
+/* —— 输入框 —— */
+.inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line-s);color:var(--gold-b);
+  font-family:var(--f-cn);font-size:14px;padding:11px 14px;letter-spacing:.06em;outline:none;transition:all .28s var(--ease);}
+[data-theme="day"] .inp{background:rgba(255,255,255,.6);}
+.inp:focus{border-color:var(--gold);box-shadow:0 0 16px rgba(201,169,97,.22);}
+.inp::placeholder{color:var(--text-d);font-size:12.5px;}
+select.inp{cursor:pointer;}
+
+/* ═══════════════════════════════════════════════════════════
+   §3 标题页
+   ═══════════════════════════════════════════════════════════ */
+#screen-title{align-items:center;justify-content:center;padding:24px;}
+.title-card{position:relative;max-width:560px;width:100%;padding:52px 34px 42px;text-align:center;
+  border:1px solid var(--line-s);background:linear-gradient(165deg,rgba(28,20,40,.85),rgba(12,8,18,.95));
+  box-shadow:0 0 80px rgba(0,0,0,.9),inset 0 0 90px rgba(201,169,97,.04);max-height:94vh;overflow-y:auto;
+  animation:titleIn 1s var(--ease) both;}
+@keyframes titleIn{from{opacity:0;transform:scale(.94) translateY(14px);}to{opacity:1;transform:none;}}
+[data-theme="day"] .title-card{background:linear-gradient(165deg,rgba(255,250,240,.95),rgba(248,240,220,.95));box-shadow:0 0 60px rgba(120,100,60,.2);}
+.title-card .corner{position:absolute;font-family:var(--f-sym);font-size:16px;color:var(--gold);opacity:.9;transition:all .4s var(--ease);}
+.title-card .corner.tl{top:8px;left:12px;}
+.title-card .corner.tr{top:8px;right:12px;}
+.title-card .corner.bl{bottom:8px;left:12px;}
+.title-card .corner.br{bottom:8px;right:12px;}
+.title-card:hover .corner{opacity:1;transform:scale(1.1);}
+.title-eyebrow{font-family:var(--f-deco);font-size:11px;letter-spacing:.42em;color:var(--gold-d);margin-bottom:22px;}
+.title-main{font-family:var(--f-deco);font-size:clamp(40px,13vw,68px);letter-spacing:.12em;
+  color:var(--gold-b);text-shadow:0 0 30px rgba(201,169,97,.55),0 0 70px rgba(139,47,79,.3);
+  font-weight:900;line-height:1.05;margin-bottom:12px;}
+.title-sub{font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-d);letter-spacing:.05em;margin-bottom:6px;}
+.title-actions{display:flex;flex-direction:column;gap:11px;max-width:290px;margin:30px auto 0;}
+.title-foot{margin-top:28px;font-size:11px;letter-spacing:.16em;color:var(--text-d);font-style:italic;font-family:var(--f-en);}
+.title-foot::before{content:'— ';color:var(--gold-d);}
+.title-foot::after{content:' —';color:var(--gold-d);}
+
+/* ═══════════════════════════════════════════════════════════
+   §4 顶栏（含返回键 + 完整按钮）
+   ═══════════════════════════════════════════════════════════ */
+.topbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:6px;
+  padding:calc(var(--safe-t) + 10px) 12px 10px;height:calc(52px + var(--safe-t));
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border-bottom:1px solid var(--line);position:relative;z-index:20;}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.tb-left{display:flex;align-items:center;gap:8px;min-width:0;flex-shrink:0;}
+.tb-mark{width:16px;height:16px;border:1px solid var(--gold);transform:rotate(45deg);position:relative;flex-shrink:0;transition:transform .5s var(--ease);}
+.tb-mark::after{content:'';position:absolute;inset:3px;background:var(--gold);opacity:.65;}
+.tb-mark:hover{transform:rotate(225deg);}
+.tb-title{font-family:var(--f-deco);font-size:13px;letter-spacing:.18em;color:var(--gold-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-loc{font-size:11px;letter-spacing:.14em;color:var(--text-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;text-align:center;min-width:0;}
+.tb-right{display:flex;gap:4px;flex-shrink:0;}
+.tb-btn{background:none;border:1px solid var(--line-s);color:var(--gold);font-family:var(--f-cn);font-size:10.5px;letter-spacing:.06em;padding:5px 8px;cursor:pointer;transition:all .28s var(--ease);}
+.tb-btn:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.1);}
+.tb-btn.back{font-family:var(--f-sym);font-size:14px;padding:4px 8px;}
+
+/* ═══════════════════════════════════════════════════════════
+   §5 剧情主界面
+   ═══════════════════════════════════════════════════════════ */
+#screen-game{display:none;flex-direction:column;}
+#screen-game.active{display:flex;}
+.stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;padding-bottom:var(--nav-h);}
+.scene-bg{position:absolute;inset:0;transition:background 1s var(--ease);z-index:0;}
+.bg-city{background:linear-gradient(180deg,#0e0a16 0%,#1a1224 40%,#2a1c30 100%);}
+.bg-city::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 80%,rgba(201,169,97,.18),transparent 40%),radial-gradient(circle at 80% 70%,rgba(201,169,97,.14),transparent 40%);}
+.bg-tavern{background:linear-gradient(180deg,#1a1010 0%,#2a1810 50%,#1a0e08 100%);}
+.bg-tavern::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(230,160,80,.25),transparent 50%),radial-gradient(circle at 20% 90%,rgba(160,80,40,.2),transparent 45%);}
+.bg-grove{background:linear-gradient(180deg,#1a1408 0%,#2e2410 50%,#1e1808 100%);}
+.bg-grove::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(220,180,80,.22),transparent 60%);}
+.bg-manor{background:linear-gradient(180deg,#0a0e18 0%,#141a28 50%,#0c1018 100%);}
+.bg-manor::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(180,200,240,.18),transparent 50%);}
+.bg-archive{background:linear-gradient(180deg,#100c08 0%,#1e160c 50%,#0e0a06 100%);}
+.bg-archive::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 40% 40%,rgba(200,160,80,.15),transparent 55%);}
+.bg-church{background:linear-gradient(180deg,#0c0818 0%,#1a1028 50%,#0a0614 100%);}
+.bg-church::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 20%,rgba(120,80,200,.28),transparent 50%),radial-gradient(circle at 50% 80%,rgba(200,60,80,.18),transparent 55%);}
+.bg-castle{background:linear-gradient(180deg,#060810 0%,#0e1420 50%,#080a14 100%);}
+.bg-castle::before{content:'';position:absolute;inset:0;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.04) 0deg 90deg,transparent 90deg 180deg),
+             radial-gradient(circle at 50% 50%,rgba(200,200,255,.15),transparent 60%);
+  background-size:80px 80px,100% 100%;}
+.bg-dream{background:linear-gradient(180deg,#0c0418 0%,#1e0a28 50%,#080210 100%);}
+.bg-dream::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 30%,rgba(120,60,180,.35),transparent 45%),radial-gradient(circle at 70% 70%,rgba(80,20,140,.3),transparent 50%);animation:dreamPulse 8s ease-in-out infinite;}
+@keyframes dreamPulse{0%,100%{opacity:.8;}50%{opacity:1;}}
+[data-theme="day"] .scene-bg{filter:brightness(1.55) saturate(.75);}
+[data-theme="day"] .bg-city{background:linear-gradient(180deg,#e8dcc4 0%,#d8c8a8 40%,#c8b898 100%);}
+[data-theme="day"] .bg-tavern{background:linear-gradient(180deg,#f0e0c8 0%,#e8d0b0 50%,#d8c0a0 100%);}
+[data-theme="day"] .bg-grove{background:linear-gradient(180deg,#f0e8c8 0%,#e8dcb0 50%,#d8c890 100%);}
+[data-theme="day"] .bg-manor{background:linear-gradient(180deg,#e0e4ec 0%,#d0d8e8 50%,#c0c8d8 100%);}
+[data-theme="day"] .bg-archive{background:linear-gradient(180deg,#ede0c8 0%,#ddcfa8 50%,#c8b898 100%);}
+[data-theme="day"] .bg-church{background:linear-gradient(180deg,#e8e0f0 0%,#d8cce8 50%,#c8b8d8 100%);}
+[data-theme="day"] .bg-castle{background:linear-gradient(180deg,#e8eaf0 0%,#d8dce8 50%,#c8cce0 100%);}
+[data-theme="day"] .bg-dream{background:linear-gradient(180deg,#ece0f8 0%,#dcd0ec 50%,#c8b8d8 100%);}
+
+.loc-bar{flex:0 0 auto;padding:8px 18px;font-size:11px;letter-spacing:.22em;color:var(--gold-d);
+  background:linear-gradient(180deg,rgba(25,17,36,.75),rgba(15,10,22,.25));
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;position:relative;z-index:2;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+[data-theme="day"] .loc-bar{background:linear-gradient(180deg,rgba(255,250,240,.85),rgba(240,230,210,.4));}
+.loc-bar::before{content:'◈';font-family:var(--f-sym);font-size:9px;}
+
+.dialog-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 22px 18px;position:relative;z-index:2;scroll-behavior:smooth;}
+.dialog-scroll::-webkit-scrollbar{width:4px;}
+.dialog-scroll::-webkit-scrollbar-thumb{background:var(--line-s);}
+.dialog-inner{max-width:760px;margin:0 auto;padding:20px 22px 24px;background:rgba(10,8,16,.55);border:1px solid var(--line);position:relative;}
+[data-theme="day"] .dialog-inner{background:rgba(255,252,245,.92);}
+.dialog-inner::before{content:'❖';position:absolute;top:-7px;left:-7px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.85;}
+.dialog-inner::after{content:'❖';position:absolute;bottom:-7px;right:-7px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.85;}
+
+.line{margin-bottom:22px;animation:lineIn .5s var(--ease) both;}
+@keyframes lineIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.line .speaker{font-family:var(--f-deco);font-size:11px;letter-spacing:.2em;color:var(--gold-b);
+  margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+/* ★ B 恢复：菱形旋转标记 */
+.line .speaker::before{content:'';width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;
+  box-shadow:0 0 8px rgba(201,169,97,.75);}
+.line .en{font-family:var(--f-en);font-style:italic;font-weight:600;
+  font-size:calc(17px * var(--font-scale));line-height:1.6;color:var(--gold-b);
+  letter-spacing:.01em;margin-bottom:8px;}
+.line .cn{font-size:calc(14.5px * var(--font-scale));line-height:1.95;color:var(--text);
+  letter-spacing:.01em;padding-left:14px;border-left:2px solid var(--line);word-break:break-word;}
+.line.narration .cn{color:var(--text-d);font-style:italic;}
+.line.monologue .cn{color:#b8a8c8;font-style:italic;}
+[data-theme="day"] .line.monologue .cn{color:#6a4a8c;}
+
+.cont-hint{position:absolute;right:26px;bottom:calc(var(--nav-h) + 22px);color:var(--gold);font-size:14px;opacity:.8;animation:bounce 1.6s infinite;pointer-events:none;z-index:5;font-family:var(--f-sym);}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.35;}50%{transform:translateY(6px);opacity:.9;}}
+
+.choices{position:relative;z-index:3;padding:0 20px 14px;max-height:44vh;overflow-y:auto;display:none;}
+.choices.active{display:block;animation:choiceIn .5s var(--ease);}
+@keyframes choiceIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.choices-inner{max-width:760px;margin:0 auto;}
+.choice-head{font-size:10.5px;letter-spacing:.4em;color:var(--gold-d);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.choice-head::before,.choice-head::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.choice-btn{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;background:linear-gradient(90deg,rgba(201,169,97,.06),transparent);border:1px solid var(--line-s);color:var(--text);font-family:var(--f-cn);font-size:calc(14px * var(--font-scale));line-height:1.7;padding:14px 18px;margin-bottom:10px;cursor:pointer;transition:all .32s var(--ease);position:relative;overflow:hidden;}
+.choice-btn::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);transform:scaleY(0);transition:transform .32s var(--ease);}
+.choice-btn:hover,.choice-btn:active{background:linear-gradient(90deg,rgba(201,169,97,.18),transparent);border-color:var(--gold);transform:translateX(5px);color:var(--gold-b);box-shadow:0 0 22px rgba(201,169,97,.16);}
+.choice-btn:hover::after{transform:scaleY(1);}
+.choice-idx{color:var(--gold);font-size:13px;flex-shrink:0;margin-top:1px;font-family:var(--f-sym);}
+
+/* 剧情工具条（含改名/导出/标题） */
+.story-tools{flex:0 0 auto;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel);display:flex;gap:4px;position:relative;z-index:3;overflow-x:auto;}
+.story-tools::-webkit-scrollbar{display:none;}
+.story-tools button{flex:1;min-width:52px;padding:8px 4px;font-family:var(--f-cn);font-size:10px;letter-spacing:.06em;background:transparent;border:1px solid var(--line-s);color:var(--text-d);cursor:pointer;transition:all .28s var(--ease);white-space:nowrap;}
+.story-tools button:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.08);}
+.story-tools button.active{background:rgba(201,169,97,.18);color:var(--gold-b);border-color:var(--gold);}
+
+/* ═══════════════════════════════════════════════════════════
+   §6 底部导航
+   ═══════════════════════════════════════════════════════════ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;display:flex;align-items:center;justify-content:space-around;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:linear-gradient(0deg,var(--panel),var(--panel2));border-top:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.bottom-nav::before{content:'';position:absolute;top:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--text-d);font-family:var(--f-cn);cursor:pointer;padding:8px 4px;transition:all .28s var(--ease);position:relative;}
+.nav-btn .nav-ico{font-size:17px;line-height:1;transition:all .28s var(--ease);font-family:var(--f-sym);}
+.nav-btn .nav-lbl{font-size:9.5px;letter-spacing:.14em;}
+.nav-btn:hover{color:var(--gold);}
+.nav-btn.active{color:var(--gold-b);}
+.nav-btn.active .nav-ico{transform:translateY(-2px);text-shadow:0 0 14px rgba(201,169,97,.75);}
+.nav-btn.active::after{content:'';position:absolute;bottom:calc(var(--safe-b) + 3px);left:50%;transform:translateX(-50%);width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,169,97,.8);}
+
+/* ═══════════════════════════════════════════════════════════
+   §7 地图
+   ═══════════════════════════════════════════════════════════ */
+#screen-map{display:none;flex-direction:column;}
+#screen-map.active{display:flex;}
+.map-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
+.map-region{margin-bottom:28px;}
+.map-region-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-family:var(--f-deco);font-size:13px;letter-spacing:.22em;color:var(--gold-b);}
+.map-region-head::before{content:'◆';color:var(--gold);font-size:10px;font-family:var(--f-sym);}
+.map-region-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line-s),transparent);}
+.map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+/* ★ A 恢复：地图卡套 ❖ 双角 */
+.map-card{position:relative;padding:20px 16px;cursor:pointer;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));transition:all .35s var(--ease);overflow:hidden;}
+.map-card::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
+.map-card::after{content:'❖';position:absolute;bottom:-6px;right:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
+.map-card:hover,.map-card:active{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 22px rgba(201,169,97,.18);}
+.map-card:hover::before{transform:rotate(90deg) scale(1.1);}
+.map-card:hover::after{transform:rotate(-90deg) scale(1.1);}
+.map-card.locked{opacity:.42;cursor:not-allowed;}
+.map-card.locked:hover{transform:none;border-color:var(--line);box-shadow:none;}
+.map-card-ico{font-size:22px;color:var(--gold);margin-bottom:10px;line-height:1;font-family:var(--f-sym);}
+.map-card-name{font-family:var(--f-deco);font-size:13px;letter-spacing:.12em;color:var(--gold-b);margin-bottom:6px;}
+.map-card-desc{font-size:11px;color:var(--text-d);line-height:1.7;}
+.map-card-tag{display:inline-block;margin-top:10px;font-size:9.5px;letter-spacing:.18em;color:var(--gold-d);border:1px solid var(--line);padding:3px 8px;}
+.map-card-tag.hot{border-color:rgba(160,60,80,.6);color:#d08a9c;}
+
+/* ═══════════════════════════════════════════════════════════
+   §8 地点进入页
+   ═══════════════════════════════════════════════════════════ */
+#screen-location{display:none;flex-direction:column;}
+#screen-location.active{display:flex;}
+.loc-stage{flex:1;overflow-y:auto;position:relative;padding-bottom:calc(var(--nav-h) + var(--safe-b));}
+.loc-hero{position:relative;padding:42px 22px 26px;text-align:center;z-index:2;}
+.loc-hero-name{font-family:var(--f-deco);font-size:32px;letter-spacing:.24em;color:var(--gold-b);text-shadow:0 0 24px rgba(201,169,97,.5),0 0 60px rgba(139,47,79,.3);margin-bottom:12px;text-indent:.24em;}
+.loc-hero-desc{font-size:12.5px;color:var(--text-d);line-height:1.9;letter-spacing:.06em;max-width:520px;margin:0 auto;}
+.loc-entries{position:relative;z-index:2;padding:20px 16px;display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto;}
+.loc-entry{border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));padding:16px 18px;cursor:pointer;transition:all .32s var(--ease);display:flex;align-items:center;gap:14px;position:relative;}
+.loc-entry::before{content:'◆';position:absolute;top:6px;right:8px;font-family:var(--f-sym);font-size:10px;color:var(--gold);opacity:.55;}
+.loc-entry:hover{border-color:var(--gold);transform:translateX(4px);box-shadow:0 0 22px rgba(201,169,97,.18);}
+.loc-entry-ico{width:44px;height:44px;flex-shrink:0;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:rgba(201,169,97,.05);position:relative;font-family:var(--f-sym);}
+.loc-entry-ico::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);}
+.loc-entry-info{flex:1;min-width:0;}
+.loc-entry-name{font-family:var(--f-deco);font-size:14px;letter-spacing:.1em;color:var(--gold-b);margin-bottom:4px;}
+.loc-entry-desc{font-size:11.5px;color:var(--text-d);line-height:1.6;}
+
+/* ═══════════════════════════════════════════════════════════
+   §9 乙游（关系）
+   ═══════════════════════════════════════════════════════════ */
+#screen-bond{display:none;flex-direction:column;}
+#screen-bond.active{display:flex;}
+.bond-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
+.bond-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:720px;margin:0 auto;}
+/* ★ A 恢复：角色卡套 ❖ 双角 + 内框 */
+.bond-card{position:relative;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));padding:20px 16px;cursor:pointer;transition:all .35s var(--ease);overflow:hidden;}
+.bond-card::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
+.bond-card::after{content:'❖';position:absolute;bottom:-6px;right:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
+.bond-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 22px rgba(201,169,97,.18);}
+.bond-card:hover::before{transform:rotate(90deg) scale(1.1);}
+.bond-card:hover::after{transform:rotate(-90deg) scale(1.1);}
+.bond-card-avatar{width:64px;height:64px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--gold);background:radial-gradient(circle,rgba(201,169,97,.15),transparent);margin:0 auto 12px;box-shadow:0 0 20px rgba(201,169,97,.3);position:relative;font-family:var(--f-sym);transition:transform .35s var(--ease);}
+.bond-card:hover .bond-card-avatar{transform:scale(1.08);}
+.bond-card-avatar::before{content:'';position:absolute;inset:4px;border-radius:50%;border:1px solid var(--line-s);}
+.bond-card-name{text-align:center;font-family:var(--f-deco);font-size:14px;letter-spacing:.12em;color:var(--gold-b);margin-bottom:4px;}
+.bond-card-en{text-align:center;font-family:var(--f-en);font-style:italic;font-size:11px;color:var(--text-d);margin-bottom:10px;}
+.bond-card-title{text-align:center;font-size:10.5px;color:var(--text-d);letter-spacing:.08em;margin-bottom:12px;}
+.bond-card-lv{text-align:center;font-size:11px;color:var(--gold-d);letter-spacing:.1em;margin-bottom:8px;font-family:var(--f-deco);}
+.bond-card-bar{height:5px;background:rgba(201,169,97,.15);overflow:hidden;border:1px solid var(--line);}
+.bond-card-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s var(--ease);}
+
+/* 角色弹窗 */
+.char-hero{text-align:center;padding:20px 0 20px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+.char-hero-av{width:84px;height:84px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--gold);margin:0 auto 14px;background:radial-gradient(circle,rgba(201,169,97,.18),transparent);box-shadow:0 0 28px rgba(201,169,97,.4);position:relative;font-family:var(--f-sym);}
+.char-hero-av::before{content:'';position:absolute;inset:5px;border-radius:50%;border:1px solid var(--line-s);}
+.char-hero-name{font-family:var(--f-deco);font-size:18px;letter-spacing:.16em;color:var(--gold-b);margin-bottom:4px;}
+.char-hero-en{font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--text-d);margin-bottom:6px;}
+.char-hero-title{font-size:11px;color:var(--text-d);letter-spacing:.1em;}
+.char-hero-lv{margin-top:12px;font-family:var(--f-deco);font-size:13px;color:var(--gold-b);letter-spacing:.14em;}
+.char-hero-lv-sub{font-size:11px;color:var(--gold-d);letter-spacing:.1em;margin-top:3px;}
+.char-hero-bar{max-width:220px;height:6px;background:rgba(201,169,97,.15);margin:10px auto 0;overflow:hidden;border:1px solid var(--line);}
+.char-hero-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s var(--ease);}
+.char-hero-next{font-size:10.5px;color:var(--text-d);margin-top:8px;letter-spacing:.06em;}
+.char-desc{font-size:12.5px;line-height:1.95;color:var(--text);padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:14px 0;}
+.char-actions{display:flex;flex-direction:column;gap:10px;}
+
+/* 礼物面板 */
+.gift-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);padding:12px 14px;background:rgba(201,169,97,.02);margin-bottom:10px;cursor:pointer;transition:all .3s var(--ease);}
+.gift-item:hover{border-color:var(--gold);background:rgba(201,169,97,.08);transform:translateX(3px);}
+.gift-ico{width:44px;height:44px;flex-shrink:0;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);background:rgba(201,169,97,.05);position:relative;font-family:var(--f-sym);}
+.gift-ico::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);}
+.gift-info{flex:1;min-width:0;}
+.gift-name{font-family:var(--f-deco);font-size:13px;letter-spacing:.08em;color:var(--gold-b);margin-bottom:3px;}
+.gift-meta{font-size:10.5px;color:var(--text-d);letter-spacing:.04em;}
+.gift-like{font-size:10px;color:#d0a0b0;letter-spacing:.06em;}
+
+/* CG 卡 */
+.cg-card{border:1px solid var(--gold);background:linear-gradient(160deg,var(--panel2),var(--panel));padding:20px;margin-bottom:12px;text-align:center;cursor:pointer;transition:all .35s var(--ease);position:relative;}
+.cg-card::before{content:'✦';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.9;}
+.cg-card:hover{box-shadow:0 0 28px rgba(201,169,97,.3);transform:translateY(-2px);}
+.cg-card-title{font-family:var(--f-deco);font-size:15px;letter-spacing:.16em;color:var(--gold-b);margin-bottom:8px;}
+.cg-card-sub{font-size:11px;color:var(--gold-d);letter-spacing:.1em;}
+
+/* ═══════════════════════════════════════════════════════════
+   §10 目录
+   ═══════════════════════════════════════════════════════════ */
+#screen-toc{display:none;flex-direction:column;}
+#screen-toc.active{display:flex;}
+.toc-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
+.toc-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto;padding:0 4px;}
+.toc-tabs::-webkit-scrollbar{display:none;}
+.toc-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-d);font-family:var(--f-cn);font-size:12px;letter-spacing:.14em;padding:12px 14px;cursor:pointer;transition:all .28s var(--ease);white-space:nowrap;margin-bottom:-1px;}
+.toc-tab.active{color:var(--gold-b);border-bottom-color:var(--gold);}
+.toc-tab:hover{color:var(--gold);}
+.toc-group{max-width:760px;margin:0 auto;}
+.toc-item{display:flex;align-items:center;gap:14px;border:1px solid var(--line);padding:14px 18px;background:linear-gradient(160deg,var(--panel2),var(--panel));margin-bottom:10px;cursor:pointer;transition:all .32s var(--ease);position:relative;}
+.toc-item::before{content:'◆';position:absolute;top:6px;right:8px;font-family:var(--f-sym);font-size:10px;color:var(--gold);opacity:.55;}
+.toc-item:hover{border-color:var(--gold);transform:translateX(4px);box-shadow:0 0 18px rgba(201,169,97,.15);}
+.toc-item.locked{opacity:.42;cursor:not-allowed;}
+.toc-item.locked:hover{transform:none;border-color:var(--line);box-shadow:none;}
+.toc-item-ico{width:40px;height:40px;flex-shrink:0;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);background:rgba(201,169,97,.05);position:relative;font-family:var(--f-sym);}
+.toc-item-ico::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);}
+.toc-item-info{flex:1;min-width:0;}
+.toc-item-title{font-family:var(--f-deco);font-size:13px;letter-spacing:.1em;color:var(--gold-b);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.toc-item-sub{font-size:11px;color:var(--text-d);line-height:1.6;}
+.toc-item-state{flex-shrink:0;font-size:10px;letter-spacing:.14em;padding:3px 8px;border:1px solid var(--line);color:var(--gold-d);}
+.toc-item-state.done{border-color:rgba(120,180,120,.6);color:#9dd0a0;}
+.toc-item-state.now{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.15);}
+
+/* ═══════════════════════════════════════════════════════════
+   §11 记录
+   ═══════════════════════════════════════════════════════════ */
+#screen-log{display:none;flex-direction:column;}
+#screen-log.active{display:flex;}
+.log-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-bottom:calc(var(--nav-h) + var(--safe-b));}
+.log-tabs{flex:0 0 auto;display:flex;overflow-x:auto;border-bottom:1px solid var(--line);padding:0 10px;background:var(--panel);}
+.log-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-d);font-family:var(--f-cn);font-size:12.5px;letter-spacing:.16em;padding:14px 16px;cursor:pointer;transition:all .28s var(--ease);white-space:nowrap;margin-bottom:-1px;}
+.log-tab.active{color:var(--gold-b);border-bottom-color:var(--gold);}
+.log-body{flex:1;overflow-y:auto;padding:20px;}
+.char-grid{display:grid;gap:12px;}
+.char-card{position:relative;padding:16px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));cursor:pointer;transition:all .3s var(--ease);}
+.char-card:hover{border-color:var(--gold);box-shadow:0 0 18px rgba(201,169,97,.15);}
+.char-head{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+.char-avatar{width:48px;height:48px;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);background:rgba(201,169,97,.05);flex-shrink:0;position:relative;font-family:var(--f-sym);}
+.char-avatar::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);}
+.char-name{font-family:var(--f-deco);font-size:14px;letter-spacing:.1em;color:var(--gold-b);}
+.char-en{font-family:var(--f-en);font-style:italic;font-size:12px;color:var(--text-d);}
+.char-title{font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-top:3px;}
+.char-aff{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:10.5px;color:var(--gold-d);letter-spacing:.1em;}
+.aff-bar{flex:1;height:4px;background:rgba(201,169,97,.12);overflow:hidden;}
+.aff-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s var(--ease);}
+.char-desc{font-size:12.5px;line-height:1.9;color:var(--text);margin-top:12px;padding-top:12px;border-top:1px solid var(--line);}
+.log-entry{margin-bottom:14px;font-size:13px;line-height:1.85;}
+.log-entry .le-speaker{font-family:var(--f-deco);font-size:11px;letter-spacing:.14em;color:var(--gold-b);display:block;margin-bottom:4px;}
+.log-entry .le-cn{color:var(--text);}
+.log-entry .le-en{font-family:var(--f-en);font-style:italic;color:var(--gold-b);font-size:13px;margin-bottom:3px;}
+.log-entry.narr .le-cn{color:var(--text-d);font-style:italic;}
+.log-entry.choice .le-cn{color:var(--gold);padding-left:10px;border-left:2px solid var(--line-s);}
+
+/* ═══════════════════════════════════════════════════════════
+   §12 设置
+   ═══════════════════════════════════════════════════════════ */
+#screen-settings{display:none;flex-direction:column;}
+#screen-settings.active{display:flex;}
+.set-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 18px);}
+.set-group{margin-bottom:24px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));}
+.set-group-head{padding:14px 18px;border-bottom:1px solid var(--line);font-family:var(--f-deco);font-size:12px;letter-spacing:.22em;color:var(--gold-b);display:flex;align-items:center;gap:8px;}
+.set-group-head::before{content:'◈';font-family:var(--f-sym);font-size:10px;color:var(--gold);}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px dashed rgba(201,169,97,.14);}
+.set-row:last-child{border-bottom:none;}
+.set-label{flex:1;min-width:0;}
+.set-label-t{font-size:13px;color:var(--text);letter-spacing:.04em;line-height:1.7;}
+.set-label-d{font-size:10.5px;color:var(--text-d);margin-top:4px;line-height:1.65;}
+.set-ctrl{flex-shrink:0;}
+.set-input{background:rgba(0,0,0,.25);border:1px solid var(--line-s);color:var(--gold-b);font-family:var(--f-cn);font-size:13px;padding:8px 12px;letter-spacing:.06em;outline:none;min-width:120px;text-align:center;transition:all .28s var(--ease);}
+[data-theme="day"] .set-input{background:rgba(255,255,255,.6);}
+.set-input:focus{border-color:var(--gold);box-shadow:0 0 14px rgba(201,169,97,.25);}
+.seg{display:flex;border:1px solid var(--line-s);}
+.seg button{background:transparent;border:none;color:var(--text-d);font-family:var(--f-cn);font-size:11px;letter-spacing:.1em;padding:8px 12px;cursor:pointer;transition:all .28s var(--ease);border-right:1px solid var(--line);}
+.seg button:last-child{border-right:none;}
+.seg button.active{background:rgba(201,169,97,.18);color:var(--gold-b);}
+.seg button:hover:not(.active){color:var(--gold);}
+.switch{position:relative;width:44px;height:24px;border:1px solid var(--line-s);cursor:pointer;transition:all .32s var(--ease);background:rgba(0,0,0,.2);}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:var(--text-d);transition:all .32s var(--ease-bounce);border-radius:50%;}
+.switch.on{border-color:var(--gold);background:rgba(201,169,97,.15);}
+.switch.on::after{left:22px;background:var(--gold);box-shadow:0 0 10px rgba(201,169,97,.7);}
+.slider{width:120px;-webkit-appearance:none;appearance:none;height:3px;background:rgba(201,169,97,.2);outline:none;}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(201,169,97,.7);}
+
+/* ═══════════════════════════════════════════════════════════
+   §13 工坊
+   ═══════════════════════════════════════════════════════════ */
+#screen-workshop{display:none;flex-direction:column;}
+#screen-workshop.active{display:flex;}
+.ws-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 18px);max-width:820px;margin:0 auto;width:100%;}
+.ws-type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.ws-type-btn{padding:9px 14px;border:1px solid var(--line-s);background:transparent;color:var(--text-d);font-family:var(--f-cn);font-size:12px;letter-spacing:.12em;cursor:pointer;transition:all .28s var(--ease);}
+.ws-type-btn.on{background:rgba(201,169,97,.18);color:var(--gold-b);border-color:var(--gold);}
+.ws-type-btn:hover{color:var(--gold);border-color:var(--gold);}
+.ws-field{margin-bottom:18px;}
+.ws-field label{display:block;font-size:11.5px;color:var(--gold-d);letter-spacing:.22em;margin-bottom:8px;}
+.ws-field label b{color:var(--gold-b);font-weight:400;}
+.ws-hint{font-size:11px;color:#6d6478;margin-top:6px;line-height:1.7;}
+.ws-lines{display:flex;flex-direction:column;gap:12px;margin-bottom:12px;}
+.ws-line-card{border:1px solid var(--line);background:rgba(0,0,0,.2);padding:14px;}
+[data-theme="day"] .ws-line-card{background:rgba(255,255,255,.4);}
+.ws-line-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.ws-line-num{font-family:var(--f-deco);font-size:11px;color:var(--gold);letter-spacing:.12em;flex-shrink:0;}
+.ws-line-type{flex:1;padding:6px 10px;background:rgba(201,169,97,.08);border:1px solid var(--line-s);color:var(--gold-b);font-family:var(--f-cn);font-size:11.5px;outline:none;cursor:pointer;}
+.ws-line-del{width:30px;height:30px;border:1px solid rgba(160,60,80,.5);background:none;color:#c07a92;cursor:pointer;font-size:14px;flex-shrink:0;transition:all .28s var(--ease);}
+.ws-line-del:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;}
+.ws-line-body{display:flex;flex-direction:column;gap:8px;}
+.ws-add-line{width:100%;padding:12px;background:transparent;border:1px dashed rgba(201,169,97,.4);color:var(--gold);font-family:var(--f-cn);font-size:12.5px;letter-spacing:.22em;cursor:pointer;transition:all .3s var(--ease);margin-bottom:20px;}
+.ws-add-line:hover{background:rgba(201,169,97,.1);border-style:solid;border-color:var(--gold);color:var(--gold-b);}
+.ws-preview{border:1px solid var(--line);background:rgba(0,0,0,.25);padding:16px;margin-bottom:20px;}
+[data-theme="day"] .ws-preview{background:rgba(255,255,255,.4);}
+.ws-preview-title{font-family:var(--f-deco);font-size:11px;letter-spacing:.24em;color:var(--gold-d);margin-bottom:12px;}
+.ws-preview-line{margin-bottom:14px;padding-bottom:14px;border-bottom:1px dashed rgba(201,169,97,.15);}
+.ws-preview-line:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.ws-preview-line .pp-speaker{font-family:var(--f-deco);font-size:10.5px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:5px;}
+.ws-preview-line .pp-en{font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-b);line-height:1.6;margin-bottom:4px;}
+.ws-preview-line .pp-cn{font-size:13px;line-height:1.85;color:var(--text);padding-left:10px;border-left:2px solid var(--line);}
+.ws-preview-line.narr .pp-cn{color:var(--text-d);font-style:italic;}
+/* ★ A 恢复：工坊卡套 ❖ 双角 */
+.ws-pack-list{display:flex;flex-direction:column;gap:10px;}
+.ws-pack{border:1px solid var(--line);background:rgba(201,169,97,.02);padding:14px 16px;position:relative;}
+.ws-pack::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.85;}
+.ws-pack::after{content:'❖';position:absolute;bottom:-6px;right:-6px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.85;}
+.ws-pack-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.ws-pack-title{font-size:13.5px;color:var(--gold-b);letter-spacing:.1em;}
+.ws-pack-meta{font-size:11px;color:var(--text-d);letter-spacing:.06em;line-height:1.7;}
+.ws-pack-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.ws-intro{font-size:12.5px;line-height:1.95;color:var(--text-d);margin-bottom:20px;padding:14px 16px;background:rgba(201,169,97,.04);border-left:2px solid rgba(201,169,97,.35);}
+.ws-intro b{color:var(--gold-b);font-weight:400;}
+
+/* ═══════════════════════════════════════════════════════════
+   §14 弹窗
+   ═══════════════════════════════════════════════════════════ */
+.modal-layer{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,2,7,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+[data-theme="day"] .modal-layer{background:rgba(60,50,30,.55);}
+.modal-layer.open{display:flex;animation:fadeIn .3s var(--ease);}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{position:relative;width:100%;max-width:580px;max-height:88vh;background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line-s);display:flex;flex-direction:column;box-shadow:0 0 70px rgba(0,0,0,.9),inset 0 0 70px rgba(201,169,97,.03);animation:modalIn .5s var(--ease);}
+.modal.wide{max-width:820px;}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(16px);}to{opacity:1;transform:none;}}
+.modal::before,.modal::after{content:'❖';position:absolute;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.9;pointer-events:none;}
+.modal::before{top:-7px;left:-7px;}
+.modal::after{bottom:-7px;right:-7px;}
+.modal-head{flex:0 0 auto;padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.modal-title{font-family:var(--f-deco);font-size:14px;letter-spacing:.24em;color:var(--gold-b);}
+.modal-close{background:none;border:1px solid var(--line-s);color:var(--text-d);width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .28s var(--ease);flex-shrink:0;}
+.modal-close:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.1);transform:rotate(90deg);}
+.modal-body{flex:1;overflow-y:auto;padding:20px 22px;}
+.modal-body::-webkit-scrollbar{width:4px;}
+.modal-body::-webkit-scrollbar-thumb{background:var(--line-s);}
+.modal-foot{flex:0 0 auto;padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* ═══════════════════════════════════════════════════════════
+   §15 Toast
+   ═══════════════════════════════════════════════════════════ */
+.toast-layer{position:fixed;top:calc(var(--safe-t) + 64px);left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:92%;max-width:440px;}
+.toast{background:linear-gradient(90deg,rgba(28,20,40,.96),rgba(20,14,30,.96));border:1px solid var(--line-s);color:var(--gold-b);font-size:12px;letter-spacing:.1em;padding:12px 20px;box-shadow:0 0 26px rgba(0,0,0,.7);animation:toastIn .4s var(--ease);text-align:center;line-height:1.7;max-width:100%;}
+[data-theme="day"] .toast{background:linear-gradient(90deg,rgba(255,250,240,.98),rgba(245,235,215,.98));}
+.toast.ok{border-color:rgba(120,180,120,.6);color:#4a8a50;}
+[data-theme="day"] .toast.ok{color:#2e5a30;}
+.toast.warn{border-color:rgba(160,60,80,.7);color:#d08a9c;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
+.toast.out{animation:toastOut .35s var(--ease) forwards;}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
+
+/* ═══════════════════════════════════════════════════════════
+   §16 小游戏样式（供 minigames.js 使用）
+   ═══════════════════════════════════════════════════════════ */
+.mini-title{text-align:center;font-family:var(--f-deco);font-size:15px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:8px;}
+.mini-sub{text-align:center;font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:18px;line-height:1.7;}
+.mini-hud{display:flex;justify-content:space-between;gap:10px;margin-bottom:16px;padding:10px 14px;border:1px solid var(--line);background:rgba(201,169,97,.04);}
+.mini-hud-item{font-size:11px;color:var(--text-d);letter-spacing:.08em;text-align:center;flex:1;}
+.mini-hud-item b{display:block;font-family:var(--f-deco);font-size:15px;color:var(--gold-b);margin-top:2px;}
+.mini-stage{position:relative;border:1px solid var(--line-s);background:rgba(0,0,0,.3);min-height:280px;overflow:hidden;}
+[data-theme="day"] .mini-stage{background:rgba(255,255,255,.35);}
+.evidence-area{position:relative;height:340px;touch-action:none;}
+.ev-card{position:absolute;width:88px;padding:8px 6px;border:1px solid var(--line-s);background:linear-gradient(160deg,var(--panel2),var(--panel));cursor:pointer;font-size:10.5px;line-height:1.4;text-align:center;color:var(--text);transition:box-shadow .28s var(--ease),border-color .28s var(--ease),transform .28s var(--ease);user-select:none;z-index:2;}
+.ev-card .ev-ico{font-size:18px;display:block;margin-bottom:4px;color:var(--gold);font-family:var(--f-sym);}
+.ev-card.sel{border-color:var(--gold);box-shadow:0 0 16px rgba(201,169,97,.6);z-index:5;transform:scale(1.05);}
+.ev-card.done{border-color:rgba(120,180,120,.7);background:rgba(120,180,120,.08);pointer-events:none;opacity:.7;}
+.ev-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+.pour-stage{position:relative;height:280px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;}
+.glass{position:relative;width:90px;height:220px;border:1px solid var(--line-s);border-top:none;background:rgba(0,0,0,.4);overflow:hidden;clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);}
+.glass-liquid{position:absolute;bottom:0;left:0;right:0;height:0;background:linear-gradient(180deg,rgba(220,160,60,.85),rgba(160,90,30,.95));transition:height .04s linear;}
+.glass-marker{position:absolute;left:-4px;right:-4px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,169,97,.9);z-index:3;}
+.glass-marker .mlabel{position:absolute;right:calc(100% + 4px);top:-7px;font-size:9.5px;color:var(--gold-b);letter-spacing:.1em;white-space:nowrap;}
+.glass-marker.m2{background:#d08a9c;}
+.pour-btn{width:100%;padding:16px;border:1px solid var(--gold);background:rgba(201,169,97,.12);color:var(--gold-b);font-family:var(--f-cn);font-size:15px;letter-spacing:.3em;cursor:pointer;user-select:none;transition:all .2s var(--ease);touch-action:none;}
+.pour-btn:active,.pour-btn.pouring{background:rgba(201,169,97,.3);}
+.pour-feedback{text-align:center;margin-top:14px;font-size:12px;letter-spacing:.1em;min-height:18px;}
+.chess-board{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;max-width:340px;margin:0 auto;aspect-ratio:1;padding:8px;border:1px solid var(--line-s);background:rgba(0,0,0,.3);}
+.chess-cell{position:relative;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .28s var(--ease);background:rgba(255,255,255,.02);}
+.chess-cell.light{background:rgba(255,255,255,.07);}
+.chess-cell.dark{background:rgba(0,0,0,.25);}
+.chess-cell.death{background:rgba(160,60,80,.35);border-color:rgba(208,138,156,.6);}
+.chess-cell.death::after{content:'☠';font-family:var(--f-sym);font-size:16px;color:#d08a9c;position:absolute;}
+.chess-cell.goal{background:rgba(120,180,120,.25);border-color:rgba(157,208,160,.7);}
+.chess-cell.goal::after{content:'♔';font-family:var(--f-sym);font-size:18px;color:#9dd0a0;position:absolute;}
+.chess-cell.player{background:rgba(201,169,97,.35);border-color:var(--gold);box-shadow:inset 0 0 16px rgba(201,169,97,.6);z-index:2;}
+.chess-cell.player::after{content:'♙';font-family:var(--f-sym);font-size:22px;color:var(--gold-b);position:absolute;}
+.chess-cell.valid{background:rgba(201,169,97,.15);border-color:var(--gold);cursor:pointer;}
+.chess-cell.valid::after{content:'◦';font-family:var(--f-sym);color:var(--gold);font-size:20px;position:absolute;}
+.puzzle-stage{position:relative;width:280px;height:280px;margin:0 auto;border:2px solid var(--line-s);background:rgba(0,0,0,.4);overflow:hidden;touch-action:none;}
+.puzzle-tile{position:absolute;width:33.3333%;height:33.3333%;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--gold);cursor:pointer;transition:transform .3s var(--ease);border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));font-family:var(--f-sym);}
+.puzzle-tile.empty{background:transparent;border:none;cursor:default;}
+.dice-area{text-align:center;padding:16px 0;}
+.dice{width:100px;height:100px;margin:0 auto 18px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--f-deco);font-size:42px;color:var(--gold-b);background:radial-gradient(circle,rgba(201,169,97,.15),transparent);box-shadow:0 0 30px rgba(201,169,97,.3);}
+.battle-bar{margin-bottom:12px;}
+.battle-name{font-size:12px;color:var(--text);letter-spacing:.1em;margin-bottom:6px;display:flex;justify-content:space-between;}
+.battle-track{height:8px;background:rgba(0,0,0,.4);border:1px solid var(--line);position:relative;}
+.battle-fill{height:100%;transition:width .5s var(--ease);background:linear-gradient(90deg,#8b2f4f,#d08a9c);}
+.battle-fill.san{background:linear-gradient(90deg,#4a2b5e,#a78bd0);}
+.battle-fill.hp{background:linear-gradient(90deg,#7a2f2f,#c07a92);}
+
+/* ═══════════════════════════════════════════════════════════
+   §17 结局卡片 + 空状态
+   ═══════════════════════════════════════════════════════════ */
+.ending-card{text-align:center;padding:16px 6px;}
+.ending-card .e-icon{font-size:34px;color:var(--gold);margin-bottom:18px;display:block;animation:pulse 2.4s infinite;font-family:var(--f-sym);}
+@keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+.ending-card .e-title{font-family:var(--f-deco);font-size:22px;color:var(--gold-b);letter-spacing:.28em;margin-bottom:10px;}
+.ending-card .e-sub{font-family:var(--f-en);font-style:italic;font-size:12px;color:var(--gold-d);letter-spacing:.2em;margin-bottom:22px;}
+.ending-card .e-desc{font-size:14px;line-height:2;color:var(--text);text-align:left;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px 4px;margin-bottom:18px;}
+.empty{text-align:center;padding:44px 20px;color:var(--text-d);font-size:13px;font-style:italic;letter-spacing:.08em;line-height:2;}
+
+@media (max-width:380px){
+  .title-main{font-size:38px;}
+  .map-grid,.bond-grid{grid-template-columns:1fr;}
+  .tb-loc{display:none;}
+}
+@media (min-width:600px){
+  .map-grid{grid-template-columns:repeat(3,1fr);}
+}
+</style>
 </head>
 <body>
 <div id="app">
-  <section class="screen active" id="screen-title">
-    <div class="title-card frame">
-      <span class="corner tl">❖</span><span class="corner tr">❖</span>
-      <span class="corner bl">❖</span><span class="corner br">❖</span>
-      <div class="title-eyebrow">☽ VESELIA · NIGHTFALLING ☾</div>
-      <h1 class="title-main">入魇</h1>
-      <div class="title-sub">In Nightmare We Trust</div>
-      <div class="divider"><span>✦</span></div>
-      <p style="font-size:12px;color:var(--text-d);letter-spacing:.14em;line-height:1.9;">梦神使叛变，魇灾吞城。<br>能在梦与醒之间活着回来的人，<br>才有资格谈论真相。</p>
-      <div class="title-actions">
-        <button class="btn primary" data-act="new">新 的 旅 程</button>
-        <button class="btn" data-act="continue">继 续 游 戏</button>
-        <button class="btn" data-act="archive">档 案 馆</button>
-        <button class="btn" data-act="workshop">剧 情 工 坊</button>
-        <button class="btn" data-act="settings">系 统 设 置</button>
-        <button class="btn" data-act="about">关 于 本 作</button>
-      </div>
-      <div class="title-foot">能看见日落的人，是幸福的</div>
+
+<!-- ═══ 标题页 ═══ -->
+<section class="screen active" id="screen-title">
+  <div class="title-card frame">
+    <span class="corner tl">❖</span><span class="corner tr">❖</span>
+    <span class="corner bl">❖</span><span class="corner br">❖</span>
+    <div class="title-eyebrow">☽ VESELIA · NIGHTFALLING ☾</div>
+    <h1 class="title-main">入魇</h1>
+    <div class="title-sub">In Nightmare We Trust</div>
+    <div class="divider"><span>✦</span></div>
+    <p style="font-size:12px;color:var(--text-d);letter-spacing:.14em;line-height:1.95;">
+      梦神使叛变，魇灾吞城。<br>
+      能在梦与醒之间活着回来的人，<br>才有资格谈论真相。
+    </p>
+    <div class="title-actions">
+      <button class="btn primary" data-act="new">新 的 旅 程</button>
+      <button class="btn" data-act="continue">继 续 游 戏</button>
+      <button class="btn" data-act="toc">目 录</button>
+      <button class="btn" data-act="workshop">剧 情 工 坊</button>
+      <button class="btn" data-act="archive">档 案 馆</button>
+      <button class="btn" data-act="about">关 于 本 作</button>
     </div>
-  </section>
+    <div class="title-foot">能看见日落的人，是幸福的</div>
+  </div>
+</section>
 
-  <section class="screen" id="screen-game">
-    <div class="topbar">
-      <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">入魇</div></div>
-      <div class="tb-loc" id="topLoc">——</div>
+<!-- ═══ 游戏主界面 ═══ -->
+<section class="screen" id="screen-game">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">入魇</div></div>
+    <div class="tb-loc" id="gameTopLoc">——</div>
+    <div class="tb-right">
+      <button class="tb-btn" data-act="archive">档案</button>
+      <button class="tb-btn" data-act="toc">目录</button>
+      <button class="tb-btn" data-act="workshop">工坊</button>
+      <button class="tb-btn" data-act="map">◂ 返回</button>
     </div>
-    <main class="stage" id="stage">
-      <div class="scene-bg bg-city" id="sceneBg"></div>
-      <div class="loc-bar"><span id="locLabel">未知之地</span></div>
-      <div class="dialog-scroll" id="dialogScroll"><div class="dialog-inner" id="dialogInner"></div></div>
-      <div class="choices" id="choices"><div class="choices-inner" id="choicesInner"></div></div>
-      <div class="cont-hint" id="contHint" style="display:none;">▼</div>
-    </main>
-  </section>
+  </div>
+  <main class="stage" id="stage">
+    <div class="scene-bg bg-city" id="sceneBg"></div>
+    <div class="loc-bar"><span id="locLabel">未知之地</span></div>
+    <div class="dialog-scroll" id="dialogScroll"><div class="dialog-inner" id="dialogInner"></div></div>
+    <div class="choices" id="choices"><div class="choices-inner" id="choicesInner"></div></div>
+    <div class="cont-hint" id="contHint" style="display:none;">▼</div>
+  </main>
+  <div class="story-tools">
+    <button id="btnRewind">↶ 回溯</button>
+    <button id="btnHistory">☰ 记录</button>
+    <button id="btnAuto">▷ 自动</button>
+    <button id="btnSkip">⏩ 跳过</button>
+    <button id="btnRename">✎ 改名</button>
+    <button id="btnExport">⇩ 导出</button>
+    <button id="btnHome">⌂ 标题</button>
+  </div>
+</section>
 
-  <section class="screen" id="screen-map">
-    <div class="topbar"><div class="tb-left"><div class="tb-mark"></div><div class="tb-title">地图</div></div><div class="tb-loc" id="mapSilver">银镑 0</div></div>
-    <main class="map-main" id="mapMain"></main>
-  </section>
+<!-- ═══ 地图 ═══ -->
+<section class="screen" id="screen-map">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">地图</div></div>
+    <div class="tb-loc" id="mapSilver">银镑 0</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="map-main" id="mapMain"></main>
+</section>
 
-  <section class="screen" id="screen-log">
-    <div class="topbar"><div class="tb-left"><div class="tb-mark"></div><div class="tb-title">记录</div></div><div class="tb-loc" id="logSub">——</div></div>
-    <main class="log-main" id="logBody" style="padding:16px;overflow-y:auto;"></main>
-  </section>
+<!-- ═══ 地点进入页 ═══ -->
+<section class="screen" id="screen-location">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">地点</div></div>
+    <div class="tb-loc" id="locTopName">——</div>
+    <div class="tb-right"><button class="tb-btn" data-act="map">◂ 返回</button></div>
+  </div>
+  <main class="loc-stage">
+    <div class="scene-bg" id="locBg"></div>
+    <div class="loc-hero">
+      <div class="loc-hero-name" id="locName">——</div>
+      <div class="loc-hero-desc" id="locDesc">——</div>
+    </div>
+    <div class="loc-entries" id="locEntries"></div>
+  </main>
+</section>
 
-  <section class="screen" id="screen-settings">
-    <div class="topbar"><div class="tb-left"><div class="tb-mark"></div><div class="tb-title">设置</div></div><div class="tb-loc" id="setUid">——</div></div>
-    <main class="set-main" id="setMain" style="padding:16px;overflow-y:auto;"></main>
-  </section>
+<!-- ═══ 乙游 ═══ -->
+<section class="screen" id="screen-bond">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">关系</div></div>
+    <div class="tb-loc" id="bondTopDesc">已结识的角色</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="bond-main"><div class="bond-grid" id="bondGrid"></div></main>
+</section>
 
-  <nav class="bottom-nav" id="bottomNav" style="display:none;">
-    <button class="nav-btn active" data-nav="game"><span class="nav-ico">◇</span><span class="nav-lbl">主页</span></button>
-    <button class="nav-btn" data-nav="map"><span class="nav-ico">◈</span><span class="nav-lbl">地图</span></button>
-    <button class="nav-btn" data-nav="log"><span class="nav-ico">❖</span><span class="nav-lbl">记录</span></button>
-    <button class="nav-btn" data-nav="settings"><span class="nav-ico">⚙</span><span class="nav-lbl">设置</span></button>
-  </nav>
+<!-- ═══ 目录 ═══ -->
+<section class="screen" id="screen-toc">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">目录</div></div>
+    <div class="tb-loc" id="tocSub">——</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="toc-main">
+    <div class="toc-tabs" id="tocTabs"></div>
+    <div class="toc-group" id="tocGroup"></div>
+  </main>
+</section>
+
+<!-- ═══ 记录 ═══ -->
+<section class="screen" id="screen-log">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">记录</div></div>
+    <div class="tb-loc" id="logSub">——</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="log-main">
+    <div class="log-tabs" id="logTabs"></div>
+    <div class="log-body" id="logBody"></div>
+  </main>
+</section>
+
+<!-- ═══ 设置 ═══ -->
+<section class="screen" id="screen-settings">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">设置</div></div>
+    <div class="tb-loc" id="setUid">——</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="set-main" id="setMain"></main>
+</section>
+
+<!-- ═══ 工坊 ═══ -->
+<section class="screen" id="screen-workshop">
+  <div class="topbar">
+    <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">工坊</div></div>
+    <div class="tb-loc" id="wsTopDesc">创建 · 编辑 · 覆盖</div>
+    <div class="tb-right"><button class="tb-btn" data-act="home">◂ 返回</button></div>
+  </div>
+  <main class="ws-main" id="wsMain"></main>
+</section>
+
+<!-- ═══ 底部导航 ═══ -->
+<nav class="bottom-nav" id="bottomNav" style="display:none;">
+  <button class="nav-btn active" data-nav="game"><span class="nav-ico">◇</span><span class="nav-lbl">剧情</span></button>
+  <button class="nav-btn" data-nav="map"><span class="nav-ico">◈</span><span class="nav-lbl">地图</span></button>
+  <button class="nav-btn" data-nav="bond"><span class="nav-ico">❖</span><span class="nav-lbl">关系</span></button>
+  <button class="nav-btn" data-nav="toc"><span class="nav-ico">☰</span><span class="nav-lbl">目录</span></button>
+  <button class="nav-btn" data-nav="workshop"><span class="nav-ico">✦</span><span class="nav-lbl">工坊</span></button>
+  <button class="nav-btn" data-nav="settings"><span class="nav-ico">⚙</span><span class="nav-lbl">设置</span></button>
+</nav>
+
 </div>
-
 <div class="modal-layer" id="modalLayer"></div>
 <div class="toast-layer" id="toastLayer"></div>
 
-<script src="js/data.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/characters.js"></script>
-<script src="js/games.js"></script>
-<script src="js/workshop.js"></script>
-<script src="js/main.js"></script>
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════
+   §A 错误捕获 + 工具
+   ═══════════════════════════════════════════════════════════ */
+window.addEventListener('error', function(ev){
+  try {
+    var layer = document.getElementById('toastLayer');
+    if (!layer) return;
+    var el = document.createElement('div');
+    el.className = 'toast warn';
+    el.textContent = '脚本错误：' + (ev.message || '未知');
+    layer.appendChild(el);
+    setTimeout(function(){ el.classList.add('out'); setTimeout(function(){el.remove();}, 400); }, 5000);
+  } catch(e){}
+});
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp = (v,a,b) => Math.max(a, Math.min(b,v));
+const HAS_GSAP = () => !!(window.gsap && !window.__gsapFailed);
+function animIn(el, from, to){ if (!el) return; if (HAS_GSAP() && settings.animations) { try{gsap.fromTo(el,from,to);}catch(e){el.style.opacity=1;} } else { el.style.opacity=1; el.style.transform='none'; } }
+function animOut(el, to, cb){ if (!el){cb&&cb();return;} if (HAS_GSAP() && settings.animations) { try{gsap.to(el,Object.assign({},to,{onComplete:cb}));}catch(e){el.style.opacity=0;cb&&cb();} } else { el.style.opacity=0; cb&&cb(); } }
+
+/* ═══════════════════════════════════════════════════════════
+   §B ★ 完整符号库（242 个）
+   ═══════════════════════════════════════════════════════════ */
+window.SYMBOLS = {
+  chess:   ['♔','♕','♖','♗','♘','♙','♚','♛','♜','♝','♞','♟'],
+  music:   ['♬','♪','♩','♫','♭','♯','𝄞','𝄢','🎼'],
+  stars:   ['☽','☾','✦','✧','✩','✪','✫','✬','✭','✮','✯','✰','★','☆'],
+  alchemy: ['🜁','🜂','🜃','🜄','🜅','🜆','🜇','🜈','🜉','🜊','🜋','🜌','🜍','🜎','🜏','🜐','🜑','🜒','🜓','🜔','🜕','🜖','🜗','🜘','🜙','🜚','🜛','🜜','🜝','🜞','🜟','🜠','🜡','🜢','🜣','🜤','🜥','🜦','🜧','🜨','🜩','🜪','🜫','🜬','🜭','🜮','🜯','🜰','🜱','🜲','🜳','🜴','🜵','🜶','🜷','🜸','🜹','🜺','🜻','🜼','🜽','🜾','🜿'],
+  arrows:  ['↜','↝','↞','↟','↠','↡','↢','↣','↤','↥','↦','↧','↨','↫','↬','↭','↮','↯','↰','↱','↲','↳','↴','↵','↶','↷','↸','↹','↺','↻','↼','↽','↾','↿','⇀','⇁','⇂','⇃','⇄','⇅','⇆','⇇','⇈','⇉','⇊','⇋','⇌','⇍','⇎','⇏','⇐','⇑','⇒','⇓','⇔','⇕','⇖','⇗','⇘','⇙','⇚','⇛','⇜','⇝','⇞','⇟','⇠','⇡','⇢','⇣','⇤','⇥','⇦','⇧','⇨','⇩','⇪'],
+  geometric:['❖','◈','◆','◇','○','●','◉','◎','☉','⊙','⊚','⊛','⊜','⊝','⊞','⊟','⊠','⊡','◌','❂','❉','❊','❋'],
+  blocks:  ['░','▒','▓','█','▄','▀','▌','▐'],
+  crosses: ['☥','☤','☫','✝','✞','✟','☨','☩','☪','☮','☯'],
+  ornaments:['✢','✣','✤','✥','✱','✲','✵','✶','✷','✸','✹','✺','✻','✼','✽','✾','✿','❀','❁','❃','❅','❆','❈']
+};
+
+/* ═══════════════════════════════════════════════════════════
+   §C 角色数据（Cash 拼写已修正）
+   ═══════════════════════════════════════════════════════════ */
+const CHARS = {
+  narrator: { name:'', en:'', sym:'✦' },
+  me:       { name:'我', en:'Me', sym:'◇' },
+  tavana:   { name:'塔瓦娜·卡伊', en:'Tavana Kay', sym:'♕', title:'梦目院院长',
+    desc:'温和谨慎，温文尔雅，优雅大方。总戴着一副单片金丝镜，一头浅咖色长发。喜欢看书、咖啡，以及银杏林。姐姐塔尔莎战死，她被迫接任院长。', color:'#e8d5a0' },
+  movioa:   { name:'莫维奥娅·沃特森', en:'Movioa Watson', sym:'♜', title:'梦目院副院长',
+    desc:'黑发血瞳，黑纱礼帽，肩立黑鸦。言语刻薄，一款冷脸贱，偶尔暴露吊儿郎当的本性。只对塔瓦娜温柔。', color:'#a78bd0' },
+  lidia:    { name:'莉迪亚·简', en:'Lidia Jane', sym:'♞', title:'联络员',
+    desc:'活泼、聒噪、精力过剩，对一切事物都保持好奇。姐姐是艾尔丝娅。', color:'#c9a961' },
+  elsia:    { name:'艾尔丝娅·简', en:'Elsia Jane', sym:'♝', title:'特务 / 杀手',
+    desc:'莉迪亚的姐姐。语气谨慎，笑容浅淡，对妹妹略显宠溺，还带点嫌弃。', color:'#8b2f4f' },
+  fiman:    { name:'菲曼·卡桑拉', en:'Fiman Kasandra', sym:'♖', title:'暗联 / 调酒师',
+    desc:'日不落酒馆的调酒师，其实是接线员。性格直率爽朗活泼，干脆利落。酒馆名字源于奶奶的话："能看见日落的人，是幸福的。"', color:'#d08a5c' },
+  cash:     { name:'卡什·洛克威尔', en:'Cash Rockwell', sym:'♘', title:'新调入成员',
+    desc:'23岁，美式年轻白男。金发碧眼，半永久墨镜，轻浮、热脸贱，ESTP，享乐主义、爱调情。实则视弱（半米外人畜不分），戴墨镜是为掩饰脆弱。缺乏安全感，深谈时反差极大。', color:'#7aa8c0' },
+  reifina:  { name:'瑞菲纳', en:'Reifina', sym:'♛', title:'魇境任务小组 队长',
+    desc:'完全帅姐，手心布满茧，人狠话不多的战神，最冷静之人。掌控力统治力都很强，像一个dom。', color:'#c0a0d0' },
+  cassi:    { name:'卡修斯尔', en:'Cassiusel', sym:'♗', title:'魇境任务小组 副队长',
+    desc:'瑞菲纳的副手。沉默寡言，忠诚，做事稳妥。', color:'#8a9ab0' },
+  morpheus: { name:'摩耳甫斯', en:'Morpheus', sym:'☽', title:'初代梦神使 ·「魇」',
+    desc:'传说中，初代「梦魇」曾是神族的梦神使。叛变之后，祂失去理智，成为了「魇」。封印并不完整——祂没有被杀死，只是被压制。祂在等。', color:'#7a4fa0' }
+};
+
+const LEVELS = [
+  { min:0,   max:4,   name:'陌路人', en:'Stranger' },
+  { min:5,   max:14,  name:'点头之交', en:'Acquaintance' },
+  { min:15,  max:29,  name:'酒友', en:'Drinking Buddy' },
+  { min:30,  max:44,  name:'可说话的人', en:'Someone to Talk To' },
+  { min:45,  max:59,  name:'朋友', en:'Friend' },
+  { min:60,  max:74,  name:'在意的人', en:'Someone I Care About' },
+  { min:75,  max:84,  name:'心跳', en:'Heartbeat' },
+  { min:85,  max:94,  name:'恋人未满', en:'Almost Lovers' },
+  { min:95,  max:99,  name:'灵魂共鸣', en:'Soul Resonance' },
+  { min:100, max:100, name:'灵魂烙印', en:'Soul Imprint' }
+];
+function getLevel(v){ for (const l of LEVELS) if (v>=l.min && v<=l.max) return l; return LEVELS[LEVELS.length-1]; }
+
+/* ═══════════════════════════════════════════════════════════
+   §D 存储键 + 设置
+   ═══════════════════════════════════════════════════════════ */
+const K_SAVE    = 'nightfalling_v4_save';
+const K_GLOBAL  = 'nightfalling_v4_global';
+const K_SETTINGS= 'nightfalling_v4_settings';
+const K_USER    = 'nightfalling_v4_user';
+const K_SLOTS   = 'nightfalling_v4_slots';
+
+const defaultSettings = {
+  theme:'night', fontSize:1, animations:true, shake:true,
+  sfxOn:true, sfxVol:65, textSpeed:25, autoPlay:false,
+  skipRead:false, confirmChoice:true
+};
+let settings = Object.assign({}, defaultSettings);
+
+function loadSettings(){ try { const raw = localStorage.getItem(K_SETTINGS); if (raw) settings = Object.assign({}, defaultSettings, JSON.parse(raw)); } catch(e){} applySettings(); }
+function saveSettings(){ try { localStorage.setItem(K_SETTINGS, JSON.stringify(settings)); } catch(e){} }
+function applySettings(){
+  try {
+    const theme = (settings.theme === 'day' || settings.theme === 'night') ? settings.theme : 'night';
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.setProperty('--font-scale', settings.fontSize);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'day' ? '#f0e6d0' : '#0a0810');
+  } catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §E ★ 音效（8 种，hit 恢复双层：square + noise）
+   ═══════════════════════════════════════════════════════════ */
+const Sfx = {
+  ctx:null,
+  init(){ if (this.ctx) return; try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} },
+  ensure(){ if (!this.ctx) this.init(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(()=>{}); },
+  vol(){ return settings.sfxOn ? clamp(settings.sfxVol/100, 0, 1) : 0; },
+  tone(freq, dur, type='sine', vol=0.15, sweep=null){
+    this.ensure(); if (!this.ctx) return;
+    const v = this.vol() * vol; if (v <= 0) return;
+    try {
+      const t = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+      osc.type = type; osc.frequency.setValueAtTime(freq, t);
+      if (sweep) osc.frequency.exponentialRampToValueAtTime(sweep, t + dur);
+      gain.gain.setValueAtTime(0, t); gain.gain.linearRampToValueAtTime(v, t+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(t); osc.stop(t+dur+0.05);
+    } catch(e){}
+  },
+  noise(dur=0.12, vol=0.15){
+    this.ensure(); if (!this.ctx) return;
+    const v = this.vol()*vol; if (v<=0) return;
+    try {
+      const t = this.ctx.currentTime;
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate*dur, this.ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+      const src = this.ctx.createBufferSource(); src.buffer = buf;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(v, t); gain.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      const filter = this.ctx.createBiquadFilter(); filter.type='bandpass'; filter.frequency.value=2000;
+      src.connect(filter); filter.connect(gain); gain.connect(this.ctx.destination);
+      src.start(t);
+    } catch(e){}
+  },
+  click(){ this.tone(720, 0.06, 'triangle', 0.1); },
+  page(){ this.noise(0.1, 0.1); },
+  success(){ this.tone(523, 0.12, 'sine', 0.15); setTimeout(()=>this.tone(659,0.12,'sine',0.15),80); setTimeout(()=>this.tone(784,0.22,'sine',0.15),160); },
+  fail(){ this.tone(220, 0.18, 'sawtooth', 0.12, 110); setTimeout(()=>this.tone(160,0.28,'sawtooth',0.1,80),120); },
+  dice(){ for (let i=0;i<5;i++) setTimeout(()=>this.noise(0.05,0.06), i*55); },
+  /* ★ D 恢复：双层 */
+  hit(){ this.tone(90, 0.16, 'square', 0.14, 50); this.noise(0.08, 0.1); },
+  unlock(){ this.tone(880, 0.1, 'sine', 0.12); setTimeout(()=>this.tone(1047,0.18,'sine',0.12),70); }
+};
+function vibrate(ms){ if (settings.shake && navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+
+function toast(msg, type='', dur=2400){
+  const layer = $('#toastLayer'); if (!layer) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg;
+  layer.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 380); }, dur);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §F 弹窗
+   ═══════════════════════════════════════════════════════════ */
+let modalStack = [];
+function openModal(opt){
+  const layer = $('#modalLayer'); if (!layer) return {el:null, close(){}};
+  const wrap = document.createElement('div');
+  wrap.className = 'modal' + (opt.wide ? ' wide' : '');
+  wrap.innerHTML =
+    '<div class="modal-head"><div class="modal-title">' + esc(opt.title||'') + '</div><button class="modal-close" aria-label="关闭">×</button></div>' +
+    '<div class="modal-body">' + (opt.body||'') + '</div>' +
+    (opt.footHTML ? '<div class="modal-foot">' + opt.footHTML + '</div>' : '');
+  layer.appendChild(wrap); layer.classList.add('open');
+  modalStack.push(wrap);
+  const close = () => closeModal(wrap);
+  wrap.querySelector('.modal-close').onclick = () => { Sfx.click(); close(); };
+  layer.onclick = (e) => { if (e.target === layer) { Sfx.click(); close(); } };
+  if (opt.onMount) { try { opt.onMount(wrap); } catch(e){ console.warn('onMount', e); } }
+  return { el: wrap, close };
+}
+function closeModal(el){
+  const layer = $('#modalLayer'); if (!layer) return;
+  const target = el || modalStack[modalStack.length-1];
+  if (!target) { layer.classList.remove('open'); layer.innerHTML=''; modalStack=[]; return; }
+  const idx = modalStack.indexOf(target);
+  if (idx >= 0) modalStack.splice(idx, 1);
+  target.remove();
+  if (!modalStack.length) layer.classList.remove('open');
+}
+function closeAllModals(){
+  const layer = $('#modalLayer'); if (!layer) return;
+  layer.classList.remove('open'); layer.innerHTML=''; modalStack = [];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §G 全局状态 + 存档
+   ═══════════════════════════════════════════════════════════ */
+function freshUnlocked(){ return { character:{}, place:{}, faction:{}, intel:{}, task:{}, ending:{}, dungeon:{}, chapter:{} }; }
+let globalData = { unlocked: freshUnlocked(), seenEndings: {}, completedChapters: {} };
+function loadGlobal(){ try { const raw = localStorage.getItem(K_GLOBAL); if (raw) { const d = JSON.parse(raw); if (d && d.unlocked) { globalData.unlocked = Object.assign(freshUnlocked(), d.unlocked); globalData.seenEndings = d.seenEndings || {}; globalData.completedChapters = d.completedChapters || {}; } } } catch(e){} }
+function saveGlobal(){ try { localStorage.setItem(K_GLOBAL, JSON.stringify(globalData)); } catch(e){} }
+
+let state = null;
+function newState(playerName){
+  return {
+    uid: 'UID: ' + Math.floor(10000000 + Math.random() * 89999999),
+    player: { name: playerName||'记者', nick: playerName||'记者', gender:'不限', personality:'冷静' },
+    stats: { silver: 0, sanity: 100 },
+    affection: {},
+    flags: {},
+    readLines: {},
+    log: [],
+    sceneId: null,
+    lineIdx: -1,
+    awaitingChoice: false,
+    snapshots: [],
+    choiceMarkers: [],
+    screen: 'title'
+  };
+}
+function saveNow(){
+  if (!state || !state.sceneId) return;
+  try {
+    localStorage.setItem(K_SAVE, JSON.stringify({
+      v:4, ts:Date.now(),
+      uid: state.uid,
+      player: state.player, stats: state.stats,
+      affection: state.affection, flags: state.flags,
+      readLines: state.readLines, log: state.log.slice(-200),
+      sceneId: state.sceneId, lineIdx: state.lineIdx
+    }));
+  } catch(e){}
+}
+function loadSaved(){ try { const raw = localStorage.getItem(K_SAVE); return raw ? JSON.parse(raw) : null; } catch(e){ return null; } }
+
+/* ═══════════════════════════════════════════════════════════
+   §H 用户内容（供工坊写入）
+   ═══════════════════════════════════════════════════════════ */
+let userContent = { chapters:[], locations:[], bondTopics:[], gifts:[], cgs:[] };
+function loadUser(){
+  try { const raw = localStorage.getItem(K_USER); if (raw) { const d = JSON.parse(raw); Object.assign(userContent, d); } } catch(e){}
+}
+function saveUser(){ try { localStorage.setItem(K_USER, JSON.stringify(userContent)); return true; } catch(e){ toast('存储空间可能已满','warn'); return false; } }
+
+/* ═══════════════════════════════════════════════════════════
+   §I ★ 场景数据（完整序章 1-8）
+   ═══════════════════════════════════════════════════════════ */
+const SCENES = {};
+
+/* 序章 · 场景 1 */
+SCENES.prologue_1 = {
+  bg:'city', loc:'落日之都 · 城门', chapter:'序章 · 落日之都',
+  lines:[
+    { cn:'暮色像一层薄薄的灰纱，覆在落日之都的煤气灯上。' },
+    { cn:'青石板路还留着午后雨水的痕迹，铁艺阳台在暮色里像一排沉默的剪影。' },
+    { cn:'你拎着行李箱，站在城门下，忽然意识到——这里的人，都在加快脚步。' },
+    { me:'（王翼的记者证在我胸前的口袋里，纸边已经磨得发毛。）', byPers:{
+      '冷静':'（王翼的记者证在我胸前的口袋里，纸边已经磨得发毛。）',
+      '共情':'（记者证贴着心口。纸边磨毛了，像被谁反复摸过。）',
+      '直率':'（记者证塞在外套里，纸边磨毛了。我还没在这破地方站稳。）',
+      '谨慎':'（我把记者证塞进最贴身的口袋。纸边磨毛了，但没人看得见。）'
+    }},
+    { me:'（这就是维塞利亚大陆的最西端么。）', byPers:{
+      '冷静':'（这就是维塞利亚大陆的最西端么。）',
+      '共情':'（这里的空气都是倦的。像所有人都在做同一场醒不来的梦。）',
+      '直率':'（行了。就是这儿了。）',
+      '谨慎':'（先别急着下判断。走一步看一步。）'
+    }},
+    { cn:'一个赶路的老人撞了你一下，连声道歉都没有，就消失在巷子里。' },
+    { me:'（……他们怕的不是贼。）', byPers:{
+      '冷静':'（……他们怕的不是贼。）',
+      '共情':'（他们眼睛里有一种被压着的东西。不是恐惧，是认命。）',
+      '直率':'（连句道歉都没有。这地方的人心比天冷。）',
+      '谨慎':'（……他们怕的不是贼。是别的东西。）'
+    }},
+    /* 性别变体 */
+    { cn:'（你的性别让你在这条街上显得格外醒目。）', byGender:{
+      '女':'（几个醉醺醺的男人从身旁走过，视线黏在你身上。你把外套拉紧了一点。）',
+      '男':'（你尽量让自己看起来不好惹。这里的夜晚不欢迎任何单独走路的男人。）',
+      '不限':'（你尽量低调。这里的黄昏不欢迎任何人。）'
+    }}
+  ],
+  next:'prologue_2'
+};
+
+/* 序章 · 场景 2 */
+SCENES.prologue_2 = {
+  bg:'grove', loc:'银杏林 · 小径', chapter:'序章 · 落日之都',
+  lines:[
+    { cn:'沿着银杏林边的小路走，空气里有一种旧纸和红茶混在一起的味道。' },
+    { cn:'金黄的叶子落了满地，踩上去沙沙作响。' },
+    { cn:'路的尽头，一座木板搭成的小酒馆出现在眼前。' },
+    { cn:'房顶的公鸡风向标来回转动，开合门被风吹得嘎吱作响。门外小院的月季和玫瑰修剪得整齐精巧。' },
+    { cn:'二层露台的栅栏旁，几位女性客人正边看风景边谈笑。' },
+    { s:'菲曼', who:'fiman', en:'Evening, stranger. You look like you just walked out of a storm.', cn:'「晚上好，陌生人。你看起来像刚从一场风暴里走出来。」' },
+    { cn:'门口站着一个系着围裙的女人，手里还拿着抹布。她笑起来的时候眼睛会弯起来。' },
+    { s:'菲曼', who:'fiman', en:"Fiman. I run this place. Fancy a drink? Or are you here for... something else?", cn:'「菲曼。这店是我开的。来一杯？还是说……你是为了别的事来的？」' }
+  ],
+  choices:[
+    { cn:'「我是王翼来的记者，想调查『魇』。」', next:'prologue_3a', set:{aff:{fiman:5}, metFiman:true} },
+    { cn:'「先来一杯吧。走了太久的路。」', next:'prologue_3b', set:{aff:{fiman:3}, metFiman:true} },
+    { cn:'「这里是不是死过很多人？」', next:'prologue_3c', set:{aff:{fiman:2}, metFiman:true} }
+  ]
+};
+
+/* 序章 · 场景 3a/3b/3c 统一指向 4 */
+SCENES.prologue_3a = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { me:'我是王翼来的记者，想调查「魇」。' },
+    { cn:'菲曼擦酒杯的手停了一下。' },
+    { s:'菲曼', who:'fiman', en:"A reporter. Huh. Well, you're either very brave or very stupid.", cn:'「记者。嗯。那你要么很勇敢，要么很蠢。」' },
+    { s:'菲曼', who:'fiman', en:"Come in. First drink's on the house. Then we talk.", cn:'「进来吧。第一杯我请。然后我们再谈。」' },
+    { cn:'她掀开吧台的活动板，示意你进来。' }
+  ],
+  next:'prologue_4'
+};
+SCENES.prologue_3b = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { me:'先来一杯吧。走了太久的路。' },
+    { s:'菲曼', who:'fiman', en:"A woman after my own heart. What'll it be?", cn:'「合我心意。喝点什么？」' },
+    { me:'威士忌。加冰。' },
+    { cn:'她转身从胡桃木酒柜上取下一瓶，动作利落。' },
+    { s:'菲曼', who:'fiman', en:'You picked the only bottle I do not water down. Good instinct.', cn:'「你挑了我唯一不掺水的那瓶。直觉不错。」' }
+  ],
+  next:'prologue_4'
+};
+SCENES.prologue_3c = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { me:'这里是不是死过很多人？' },
+    { cn:'菲曼的笑容淡了一点。' },
+    { s:'菲曼', who:'fiman', en:"You're direct. I'll give you that.", cn:'「你倒是直接。这点我认。」' },
+    { s:'菲曼', who:'fiman', en:"Everyone in this city has lost someone. But nobody talks about it. Not here.", cn:'「这座城里每个人都失去过谁。但没人愿意谈。至少不在这儿。」' },
+    { cn:'她把酒杯推到你面前。' }
+  ],
+  next:'prologue_4'
+};
+
+/* ★ 序章 · 场景 4（恢复：卡什登场） */
+SCENES.prologue_4 = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { s:'菲曼', who:'fiman', en:"There's someone you should meet. A new face, just transferred in. Loud, but harmless.", cn:'「有个人你应该见见。新调来的。吵，但没恶意。」' },
+    { cn:'她朝酒馆角落抬了抬下巴。' },
+    { cn:'那里坐着一个金发碧眼的年轻男人，戴着一副永远不摘的墨镜，正单手撑着脸，跟旁边一位女士调笑。' },
+    { s:'卡什', who:'cash', en:"And then she said— oh, hello. Didn't see you there. Literally. It's the glasses.", cn:'「然后她说——哦，你好。没看见你。字面意义上的。怪这副眼镜。」' },
+    { cn:'他笑嘻嘻地摘了一下墨镜，又立刻戴回去。' },
+    { s:'菲曼', who:'fiman', en:"Cash. That's Cash. Don't take anything he says seriously. Including his name.", cn:'「卡什。他叫卡什。他说什么都别当真。包括他的名字。」' }
+  ],
+  set:{metCash:true, metFiman:true, aff:{fiman:2, cash:2}},
+  next:'prologue_5'
+};
+
+/* ★ 序章 · 场景 5（恢复：卡什调戏 + 菲曼劝阻） */
+SCENES.prologue_5 = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { s:'卡什', who:'cash', en:"You must be the new one. The reporter. Fiman told me about you.", cn:'「你就是新来的那个吧。记者。菲曼跟我提过你。」' },
+    { s:'卡什', who:'cash', en:"Stick with me. I'll show you the good bars, the bad bars, and the ones that don't exist.", cn:'「跟着我。我带你见识好酒吧、烂酒吧，还有那些不存在的酒吧。」' },
+    { s:'菲曼', who:'fiman', en:"Don't follow him anywhere.", cn:'「别跟他去任何地方。」' },
+    { cn:'卡什大笑起来，丝毫不以为意。' },
+    { me:'（这个人……与其说是危险，不如说是让人头疼。）', byPers:{
+      '冷静':'（这个人。与其说是危险，不如说是让人头疼。）',
+      '共情':'（他笑得很大声，但眼神一直没落到你身上。像是在躲什么。）',
+      '直率':'（浮夸。这人在装。）',
+      '谨慎':'（别急着下判断。但他确实像在演。）'
+    }}
+  ],
+  set:{aff:{cash:5}},
+  next:'prologue_6'
+};
+
+/* ★ 序章 · 场景 6（恢复：莫维奥娅 + 塔瓦娜登场） */
+SCENES.prologue_6 = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { cn:'门忽然开了。夜风裹着一股冷意吹进来，酒馆里所有说话声都低了下去。' },
+    { cn:'走进来的是一个黑发女人。黑色齐肩短发，黑纱礼帽，肩上立着一只黑鸦。她的瞳孔是血红色的，在煤气灯下显得格外刺目。' },
+    { cn:'她身后还跟着一个人——浅咖色长发，单片金丝镜，深蓝外套，胸前别着一枚银色的眼睛徽章。' },
+    { s:'莫维奥娅', who:'movioa', en:'Fiman. Three glasses. The usual.', cn:'「菲曼。三杯。老样子。」' },
+    { s:'菲曼', who:'fiman', en:"Three? Who's the third for?", cn:'「三杯？第三杯给谁？」' },
+    { cn:'莫维奥娅没有回答，只是把目光转向了你。' },
+    { s:'塔瓦娜', who:'tavana', en:"You must be the reporter from the Wing. I'm Tavana. Head of the Dream Bureau.", cn:'「你一定是王翼来的记者。我是塔瓦娜。梦目院院长。」' },
+    { s:'塔瓦娜', who:'tavana', en:"Fiman told me you arrived this evening. I thought I'd come to greet you personally.", cn:'「菲曼说你今晚到了。我想亲自来迎接你。」' }
+  ],
+  set:{metTavana:true, metMovioa:true, aff:{tavana:4, movioa:1}},
+  next:'prologue_7'
+};
+
+/* ★ 序章 · 场景 7 */
+SCENES.prologue_7 = {
+  bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
+  lines:[
+    { s:'莫维奥娅', who:'movioa', en:"Tavana. You're being polite. It's exhausting to watch.", cn:'「塔瓦娜。你这么客气。看着都累。」' },
+    { s:'塔瓦娜', who:'tavana', en:"Movioa, please.", cn:'「莫维奥娅，拜托。」' },
+    { s:'莫维奥娅', who:'movioa', en:"What? I'm just saying what everyone's thinking.", cn:'「怎么？我只是把大家心里想的说出来了而已。」' },
+    { cn:'塔瓦娜轻轻叹了口气，转向你。' },
+    { s:'塔瓦娜', who:'tavana', en:"Tomorrow morning, come to the Bureau. There is much to discuss.", cn:'「明早来梦目院。有很多事情要谈。」' }
+  ],
+  next:'prologue_8'
+};
+
+/* ★ 序章 · 场景 8 */
+SCENES.prologue_8 = {
+  bg:'tavern', loc:'日不落酒馆 · 二楼客房', chapter:'序章 · 落日之都',
+  lines:[
+    { cn:'那天晚上，你住在日不落酒馆二楼。窗户朝着银杏林，月光把叶子照得像镀了银。' },
+    { cn:'楼下隐约传来谈笑声，但很快，一扇扇窗户被关上，门闩落下的声音此起彼伏。' },
+    { me:'（所有人都在锁门。他们怕的不是贼。）', byPers:{
+      '冷静':'（所有人都在锁门。他们怕的不是贼。）',
+      '共情':'（一家一户的锁门声连成一片，像某种无声的默契。）',
+      '直率':'（所有人都在锁门。白天装得跟没事人一样。）',
+      '谨慎':'（所有人都在锁门。我得记下来——他们怕的不是贼。）'
+    }},
+    { cn:'你把笔记本翻到新的一页，写下第一行字。' },
+    { cn:'「落日之都，第一日。魇真实存在。梦域正在扩张。而那位院长，似乎还有话没说。」' }
+  ],
+  onEnd: () => {
+    globalData.completedChapters['prologue'] = true;
+    saveGlobal();
+    toast('◈ 序章完成 · 地图已解锁', 'ok');
+    saveNow();
+    setTimeout(()=>showScreen('map'), 800);
+  }
+};
+
+/* 第一章 · 面见院长 */
+SCENES.manor_1 = {
+  bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
+  lines:[
+    { cn:'梦目院的大厅比想象中安静。高耸的石柱，冷白色的穹顶，穿深色制服的人匆匆走过，没有人多看你一眼。' },
+    { s:'塔瓦娜', who:'tavana', en:"Welcome. Please, sit. Coffee?", cn:'「欢迎。请坐。咖啡？」' },
+    { cn:'塔瓦娜在长桌尽头坐下，摘下单片镜，轻轻揉了揉眉心。' },
+    { s:'塔瓦娜', who:'tavana', en:"I'll be direct. You want to investigate the nightmare. I want to know why.", cn:'「我直说了。你想调查魇。我想知道为什么。」' }
+  ],
+  choices:[
+    { cn:'「我是记者。这是我的职责。」', next:'manor_2a', set:{aff:{tavana:3}} },
+    { cn:'「我在王翼见过不该看见的东西。」', next:'manor_2b', set:{aff:{tavana:5}} },
+    { cn:'「我听说……这里有人能让人再也醒不过来。」', next:'manor_2c', set:{aff:{tavana:1}} }
+  ]
+};
+SCENES.manor_2a = {
+  bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
+  lines:[
+    { me:'我是记者。这是我的职责。' },
+    { s:'塔瓦娜', who:'tavana', en:"A duty. Good. Duty is more reliable than curiosity.", cn:'「职责。很好。职责比好奇心可靠。」' },
+    { s:'塔瓦娜', who:'tavana', en:"Then I'll give you a duty. Find out what's happening at the western dream field. Report back to me.", cn:'「那我给你一个职责。去西边梦域查清楚发生了什么。回来向我汇报。」' }
+  ],
+  next:'manor_3'
+};
+SCENES.manor_2b = {
+  bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
+  lines:[
+    { me:'我在王翼见过不该看见的东西。' },
+    { cn:'塔瓦娜的睫毛微微一动。' },
+    { s:'塔瓦娜', who:'tavana', en:"In the Wing... What did you see?", cn:'「在王翼……你看见了什么？」' },
+    { me:'一座城市。所有人都在睡觉。但没有人做梦。' },
+    { s:'塔瓦娜', who:'tavana', en:"……That is worse than a nightmare. Much worse.", cn:'「……那比噩梦更糟。糟得多。」' }
+  ],
+  next:'manor_3'
+};
+SCENES.manor_2c = {
+  bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
+  lines:[
+    { me:'我听说……这里有人能让人再也醒不过来。' },
+    { s:'塔瓦娜', who:'tavana', en:"Yes. Those are called the Unreturned. And there are more of them every month.", cn:'「是的。那些人叫未归之人。每个月都越来越多。」' },
+    { s:'塔瓦娜', who:'tavana', en:"If you want to know how they got there, you'll have to look at the dream fields.", cn:'「如果你想知道他们是怎么变成那样的，得去梦域看看。」' }
+  ],
+  next:'manor_3'
+};
+SCENES.manor_3 = {
+  bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
+  lines:[
+    { s:'塔瓦娜', who:'tavana', en:"One more thing. Stay away from the church. They don't like outsiders.", cn:'「还有一件事。远离教堂。他们不喜欢外人。」' },
+    { s:'塔瓦娜', who:'tavana', en:"And if you see a black bird on someone's shoulder—don't stare. That's Movioa's way of saying hello.", cn:'「要是看见谁肩上站着黑鸦——别盯着看。那是莫维奥娅打招呼的方式。」' },
+    { cn:'她笑了一下，露出一点疲惫。' }
+  ],
+  onEnd: () => {
+    globalData.completedChapters['ch1'] = true;
+    saveGlobal();
+    if (state) state.flags['loc_archive'] = true;
+    if (state) state.flags['loc_church'] = true;
+    if (state) state.flags['loc_grove'] = true;
+    toast('◈ 第一章完成 · 档案室/教堂/银杏林已解锁', 'ok');
+    saveNow();
+    setTimeout(()=>showScreen('map'), 800);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════
+   §J ★ 档案（7 类完整）
+   ═══════════════════════════════════════════════════════════ */
+const CODEX = {
+  character: {
+    '塔瓦娜·卡伊': { name:'塔瓦娜·卡伊', title:'圣梦目管理院 · 现任院长', desc:'接任时年仅十九岁。姐姐塔尔莎死在封印之战中。', tags:['卡伊家族','院长'] },
+    '莫维奥娅·沃特森': { name:'莫维奥娅·沃特森', title:'副院长', desc:'黑发血瞳，黑纱礼帽，肩立黑鸦。封印之战七人中的一人。', tags:['沃特森家族','副院长'] },
+    '艾瑞莉·简': { name:'艾瑞莉·简', title:'联络员', desc:'活泼、聒噪、精力过剩。', tags:['联络员'] },
+    '艾尔丝亚·简': { name:'艾尔丝亚·简', title:'特务 / 杀手', desc:'艾瑞莉的姐姐。语气温和，笑容浅淡，管理院最危险的人物之一。', tags:['特务'] },
+    '菲曼·卡桑拉': { name:'菲曼·卡桑拉', title:'暗联 / 调酒师', desc:'日不落酒馆的经营者，管理院安插在落日之都的暗线。', tags:['酒馆','暗线'] },
+    '缇斯·沃特森': { name:'缇斯·沃特森', title:'封印之战的容器', desc:'莫维奥娅的哥哥。被摩耳甫斯选中，成为魇的容器。', tags:['容器','已封印'] },
+    '塔尔莎·卡伊': { name:'塔尔莎·卡伊', title:'前任院长（已故）', desc:'封印之战的主导者。七人中唯一死去的那一个。', tags:['已故'] },
+    '摩耳甫斯': { name:'摩耳甫斯', title:'初代梦神使 ·「魇」', desc:'初代「梦魇」曾是神族的梦神使。叛变后失去理智。', tags:['梦神使','未死'] }
+  },
+  place: {
+    '落日之都': { name:'落日之都', title:'索姆尼亚帝国 · 边陲城', desc:'维多利亚式街道。入夜之后家家锁门。', tags:['主城'] },
+    '日不落酒馆': { name:'日不落酒馆', title:'银杏林旁', desc:'木板搭成的老式小酒馆。房顶插着公鸡风向标。', tags:['落脚点'] },
+    '圣梦目管理院': { name:'圣梦目管理院', title:'管理机构', desc:'管控「梦魇」事件。走廊幽深，档案室常年上锁。', tags:['势力'] },
+    '银杏林': { name:'银杏林', title:'城郊林地', desc:'大片银杏，四季金黄。深处有旧书店和一条不该存在的路。', tags:['梦域边缘'] },
+    '封印战场遗址': { name:'封印战场遗址', title:'银杏林以西', desc:'一片焦黑空地。泥土是暗红色的。中央烙着乌鸦形状。', tags:['封印','危险'] },
+    '圣梦目管理院档案室': { name:'档案室', title:'铁门之后', desc:'四面墙全是书架。最里面那排是塔瓦娜的私人档案。', tags:['档案'] },
+    '圣梦教会·醒派教堂': { name:'圣梦教会 · 醒派', title:'哥特式教堂', desc:'尖顶刺向灰蒙蒙天空。祭坛上刻着：「祂不睡，所以你看得见。」', tags:['教会','醒派'] },
+    '梦派据点': { name:'梦派据点', title:'某条小巷尽头', desc:'管理院知道它的存在，但从未动手。动了会死人。', tags:['异端'] },
+    '银杏林书店': { name:'银杏林书店', title:'银杏林深处', desc:'一座小木屋，窗户里透出暖黄色的光。柜台上有时会放着两块蛋糕。', tags:['旧书店'] },
+    '伊林堡': { name:'伊林堡', title:'王翼 · 首都', desc:'你的来处。据说那里的宗教狂热与「魇」有关。', tags:['王翼'] },
+    '映月镇': { name:'映月镇', title:'日月湖畔', desc:'传说夜里湖面会映出两轮月亮。梦之乡、夜鸟林都在这附近。', tags:['未解锁'] },
+    '日往城': { name:'日往城', title:'向日葵花海', desc:'日光展与救助灾魇避难所所在地。', tags:['未解锁'] }
+  },
+  faction: {
+    '圣梦目管理院': { name:'圣梦目管理院', title:'独立管理机构', desc:'管控「梦魇」事件。', tags:['官方'] },
+    '圣梦教会·醒派': { name:'圣梦教会 · 醒派', title:'正统教派', desc:'认为梦魇是恶，醒者是神赐的盾牌。', tags:['正统'] },
+    '圣梦教会·梦派': { name:'圣梦教会 · 梦派', title:'异端教派', desc:'认为摩耳甫斯是神的另一面。被醒派追杀。', tags:['异端'] },
+    '王翼': { name:'王翼', title:'邻国', desc:'首都伊林堡。宗教狂热与「魇」有关。', tags:['邻国'] }
+  },
+  intel: {
+    '梦域正在扩张': { name:'梦域正在扩张', title:'情报', desc:'西边的梦域又扩了。有个村子一夜之间所有人都没醒过来。', tags:['紧急'] },
+    '封印并不完全稳固': { name:'封印并不完全稳固', title:'情报', desc:'封印战场遗址的乌鸦烙印纹路清晰得像昨天才烙上去的。', tags:['核心'] },
+    '摩耳甫斯在等待时机': { name:'摩耳甫斯在等待时机', title:'情报', desc:'档案卷宗上只写了一行字：「他还会醒。」', tags:['核心'] },
+    '缇斯是莫维奥娅的哥哥': { name:'缇斯是莫维奥娅的哥哥', title:'情报', desc:'被梦魇选中的容器，是副院长的亲哥哥。', tags:['人物关系'] },
+    '莫维奥娅参与了封印之战': { name:'莫维奥娅参与了封印之战', title:'情报', desc:'封印之战七人之一。', tags:['人物背景'] },
+    '塔瓦娜接任院长是无奈之举': { name:'塔瓦娜接任院长是无奈之举', title:'情报', desc:'姐姐死后她被迫继任。', tags:['人物背景'] },
+    '管理院与教会在对待梦派上有分歧': { name:'管理院与教会分歧', title:'情报', desc:'教会用裁判所手段对付梦派。塔瓦娜不赞同。', tags:['势力'] },
+    '梦派信徒仍在暗中活动': { name:'梦派信徒仍在暗中活动', title:'情报', desc:'落日之都某条小巷尽头有一扇门。', tags:['线索'] },
+    '瑞菲纳即将返回落日之都': { name:'瑞菲纳即将返回落日之都', title:'情报', desc:'梦域任务小组组长。', tags:['人物'] },
+    '银杏林深处有梦域边缘': { name:'银杏林深处有梦域边缘', title:'情报', desc:'林中某处会出现一条不该存在的路。', tags:['危险'] },
+    '菲曼似乎知道一些管理院不愿提及的事': { name:'菲曼知道的事', title:'情报', desc:'她劝你不要只待在管理院。', tags:['线索'] },
+    '封印之战·档案摘要': { name:'封印之战 · 档案摘要', title:'档案', desc:'「第三日，缇斯已完全被魇吞噬。」\n「第五日，封印完成。塔尔莎·卡伊阵亡。」\n「他还会醒。」', tags:['核心'] },
+    '管理院早期成员名单': { name:'管理院早期成员名单', title:'档案', desc:'塔尔莎·卡伊 / 莫维奥娅·沃特森 / [涂黑的名字]', tags:['档案'] },
+    '塔瓦娜至今仍在怀念姐姐': { name:'塔瓦娜至今仍在怀念姐姐', title:'情报', desc:'她每次去银杏林书店，仍会点两份蛋糕。', tags:['人物'] }
+  },
+  task: {
+    '主线·探索「梦魇」': { name:'主线 · 探索「梦魇」', title:'主线', desc:'调查笼罩维塞利亚大陆的「魇」事件。', tags:['主线'] },
+    '支线·升为特级调查部门成员': { name:'升为特级调查部门成员', title:'支线', desc:'只有特级调查部门成员可以出入魇灾地区。', tags:['支线'] },
+    '支线·梦域扩张': { name:'梦域扩张', title:'支线', desc:'梦域正在扩张，管理院人手不足。', tags:['支线'] },
+    '支线·探访封印战场': { name:'探访封印战场', title:'支线', desc:'去银杏林以西看看封印之战的遗迹。', tags:['支线'] },
+    '支线·申请档案室权限': { name:'申请档案室权限', title:'支线', desc:'大部分资料被塔瓦娜锁了。', tags:['支线'] },
+    '支线·熟悉落日之都': { name:'熟悉落日之都', title:'支线', desc:'在落日之都走走。', tags:['支线'] },
+    '支线·再见塔瓦娜': { name:'再见塔瓦娜', title:'支线', desc:'有些事只有当面问院长才能得到答案。', tags:['支线'] },
+    '支线·探索银杏林': { name:'探索银杏林', title:'支线', desc:'林子深处，有些东西管理院也没清理干净。', tags:['支线'] }
+  },
+  ending: {
+    'e_truth': { name:'真 相', desc:'你知道了。关于梦域。关于封印。关于那位院长的姐姐。\n以及——摩耳甫斯还在等。' },
+    'e_silence': { name:'沉 默', desc:'你选择沉默。有些真相，说出来只会让更多人成为未归之人。' },
+    'e_unreturned': { name:'未 归', desc:'你留在了梦域底部。再也没有醒来。' }
+  },
+  dungeon: {
+    '银杏深处的午后': { name:'银杏深处的午后', title:'副本', desc:'一段与主线无关的插曲。', tags:['副本'] }
+  }
+};
+
+/* 情报 5 条内置内容（供记录页情报 tab 使用） */
+const INTEL_LIST = [
+  { name:'封印并不完全稳固', desc:'封印战场遗址的乌鸦烙印纹路清晰得像昨天才烙上去的。伸手去碰，指尖会感到一阵冰凉——像是碰到了什么还活着的东西。', done: s => s?.flags?.loc_archive },
+  { name:'摩耳甫斯在等待时机', desc:'档案卷宗上只写了一行字：「他还会醒。」封印是暂时的。摩耳甫斯在梦域深处，他只是在等——等有人把他放出来。', done: s => s?.flags?.loc_archive },
+  { name:'缇斯是莫维奥娅的哥哥', desc:'被梦魇选中的容器，是副院长的亲哥哥。莫维奥娅不愿提起这个名字。', done: s => s?.flags?.metCash || s?.flags?.loc_archive },
+  { name:'梦域正在扩张', desc:'西边的梦域又扩了。有个村子一夜之间所有人都没醒过来。', done: s => s?.flags?.loc_grove },
+  { name:'能看见日落的人，是幸福的', desc:'菲曼的奶奶给酒馆起了这个名字。因为只要你还看得见日落，就说明你又撑过了一天。', done: s => (s?.affection?.fiman || 0) >= 5 }
+];
+
+/* ═══════════════════════════════════════════════════════════
+   §K ★ 地点数据（含映月镇、日往城）
+   ═══════════════════════════════════════════════════════════ */
+const LOCATIONS = [
+  {
+    key:'tavern', name:'日不落酒馆', bg:'tavern', region:'索姆尼亚帝国 · 落日之都',
+    desc:'木板搭成的老式小酒馆。房顶插着公鸡风向标。奶奶起名：「能看见日落的人，是幸福的。」',
+    unlock:null,
+    entries:[
+      { type:'scene', id:'prologue_2', name:'坐到吧台前', icon:'♖', desc:'菲曼在吧台后面擦酒杯。' },
+      { type:'minigame', id:'pour', name:'调酒小游戏', icon:'♨', desc:'按住按钮，把控精确刻度。' },
+      { type:'character', id:'fiman', name:'与菲曼对话', icon:'♖', desc:'闲聊 / 深谈 / 送礼' },
+      { type:'character', id:'cash', name:'与卡什对话', icon:'♘', desc:'闲聊 / 深谈 / 送礼' }
+    ]
+  },
+  {
+    key:'manor', name:'梦目院总部', bg:'manor', region:'索姆尼亚帝国 · 落日之都',
+    desc:'高耸石柱，冷白穹顶。走廊幽深，档案室常年上锁。',
+    unlock:{ flag:'metTavana' },
+    entries:[
+      { type:'scene', id:'manor_1', name:'面见院长', icon:'♕', desc:'塔瓦娜在长桌尽头等你。' },
+      { type:'character', id:'tavana', name:'与塔瓦娜对话', icon:'♕', desc:'闲聊 / 深谈 / 送礼' },
+      { type:'character', id:'movioa', name:'与莫维奥娅对话', icon:'♜', desc:'闲聊 / 深谈 / 送礼' },
+      { type:'character', id:'lidia', name:'与莉迪亚对话', icon:'♞', desc:'闲聊 / 深谈 / 送礼' },
+      { type:'character', id:'elsia', name:'与艾尔丝娅对话', icon:'♝', desc:'闲聊 / 深谈 / 送礼' }
+    ]
+  },
+  {
+    key:'archive', name:'档案室', bg:'archive', region:'索姆尼亚帝国 · 落日之都',
+    desc:'四面墙全是书架。桌上一盏煤油灯。管理员经常不在。',
+    unlock:{ flag:'loc_archive' },
+    entries:[
+      { type:'minigame', id:'evidence', name:'证据链连线', icon:'❖', desc:'把相关线索连起来。' }
+    ]
+  },
+  {
+    key:'church', name:'卡特琳教堂', bg:'church', region:'索姆尼亚帝国 · 落日之都',
+    desc:'哥特尖顶刺向灰蒙蒙的天空。内部很暗，只有几盏蜡烛。',
+    unlock:{ flag:'loc_church' },
+    entries:[
+      { type:'minigame', id:'puzzle', name:'光影拼图', icon:'☩', desc:'滑动碎片，拼出完整图案。' }
+    ]
+  },
+  {
+    key:'grove', name:'银杏林', bg:'grove', region:'索姆尼亚帝国 · 落日之都',
+    desc:'金黄的叶子落了满地。林子深处，有些东西管理院也没清理干净。',
+    unlock:{ flag:'loc_grove' },
+    entries:[
+      { type:'minigame', id:'dream', name:'梦域副本', icon:'☽', desc:'规则怪谈 + D20 掷骰 + 战斗。' }
+    ]
+  },
+  {
+    key:'moon', name:'映月镇', bg:'dream', region:'索姆尼亚帝国 · 映月镇',
+    desc:'日月湖映出两轮月亮。梦之乡与夜鸟林都在这附近。',
+    unlock:{ flag:'loc_moon' },
+    entries:[]
+  },
+  {
+    key:'sun', name:'日往城', bg:'grove', region:'索姆尼亚帝国 · 日往城',
+    desc:'向日葵花海与救助灾魇避难所。',
+    unlock:{ flag:'loc_sun' },
+    entries:[]
+  },
+  {
+    key:'chess', name:'伊林堡 · 棋局厅', bg:'castle', region:'王翼国度',
+    desc:'黑白大理石交织。地板像巨型棋盘。',
+    unlock:null,
+    entries:[
+      { type:'minigame', id:'chess', name:'残局走位', icon:'♔', desc:'走位到升变格。' }
+    ]
+  }
+];
+
+function isLocationUnlocked(loc){
+  if (!loc.unlock) return true;
+  if (loc.unlock.flag) return !!state?.flags?.[loc.unlock.flag];
+  if (loc.unlock.chapter) return !!globalData.completedChapters?.[loc.unlock.chapter];
+  return true;
+}
+function getAllLocations(){
+  return LOCATIONS.concat(userContent.locations.map(l => ({
+    key:l.key, name:l.name, bg:l.bg||'city', region:l.region||'其他',
+    desc:l.desc, unlock:l.unlock, entries:l.entries||[], userMade:true
+  })));
+}
+function getLocationIcon(key){
+  const map = { tavern:'♖', manor:'♕', archive:'❖', church:'☩', grove:'✦', moon:'☽', sun:'☀', chess:'♔' };
+  return map[key] || '◆';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §L ★ 乙游话题（内置 + 用户）
+   ═══════════════════════════════════════════════════════════ */
+const BOND_TOPICS_BUILTIN = [
+  { key:'fiman_chat', charId:'fiman', mode:'chat', title:'「今日份的闲聊」', need:0,
+    lines:[
+      { who:'fiman', en:"You're back. Sit. The usual?", cn:'「你又来了。坐。老样子？」' },
+      { who:'fiman', en:"Business is slow. Either a storm's coming, or everyone's already asleep.", cn:'「生意冷清。要么暴风雨来了，要么大家都睡着了。」' }
+    ]},
+  { key:'fiman_deep', charId:'fiman', mode:'deep', title:'「日落为什么这么重要」', need:15,
+    lines:[
+      { who:'me', cn:'（我把杯子推过去。）' },
+      { who:'fiman', en:"You know why my grandmother named this place the way she did?", cn:'「你知道我奶奶为什么给这店起这个名字吗？」' },
+      { who:'fiman', en:"Because if you can still see the sunset, you made it through the day.", cn:'「因为只要你还看得见日落，就说明你又撑过了一天。」' },
+      { who:'fiman', en:"Some nights I lock that door and wonder if I'll wake up. But I keep the lights on.", cn:'「有些晚上我锁上门，会想明天还能不能醒过来。但我还是让灯亮着。」' }
+    ]},
+  { key:'cash_chat', charId:'cash', mode:'chat', title:'「你最爱的机车」', need:0,
+    lines:[
+      { who:'cash', en:"Hey! Perfect timing. I was about to do something stupid.", cn:'「嘿！来得正好。我正要干点蠢事。」' },
+      { who:'cash', en:"You know what? I like you. You don't flinch.", cn:'「你知道吗？我喜欢你。你不躲。」' }
+    ]},
+  { key:'cash_deep', charId:'cash', mode:'deep', title:'「墨镜后面的秘密」', need:20,
+    lines:[
+      { who:'me', cn:'你为什么一直戴着墨镜？' },
+      { who:'cash', en:"Oh, you know. Style. Mystery.", cn:'「哦，你知道的。造型。神秘感。」' },
+      { who:'cash', en:"...Fine. Truth is, I can barely see past my own nose. The glasses are for me.", cn:'「……好吧。实话是，我连自己的鼻子都看不清。墨镜是为我自己。」' },
+      { who:'me', cn:'（他说这话时声音比平时低。）' },
+      { who:'cash', en:"Don't tell anyone, alright? I have a reputation to maintain.", cn:'「别告诉别人，好吗？我还要维持形象呢。」' }
+    ]},
+  { key:'tavana_chat', charId:'tavana', mode:'chat', title:'「办公室的咖啡」', need:0,
+    lines:[
+      { who:'tavana', en:"Ah, you're here. Please, sit.", cn:'「啊，你来了。请坐。」' },
+      { who:'tavana', en:"The coffee in this office is terrible. I keep drinking it anyway.", cn:'「这办公室的咖啡很糟。我还是照喝不误。」' }
+    ]},
+  { key:'tavana_deep', charId:'tavana', mode:'deep', title:'「姐姐的那句话」', need:20,
+    lines:[
+      { who:'tavana', en:"My sister used to say—the nightmare is not the enemy. The enemy is forgetting what morning looks like.", cn:'「我姐姐以前说——梦魇不是敌人。敌人是忘记早晨是什么样子。」' },
+      { who:'tavana', en:"I try to remember. Every day.", cn:'「我努力记着。每一天。」' }
+    ]},
+  { key:'movioa_chat', charId:'movioa', mode:'chat', title:'「副院长今天也很烦」', need:0,
+    lines:[
+      { who:'movioa', en:"You again. Did I not make myself clear the first time?", cn:'「又是你。我第一次没说清楚吗？」' },
+      { who:'movioa', en:"...Fine. What do you want?", cn:'「……行吧。你想要什么？」' }
+    ]},
+  { key:'movioa_deep', charId:'movioa', mode:'deep', title:'「哥哥不是怪物」', need:25,
+    lines:[
+      { who:'movioa', en:"My brother was not a monster. He was a fool. There is a difference.", cn:'「我哥哥不是怪物。他是个傻子。这有区别。」' },
+      { who:'movioa', en:"...Stop looking at me like that.", cn:'「……别那样看着我。」' }
+    ]},
+  { key:'lidia_chat', charId:'lidia', mode:'chat', title:'「莉迪亚的一百个问题」', need:0,
+    lines:[
+      { who:'lidia', en:"Oh! It's you! Hi! I have so many questions!", cn:'「哦！是你！嗨！我有一大堆问题！」' },
+      { who:'lidia', en:"What's the Wing like?", cn:'「王翼是什么样的？」' }
+    ]},
+  { key:'lidia_deep', charId:'lidia', mode:'deep', title:'「安静下来很可怕」', need:15,
+    lines:[
+      { who:'lidia', en:"If I stop talking, I start thinking. And thinking is scary here.", cn:'「如果我不说话，我就会开始想事情。而在这里想事情很可怕。」' }
+    ]},
+  { key:'elsia_chat', charId:'elsia', mode:'chat', title:'「限制区」', need:0,
+    lines:[
+      { who:'elsia', en:"You should not be here. This corridor is restricted.", cn:'「你不该在这里。这条走廊是限制区。」' }
+    ]},
+  { key:'elsia_deep', charId:'elsia', mode:'deep', title:'「背负着走」', need:20,
+    lines:[
+      { who:'elsia', en:"People think being an assassin means you stop feeling. It doesn't.", cn:'「人们以为做杀手就意味着不再有感觉。不是的。」' }
+    ]},
+  { key:'reifina_chat', charId:'reifina', mode:'chat', title:'「小队的规矩」', need:0,
+    lines:[
+      { who:'reifina', en:"When we go in, you stay behind me.", cn:'「我们进去的时候，你跟着我。」' }
+    ]},
+  { key:'reifina_deep', charId:'reifina', mode:'deep', title:'「记得每一个名字」', need:25,
+    lines:[
+      { who:'reifina', en:"I've lost three teams. I remember every name. That's why I don't smile much.", cn:'「我失去了三支队伍。我记得每一个名字。所以我不怎么笑。」' }
+    ]}
+];
+function getAllBondTopics(){
+  return BOND_TOPICS_BUILTIN.concat(userContent.bondTopics.map(t => ({
+    key:t.key, charId:t.charId, mode:t.mode||'chat', title:t.title, need:t.need||0, lines:t.lines||[]
+  })));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §M 礼物 + CG
+   ═══════════════════════════════════════════════════════════ */
+const GIFTS_BUILTIN = [
+  { key:'g_ginkgo',  name:'银杏叶书签', icon:'✦', cost:5,  aff:4,  likes:['tavana'], desc:'一片干燥的银杏叶。塔瓦娜会喜欢。' },
+  { key:'g_vinyl',   name:'旧唱片',     icon:'♬', cost:10, aff:7,  likes:['fiman'],  desc:'不知道是谁留下的唱片。菲曼可能认得。' },
+  { key:'g_pen',     name:'黑羽毛钢笔', icon:'✒', cost:20, aff:15, likes:['tavana','movioa'], desc:'笔尖细如羽毛。' },
+  { key:'g_whisky',  name:'老威士忌',   icon:'♨', cost:15, aff:10, likes:['fiman'],  desc:'胡桃木酒柜里同款。' },
+  { key:'g_sunglass',name:'复古墨镜',   icon:'◐', cost:18, aff:12, likes:['cash'],   desc:'新的墨镜。款式和现在戴的那副很像。' },
+  { key:'g_letter',  name:'未寄出的信', icon:'✉', cost:12, aff:8,  likes:['movioa'], desc:'信封上没有地址。' }
+];
+function getAllGifts(){
+  return GIFTS_BUILTIN.concat(userContent.gifts.map(g => ({
+    key:g.key, name:g.name, icon:g.icon||'✦', cost:g.cost||10, aff:g.aff||5, likes:g.likes||[], desc:g.desc||''
+  })));
+}
+
+const CGS_BUILTIN = [
+  { key:'cg_cash_night', charId:'cash', title:'「深夜的阳台」', subtitle:'卡什 · 特殊剧情', need:40,
+    lines:[
+      { cn:'（深夜。你听见阳台上有动静。）' },
+      { cn:'推开门，卡什坐在那里，墨镜放在一边，手里转着一只打火机。' },
+      { s:'卡什', who:'cash', en:"Couldn't sleep?", cn:'「睡不着？」' },
+      { s:'卡什', who:'cash', en:"Me neither. Never could, in this city.", cn:'「我也一样。在这座城市里从来睡不着。」' },
+      { me:'……你在想什么？' },
+      { s:'卡什', who:'cash', en:"Home. Then I remember I don't really have one anymore.", cn:'「家。然后我想起来，我其实已经没有家了。」' },
+      { cn:'他把打火机转了一圈，没有点。' },
+      { s:'卡什', who:'cash', en:"You're still here. That's... something.", cn:'「你还在。这……也算点什么吧。」' }
+    ]}
+];
+function getAllCGs(){
+  return CGS_BUILTIN.concat(userContent.cgs.map(cg => ({
+    key:cg.key, charId:cg.charId, title:cg.title, subtitle:cg.subtitle, need:cg.need||30, lines:cg.lines||[]
+  })));
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §N 页面切换
+   ═══════════════════════════════════════════════════════════ */
+function showScreen(name){
+  const cur = document.querySelector('.screen.active');
+  const nxt = document.getElementById('screen-' + name);
+  if (!nxt) return;
+  if (cur === nxt) { updateNav(name); return; }
+  if (state) state.screen = name;
+  const doSwap = () => {
+    if (cur) { cur.classList.remove('active'); cur.style.opacity=''; }
+    nxt.classList.add('active');
+    nxt.style.opacity = '1';
+    if (HAS_GSAP() && settings.animations) animIn(nxt, {opacity:0,y:10}, {opacity:1,y:0,duration:.35,ease:'power2.out'});
+  };
+  if (HAS_GSAP() && settings.animations && cur) animOut(cur, {opacity:0,duration:.2}, doSwap);
+  else doSwap();
+  const nav = $('#bottomNav');
+  if (nav) nav.style.display = (name === 'title') ? 'none' : 'flex';
+  updateNav(name);
+  if (name === 'map') renderMap();
+  if (name === 'bond') renderBondGrid();
+  if (name === 'toc') renderTOC();
+  if (name === 'log') renderLog();
+  if (name === 'settings') renderSettings();
+  if (name === 'workshop') { if (window.Workshop && window.Workshop.render) window.Workshop.render(); else { $('#wsMain').innerHTML = '<div class="empty">工坊加载中…</div>'; } }
+}
+function updateNav(name){ $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === name)); }
+
+/* ═══════════════════════════════════════════════════════════
+   §O 场景引擎（含称呼/性别/性格分支）
+   ═══════════════════════════════════════════════════════════ */
+let typingState = { active:false, timer:null, el:null, full:'' };
+function stopTyping(){ if (typingState.timer) clearTimeout(typingState.timer); typingState.active=false; if (typingState.el) typingState.el.textContent = typingState.full; }
+function typeInto(el, text, cb){
+  if (!el) { cb&&cb(); return; }
+  stopTyping();
+  typingState.el = el; typingState.full = text;
+  el.textContent = '';
+  if (settings.textSpeed <= 0) { el.textContent = text; typingState.active=false; cb&&cb(); return; }
+  let i = 0; typingState.active = true;
+  const step = () => {
+    if (!typingState.active) return;
+    if (i >= text.length) { typingState.active = false; cb&&cb(); return; }
+    el.textContent += text.charAt(i++);
+    typingState.timer = setTimeout(step, settings.textSpeed);
+  };
+  step();
+}
+
+function playScene(sceneId){
+  const scene = SCENES[sceneId];
+  if (!scene) { toast('场景不存在：' + sceneId, 'warn'); return; }
+  if (scene.set) {
+    if (scene.set.aff) for (const k in scene.set.aff) state.affection[k] = (state.affection[k]||0) + scene.set.aff[k];
+    for (const k in scene.set) if (k !== 'aff') state.flags[k] = scene.set[k];
+  }
+  state.sceneId = sceneId;
+  state.lineIdx = 0;
+  state.awaitingChoice = false;
+  state.snapshots = [];
+  state.choiceMarkers = [];
+  state.log = state.log || [];
+  showScreen('game');
+  const bg = $('#sceneBg');
+  if (bg) bg.className = 'scene-bg bg-' + (scene.bg || 'city');
+  if ($('#locLabel')) $('#locLabel').textContent = scene.loc || '未知之地';
+  if ($('#gameTopLoc')) $('#gameTopLoc').textContent = scene.chapter || scene.loc || '——';
+  if ($('#dialogInner')) $('#dialogInner').innerHTML = '';
+  if ($('#choices')) $('#choices').classList.remove('active');
+  if ($('#choicesInner')) $('#choicesInner').innerHTML = '';
+  if ($('#contHint')) $('#contHint').style.display = 'none';
+  renderLine(0);
+  saveNow();
+}
+
+/* 处理性格/性别分支 */
+function resolveLine(line){
+  const pers = state?.player?.personality || '冷静';
+  const gender = state?.player?.gender || '不限';
+  let cn = line.cn, me = line.me;
+  if (line.byPers && line.byPers[pers]) {
+    if (line.me) me = line.byPers[pers];
+    else cn = line.byPers[pers];
+  }
+  if (line.byGender && line.byGender[gender]) cn = line.byGender[gender];
+  /* 称呼替换 */
+  const nick = state?.player?.nick || '记者';
+  const name = state?.player?.name || '记者';
+  const replace = txt => txt ? txt.replace(/\[nick\]/g, nick).replace(/\[name\]/g, name) : txt;
+  return { ...line, cn: replace(cn), me: replace(me) };
+}
+
+function renderLine(idx){
+  const scene = SCENES[state.sceneId];
+  if (!scene) return;
+  const lines = scene.lines || [];
+  if (idx >= lines.length) {
+    if (scene.choices && scene.choices.length) {
+      pushSnapshot(); state.choiceMarkers.push(state.snapshots.length - 1);
+      showChoices(scene.choices); saveNow(); return;
+    }
+    if (scene.next) { pushSnapshot(); setTimeout(()=>playScene(scene.next), 200); return; }
+    if (scene.onEnd) { scene.onEnd(); return; }
+    showScreen('map');
+    return;
+  }
+  state.lineIdx = idx;
+  const raw = lines[idx];
+  const line = resolveLine(raw);
+  const inner = $('#dialogInner');
+  if (!inner) return;
+  const div = document.createElement('div');
+  div.className = 'line';
+  if (line.s) {
+    const ch = CHARS[line.who] || { name: line.s, en:'' };
+    const charEn = (CHARS[line.who] && CHARS[line.who].en) || '';
+    div.innerHTML = '<div class="speaker">' + esc(ch.name) + (charEn ? ' · ' + esc(charEn) : '') + '</div>' +
+                    (line.en ? '<div class="en">' + esc(line.en) + '</div>' : '') +
+                    '<div class="cn"></div>';
+    inner.appendChild(div);
+    typeInto(div.querySelector('.cn'), line.cn || '', onLineDone);
+    pushLog(ch.name, line.cn, line.en);
+  } else if (line.me) {
+    div.classList.add('monologue');
+    div.innerHTML = (line.en ? '<div class="en">' + esc(line.en) + '</div>' : '') + '<div class="cn"></div>';
+    inner.appendChild(div);
+    typeInto(div.querySelector('.cn'), line.me, onLineDone);
+    pushLog('我', line.me, line.en);
+  } else {
+    div.classList.add('narration');
+    div.innerHTML = '<div class="cn"></div>';
+    inner.appendChild(div);
+    typeInto(div.querySelector('.cn'), line.cn || '', onLineDone);
+    pushLog('旁白', line.cn);
+  }
+  scrollToBottom();
+  if ($('#contHint')) $('#contHint').style.display = 'none';
+  saveNow();
+}
+
+let autoTimer = null;
+function onLineDone(){
+  const scene = SCENES[state.sceneId]; if (!scene) return;
+  const lines = scene.lines || [];
+  const isLast = state.lineIdx >= lines.length - 1;
+  const hint = $('#contHint');
+  if (hint) {
+    if (isLast && (scene.choices || scene.next || scene.onEnd)) { if (!scene.choices) hint.style.display = 'block'; }
+    else hint.style.display = 'block';
+  }
+  if (settings.autoPlay) { clearTimeout(autoTimer); autoTimer = setTimeout(advanceLine, 2000); }
+}
+
+function advanceLine(){
+  if (state?.screen !== 'game') return;
+  if (typingState.active) { stopTyping(); onLineDone(); return; }
+  const scene = SCENES[state.sceneId]; if (!scene) return;
+  if (scene.choices && scene.choices.length && state.lineIdx >= (scene.lines||[]).length - 1) { showChoices(scene.choices); return; }
+  Sfx.page();
+  renderLine(state.lineIdx + 1);
+}
+
+function scrollToBottom(){ const el = $('#dialogScroll'); if (!el) return; requestAnimationFrame(()=>{ el.scrollTop = el.scrollHeight; }); }
+
+function showChoices(choices){
+  state.awaitingChoice = true;
+  const box = $('#choices'), inner = $('#choicesInner');
+  if (!box || !inner) return;
+  inner.innerHTML = '<div class="choice-head">抉 择</div>';
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    const sym = '①②③④⑤⑥⑦⑧⑨⑩'.charAt(i) || '◆';
+    btn.innerHTML = '<span class="choice-idx">' + sym + '</span><span>' + esc(c.cn) + '</span>';
+    btn.onclick = () => {
+      Sfx.click();
+      if (settings.confirmChoice) confirmChoice(c);
+      else selectChoice(c);
+    };
+    inner.appendChild(btn);
+  });
+  box.classList.add('active');
+  $('#contHint').style.display = 'none';
+}
+
+function confirmChoice(c){
+  openModal({
+    title:'确 认 抉 择',
+    body:'<p style="font-size:14px;line-height:2;color:var(--text);">' + esc(c.cn) + '</p><p style="font-size:11px;color:var(--text-d);margin-top:14px;">此选择将推进剧情。</p>',
+    footHTML:'<button class="btn ghost" id="ccCancel">再想想</button><button class="btn primary" id="ccOk">确认</button>',
+    onMount: (w) => {
+      w.querySelector('#ccCancel').onclick = () => { Sfx.click(); closeModal(w); };
+      w.querySelector('#ccOk').onclick = () => { Sfx.success(); closeModal(w); selectChoice(c); };
+    }
+  });
+}
+
+function selectChoice(c){
+  state.awaitingChoice = false;
+  $('#choices').classList.remove('active');
+  $('#choicesInner').innerHTML = '';
+  pushLog('▸ ' + c.cn, 'choice');
+  if (c.set) {
+    if (c.set.aff) for (const k in c.set.aff) state.affection[k] = (state.affection[k]||0) + c.set.aff[k];
+    for (const k in c.set) if (k !== 'aff') state.flags[k] = c.set[k];
+  }
+  saveNow();
+  if (c.next) { playScene(c.next); return; }
+  showScreen('map');
+}
+
+function pushSnapshot(){
+  if (!state) return;
+  state.snapshots.push({
+    sceneId: state.sceneId, lineIdx: state.lineIdx,
+    flags: JSON.parse(JSON.stringify(state.flags)),
+    affection: JSON.parse(JSON.stringify(state.affection))
+  });
+  if (state.snapshots.length > 100) state.snapshots.shift();
+}
+
+function pushLog(speaker, cn, en){
+  if (!state) return;
+  state.log.push({ speaker, cn, en });
+  if (state.log.length > 300) state.log.shift();
+}
+
+function rewindToLastChoice(){
+  if (!state || !state.choiceMarkers.length) { toast('没有可回溯的选择点', 'warn'); return; }
+  const marker = state.choiceMarkers.pop();
+  const snap = state.snapshots[marker];
+  if (!snap) { toast('快照丢失', 'warn'); return; }
+  state.sceneId = snap.sceneId; state.lineIdx = snap.lineIdx;
+  state.flags = JSON.parse(JSON.stringify(snap.flags));
+  state.affection = JSON.parse(JSON.stringify(snap.affection));
+  state.awaitingChoice = false;
+  state.snapshots = state.snapshots.slice(0, marker);
+  playSceneFromSnapshot();
+  toast('◈ 已回溯到上一个选择', 'ok');
+}
+
+function playSceneFromSnapshot(){
+  const scene = SCENES[state.sceneId]; if (!scene) return;
+  showScreen('game');
+  const bg = $('#sceneBg');
+  if (bg) bg.className = 'scene-bg bg-' + (scene.bg || 'city');
+  if ($('#locLabel')) $('#locLabel').textContent = scene.loc || '未知之地';
+  if ($('#gameTopLoc')) $('#gameTopLoc').textContent = scene.chapter || scene.loc || '——';
+  if ($('#dialogInner')) $('#dialogInner').innerHTML = '';
+  const lines = scene.lines || [];
+  for (let i = 0; i <= Math.min(state.lineIdx, lines.length-1); i++) {
+    const line = resolveLine(lines[i]);
+    const div = document.createElement('div');
+    div.className = 'line';
+    if (line.s) { const ch = CHARS[line.who] || { name: line.s }; div.innerHTML = '<div class="speaker">' + esc(ch.name) + '</div>' + (line.en?'<div class="en">'+esc(line.en)+'</div>':'') + '<div class="cn">' + esc(line.cn) + '</div>'; }
+    else if (line.me) { div.classList.add('monologue'); div.innerHTML = (line.en?'<div class="en">'+esc(line.en)+'</div>':'') + '<div class="cn">' + esc(line.me) + '</div>'; }
+    else { div.classList.add('narration'); div.innerHTML = '<div class="cn">' + esc(line.cn) + '</div>'; }
+    $('#dialogInner').appendChild(div);
+  }
+  if (scene.choices && state.lineIdx >= lines.length - 1) {
+    pushSnapshot(); state.choiceMarkers.push(state.snapshots.length - 1);
+    showChoices(scene.choices);
+  }
+  scrollToBottom(); saveNow();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §P 地图 + 地点进入
+   ═══════════════════════════════════════════════════════════ */
+let currentLocation = null;
+
+function renderMap(){
+  const main = $('#mapMain'); if (!main) return;
+  if ($('#mapSilver')) $('#mapSilver').textContent = '银镑 ' + (state?.stats?.silver || 0);
+  const locs = getAllLocations();
+  const byRegion = {};
+  locs.forEach(l => { const r = l.region || '其他'; if (!byRegion[r]) byRegion[r] = []; byRegion[r].push(l); });
+  let html = '';
+  for (const r in byRegion) {
+    html += '<div class="map-region"><div class="map-region-head">' + esc(r) + '</div><div class="map-grid">';
+    byRegion[r].forEach(l => {
+      const unlocked = isLocationUnlocked(l);
+      html += '<div class="map-card ' + (unlocked?'':'locked') + '" data-loc="' + l.key + '">' +
+        '<div class="map-card-ico">' + getLocationIcon(l.key) + '</div>' +
+        '<div class="map-card-name">' + esc(l.name) + '</div>' +
+        '<div class="map-card-desc">' + esc(l.desc) + '</div>' +
+        (unlocked ? '<div class="map-card-tag">◈ ' + (l.entries?.length || 0) + ' 处可去</div>' : '<div class="map-card-tag">未解锁</div>') +
+      '</div>';
+    });
+    html += '</div></div>';
+  }
+  main.innerHTML = html;
+  main.querySelectorAll('.map-card').forEach(card => {
+    card.onclick = () => {
+      const key = card.dataset.loc;
+      const loc = getAllLocations().find(x => x.key === key);
+      if (!loc) return;
+      if (!isLocationUnlocked(loc)) { Sfx.fail(); toast('尚未解锁','warn'); return; }
+      Sfx.click(); enterLocation(loc);
+    };
+  });
+}
+
+function enterLocation(loc){
+  currentLocation = loc;
+  showScreen('location');
+  const bg = $('#locBg');
+  if (bg) bg.className = 'scene-bg bg-' + (loc.bg || 'city');
+  if ($('#locTopName')) $('#locTopName').textContent = loc.name;
+  if ($('#locName')) $('#locName').textContent = loc.name;
+  if ($('#locDesc')) $('#locDesc').textContent = loc.desc;
+  const box = $('#locEntries');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!loc.entries || !loc.entries.length) {
+    box.innerHTML = '<div class="empty">这里还没有可交互的内容。<br>去工坊添加吧。</div>';
+    return;
+  }
+  loc.entries.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'loc-entry';
+    el.innerHTML = '<div class="loc-entry-ico">' + (entry.icon || '◆') + '</div>' +
+      '<div class="loc-entry-info"><div class="loc-entry-name">' + esc(entry.name) + '</div><div class="loc-entry-desc">' + esc(entry.desc || '') + '</div></div>';
+    el.onclick = () => {
+      Sfx.click();
+      if (entry.type === 'scene') playScene(entry.id);
+      else if (entry.type === 'minigame') openMinigame(entry.id);
+      else if (entry.type === 'character') openCharacterMenu(entry.id);
+    };
+    box.appendChild(el);
+  });
+}
+
+function openMinigame(id){
+  if (window.Minigames && window.Minigames.open) { window.Minigames.open(id); return; }
+  toast('小游戏模块加载中…', 'warn');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §Q 乙游
+   ═══════════════════════════════════════════════════════════ */
+function renderBondGrid(){
+  const grid = $('#bondGrid'); if (!grid) return;
+  const ids = ['tavana','movioa','lidia','elsia','fiman','cash','reifina'];
+  grid.innerHTML = '';
+  ids.forEach(id => {
+    const c = CHARS[id]; if (!c) return;
+    const aff = (state?.affection?.[id]) || 0;
+    const lv = getLevel(aff);
+    const el = document.createElement('div');
+    el.className = 'bond-card';
+    el.innerHTML =
+      '<div class="bond-card-avatar">' + c.sym + '</div>' +
+      '<div class="bond-card-name">' + esc(c.name) + '</div>' +
+      '<div class="bond-card-en">' + esc(c.en) + '</div>' +
+      '<div class="bond-card-title">' + esc(c.title || '') + '</div>' +
+      '<div class="bond-card-lv">' + esc(lv.name) + ' · ' + aff + '</div>' +
+      '<div class="bond-card-bar"><div class="bond-card-bar-fill" style="width:' + clamp(aff,0,100) + '%"></div></div>';
+    el.onclick = () => { Sfx.click(); openCharacterMenu(id); };
+    grid.appendChild(el);
+  });
+  if ($('#bondTopDesc')) $('#bondTopDesc').textContent = '已结识 ' + Object.keys(state?.affection || {}).length + ' 人';
+}
+
+function openCharacterMenu(id){
+  const c = CHARS[id]; if (!c) return;
+  const aff = (state?.affection?.[id]) || 0;
+  const lv = getLevel(aff);
+  const nextLv = LEVELS.find(l => l.min > aff);
+  const nextStr = nextLv ? ('距「' + nextLv.name + '」还差 ' + (nextLv.min - aff)) : '已达最高等级';
+  const cgs = getAllCGs().filter(cg => cg.charId === id);
+  let cgHTML = '';
+  if (cgs.length) {
+    cgHTML = '<div style="margin-top:14px;"><div style="font-size:11px;color:var(--gold-d);letter-spacing:.18em;margin-bottom:8px;">◈ 特殊剧情</div>';
+    cgs.forEach(cg => {
+      const unlocked = aff >= cg.need;
+      cgHTML += '<div class="cg-card" data-cg="' + cg.key + '">' +
+        '<div class="cg-card-title">' + (unlocked ? esc(cg.title) : '？？？') + '</div>' +
+        '<div class="cg-card-sub">' + (unlocked ? esc(cg.subtitle || '') : ('好感 ' + cg.need + ' 解锁')) + '</div>' +
+      '</div>';
+    });
+    cgHTML += '</div>';
+  }
+  openModal({
+    title: c.name,
+    body:
+      '<div class="char-hero">' +
+        '<div class="char-hero-av">' + c.sym + '</div>' +
+        '<div class="char-hero-name">' + esc(c.name) + '</div>' +
+        '<div class="char-hero-en">' + esc(c.en) + '</div>' +
+        '<div class="char-hero-title">' + esc(c.title || '') + '</div>' +
+        '<div class="char-hero-lv">' + esc(lv.name) + '</div>' +
+        '<div class="char-hero-lv-sub">' + esc(lv.en) + ' · ' + aff + ' / 100</div>' +
+        '<div class="char-hero-bar"><div class="char-hero-bar-fill" style="width:' + clamp(aff,0,100) + '%"></div></div>' +
+        '<div class="char-hero-next">' + esc(nextStr) + '</div>' +
+      '</div>' +
+      '<div class="char-desc">' + esc(c.desc) + '</div>' +
+      '<div class="char-actions">' +
+        '<button class="btn primary" data-act="chat">闲 聊</button>' +
+        '<button class="btn" data-act="deep">深 谈</button>' +
+        '<button class="btn" data-act="gift">送 礼</button>' +
+      '</div>' + cgHTML,
+    onMount: (w) => {
+      w.querySelector('[data-act="chat"]').onclick = () => { Sfx.click(); closeModal(w); startCharacterDialogue(id, 'chat'); };
+      w.querySelector('[data-act="deep"]').onclick = () => { Sfx.click(); closeModal(w); startCharacterDialogue(id, 'deep'); };
+      w.querySelector('[data-act="gift"]').onclick = () => { Sfx.click(); closeModal(w); openGiftPanel(id); };
+      w.querySelectorAll('.cg-card').forEach(cgEl => {
+        cgEl.onclick = () => {
+          const key = cgEl.dataset.cg;
+          const cg = getAllCGs().find(x => x.key === key);
+          if (!cg) return;
+          if (aff < cg.need) { Sfx.fail(); toast('好感度不足','warn'); return; }
+          Sfx.click(); closeModal(w); playCG(cg);
+        };
+      });
+    }
+  });
+}
+
+function startCharacterDialogue(id, mode){
+  const topics = getAllBondTopics().filter(t => t.charId === id && t.mode === mode);
+  if (!topics.length) { toast('此角色暂无「' + (mode==='deep'?'深谈':'闲聊') + '」内容', 'warn'); return; }
+  const aff = (state?.affection?.[id]) || 0;
+  const wrap = openModal({
+    title: CHARS[id].name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊'),
+    body:'<div style="margin-bottom:14px;font-size:11.5px;color:var(--text-d);letter-spacing:.06em;line-height:1.7;">' + (mode==='deep'?'好感越高，能聊的就越深。':'选一个话题开始。') + '</div><div id="topicList"></div>',
+    onMount: (w) => {
+      const box = w.querySelector('#topicList');
+      topics.forEach(t => {
+        const unlocked = aff >= (t.need || 0);
+        const el = document.createElement('div');
+        el.className = 'toc-item' + (unlocked?'':' locked');
+        el.style.marginBottom = '10px';
+        el.innerHTML = '<div class="toc-item-ico">' + (mode==='deep'?'♛':'♞') + '</div>' +
+          '<div class="toc-item-info"><div class="toc-item-title">' + esc(t.title) + '</div>' +
+          '<div class="toc-item-sub">' + (unlocked?'点击开始':'好感 ' + t.need + ' 解锁') + '</div></div>';
+        if (unlocked) el.onclick = () => { Sfx.click(); closeModal(wrap); playTopic(id, t); };
+        box.appendChild(el);
+      });
+    }
+  });
+}
+
+function playTopic(id, topic){
+  const lines = topic.lines.map(l => {
+    if (l.who === 'me') return { me: l.cn, en: l.en || '' };
+    const ch = CHARS[l.who];
+    return { s: ch ? ch.name : l.who, who: l.who, en: l.en || '', cn: l.cn };
+  });
+  const sceneId = '__topic_' + topic.key + '_' + Date.now();
+  SCENES[sceneId] = {
+    bg: 'tavern', loc: CHARS[id].name + ' · ' + (topic.mode==='deep'?'深谈':'闲聊'),
+    chapter: CHARS[id].name + ' · 对话',
+    lines,
+    onEnd: () => {
+      const gain = topic.mode === 'deep' ? 10 : 5;
+      const oldAff = state.affection[id] || 0;
+      state.affection[id] = oldAff + gain;
+      const oldLv = getLevel(oldAff), newLv = getLevel(state.affection[id]);
+      if (newLv.name !== oldLv.name) showLevelUp(newLv, state.affection[id], CHARS[id].name);
+      Sfx.unlock();
+      toast('◈ 与 ' + CHARS[id].name + ' 的亲密 +' + gain, 'ok');
+      saveNow();
+      setTimeout(()=>showScreen('bond'), 600);
+    }
+  };
+  playScene(sceneId);
+}
+
+function showLevelUp(newLv, value, charName){
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .6s var(--ease);background:radial-gradient(circle at 50% 50%,rgba(201,169,97,.25),transparent 70%);';
+  el.innerHTML = '<div style="text-align:center;">' +
+    '<div style="font-family:var(--f-deco);font-size:11px;letter-spacing:.5em;color:var(--gold-d);margin-bottom:18px;text-indent:.5em;">—— 亲 密 度 提 升 ——</div>' +
+    '<div style="font-family:var(--f-deco);font-size:clamp(30px,9vw,52px);font-weight:900;letter-spacing:.14em;color:var(--gold-b);text-shadow:0 0 36px rgba(201,169,97,.85);">' + esc(newLv.name) + '</div>' +
+    '<div style="font-family:var(--f-en);font-style:italic;font-size:16px;color:var(--gold-d);margin-top:8px;">' + esc(newLv.en) + '</div>' +
+    '<div style="font-family:var(--f-deco);font-size:12px;letter-spacing:.3em;color:var(--gold-b);margin-top:14px;">' + value + ' / 100 · ' + esc(charName || '') + '</div>' +
+  '</div>';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{ el.style.opacity='1'; });
+  setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(), 500); }, 2600);
+}
+
+function openGiftPanel(id){
+  const c = CHARS[id];
+  const gifts = getAllGifts();
+  let html = '<div style="margin-bottom:14px;font-size:11.5px;color:var(--text-d);letter-spacing:.06em;">选择礼物赠予 ' + esc(c.name) + '。喜欢的礼物能加更多好感。</div>';
+  gifts.forEach(g => {
+    const liked = (g.likes || []).includes(id);
+    html += '<div class="gift-item" data-key="' + g.key + '">' +
+      '<div class="gift-ico">' + (g.icon || '✦') + '</div>' +
+      '<div class="gift-info">' +
+        '<div class="gift-name">' + esc(g.name) + '</div>' +
+        '<div class="gift-meta">银镑 ' + g.cost + ' · 好感 +' + (liked ? (g.aff * 2) + ' (喜欢)' : g.aff) + '</div>' +
+        (liked ? '<div class="gift-like">◈ ' + esc(c.name) + ' 会喜欢这个</div>' : '') +
+      '</div>' +
+    '</div>';
+  });
+  const wrap = openModal({
+    title:'赠 礼 · ' + c.name,
+    body: html,
+    footHTML:'<button class="btn ghost" id="giftCancel">取消</button>',
+    onMount: (w) => {
+      w.querySelector('#giftCancel').onclick = () => { Sfx.click(); closeModal(w); };
+      w.querySelectorAll('.gift-item').forEach(el => {
+        el.onclick = () => {
+          const key = el.dataset.key;
+          const g = gifts.find(x => x.key === key);
+          if (!g) return;
+          if ((state.stats.silver || 0) < g.cost) { Sfx.fail(); toast('银镑不足','warn'); return; }
+          state.stats.silver -= g.cost;
+          const liked = (g.likes || []).includes(id);
+          const gain = liked ? g.aff * 2 : g.aff;
+          const oldAff = state.affection[id] || 0;
+          state.affection[id] = oldAff + gain;
+          Sfx.success(); closeModal(w);
+          const reaction = liked ? '「……这个？」' + c.name + ' 看了你一眼，把礼物收下了。' : '「谢谢。」' + c.name + ' 礼貌地收下了。';
+          const oldLv = getLevel(oldAff), newLv = getLevel(state.affection[id]);
+          if (newLv.name !== oldLv.name) showLevelUp(newLv, state.affection[id], c.name);
+          openModal({
+            title:'赠 礼 成 功',
+            body:'<div style="text-align:center;padding:20px 8px;">' +
+              '<div style="font-size:40px;color:var(--gold);margin-bottom:14px;">' + (g.icon || '✦') + '</div>' +
+              '<div style="font-size:13px;line-height:2;color:var(--text);">' + esc(reaction) + '<br>（亲密 +' + gain + '）</div>' +
+              (liked ? '<div style="margin-top:14px;font-size:11px;color:#d0a0b0;letter-spacing:.1em;">◈ 送到了对方喜欢的东西</div>' : '') +
+            '</div>',
+            footHTML:'<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">好的</button>'
+          });
+          saveNow();
+        };
+      });
+    }
+  });
+}
+
+function playCG(cg){
+  const lines = cg.lines.map(l => {
+    if (l.who === 'me') return { me: l.cn, en: l.en || '' };
+    if (l.s) return { s: l.s, en: l.en || '', cn: l.cn };
+    if (l.who) { const ch = CHARS[l.who]; return { s: ch ? ch.name : l.who, who: l.who, en: l.en || '', cn: l.cn }; }
+    return { cn: l.cn };
+  });
+  const sceneId = '__cg_' + cg.key + '_' + Date.now();
+  SCENES[sceneId] = {
+    bg: 'tavern', loc: cg.title, chapter: cg.subtitle || '特殊剧情',
+    lines,
+    onEnd: () => { Sfx.unlock(); toast('◈ 特殊剧情已完成：' + cg.title, 'ok'); saveNow(); setTimeout(()=>showScreen('bond'), 600); }
+  };
+  playScene(sceneId);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §R 目录（4 tab）
+   ═══════════════════════════════════════════════════════════ */
+let tocTab = 'main';
+function renderTOC(){
+  const tabs = $('#tocTabs'); if (!tabs) return;
+  const tabList = [
+    { id:'main', label:'主线' }, { id:'side', label:'支线 / 副本' },
+    { id:'bond', label:'乙游话题' }, { id:'loc', label:'地点' }
+  ];
+  tabs.innerHTML = tabList.map(t => '<button class="toc-tab ' + (t.id===tocTab?'active':'') + '" data-tab="' + t.id + '">' + t.label + '</button>').join('');
+  tabs.querySelectorAll('.toc-tab').forEach(b => { b.onclick = () => { Sfx.click(); tocTab = b.dataset.tab; renderTOC(); }; });
+  const group = $('#tocGroup'); if (!group) return;
+  group.innerHTML = '';
+
+  if (tocTab === 'main') {
+    const builtin = [
+      { id:'prologue_1', title:'序章 · 落日之都', subtitle:'初到城门', chapterKey:'prologue' },
+      { id:'manor_1', title:'第一章 · 塔瓦娜', subtitle:'面见院长', chapterKey:'ch1' }
+    ];
+    const userCh = userContent.chapters.filter(c => (c.type||'main') === 'main').map(c => ({ id:'user_chapter_' + c.key, title:c.title, subtitle:c.subtitle || '', chapterKey:c.key, userMade:true, _c:c }));
+    const all = builtin.concat(userCh);
+    all.forEach(item => {
+      const done = !!globalData.completedChapters?.[item.chapterKey];
+      const el = document.createElement('div');
+      el.className = 'toc-item';
+      el.innerHTML = '<div class="toc-item-ico">♕</div>' +
+        '<div class="toc-item-info"><div class="toc-item-title">' + esc(item.title) + '</div>' +
+        '<div class="toc-item-sub">' + esc(item.subtitle) + '</div></div>' +
+        '<div class="toc-item-state ' + (done?'done':'') + '">' + (done?'已完成':'未开始') + '</div>';
+      el.onclick = () => { Sfx.click(); if (SCENES[item.id]) playScene(item.id); else if (item.userMade) playUserChapter(item._c); };
+      group.appendChild(el);
+    });
+    if ($('#tocSub')) $('#tocSub').textContent = '主线 ' + all.length + ' 章';
+  } else if (tocTab === 'side') {
+    const sides = userContent.chapters.filter(c => c.type === 'side' || c.type === 'dungeon');
+    if (!sides.length) { group.innerHTML = '<div class="empty">还没有支线或副本。<br>去「剧情工坊」创建吧。</div>'; return; }
+    sides.forEach(c => {
+      const done = !!globalData.completedChapters?.[c.key];
+      const el = document.createElement('div');
+      el.className = 'toc-item';
+      el.innerHTML = '<div class="toc-item-ico">' + (c.type==='dungeon'?'☽':'✦') + '</div>' +
+        '<div class="toc-item-info"><div class="toc-item-title">' + esc(c.title) + '</div>' +
+        '<div class="toc-item-sub">' + esc(c.subtitle || c.location || '') + '</div></div>' +
+        '<div class="toc-item-state ' + (done?'done':'') + '">' + (c.type==='dungeon'?'副本':'支线') + '</div>';
+      el.onclick = () => { Sfx.click(); playUserChapter(c); };
+      group.appendChild(el);
+    });
+    if ($('#tocSub')) $('#tocSub').textContent = sides.length + ' 项';
+  } else if (tocTab === 'bond') {
+    const topics = getAllBondTopics();
+    const byChar = {};
+    topics.forEach(t => { if (!byChar[t.charId]) byChar[t.charId] = []; byChar[t.charId].push(t); });
+    let any = false;
+    for (const charId in byChar) {
+      any = true;
+      const c = CHARS[charId]; if (!c) continue;
+      const aff = (state?.affection?.[charId]) || 0;
+      const head = document.createElement('div');
+      head.style.cssText = 'margin:16px 0 8px;font-family:var(--f-deco);font-size:12px;letter-spacing:.2em;color:var(--gold-b);';
+      head.textContent = c.name + ' · 好感 ' + aff;
+      group.appendChild(head);
+      byChar[charId].forEach(t => {
+        const unlocked = aff >= (t.need||0);
+        const el = document.createElement('div');
+        el.className = 'toc-item' + (unlocked?'':' locked');
+        el.innerHTML = '<div class="toc-item-ico">' + (t.mode==='deep'?'♛':'♞') + '</div>' +
+          '<div class="toc-item-info"><div class="toc-item-title">' + esc(t.title) + '</div>' +
+          '<div class="toc-item-sub">' + (t.mode==='deep'?'深谈':'闲聊') + (unlocked?'':' · 好感 ' + t.need + ' 解锁') + '</div></div>';
+        if (unlocked) el.onclick = () => { Sfx.click(); playTopic(charId, t); };
+        group.appendChild(el);
+      });
+    }
+    if (!any) group.innerHTML = '<div class="empty">还没有任何乙游话题。</div>';
+    if ($('#tocSub')) $('#tocSub').textContent = topics.length + ' 个话题';
+  } else if (tocTab === 'loc') {
+    const locs = getAllLocations();
+    locs.forEach(l => {
+      const unlocked = isLocationUnlocked(l);
+      const el = document.createElement('div');
+      el.className = 'toc-item' + (unlocked?'':' locked');
+      el.innerHTML = '<div class="toc-item-ico">' + getLocationIcon(l.key) + '</div>' +
+        '<div class="toc-item-info"><div class="toc-item-title">' + esc(l.name) + '</div>' +
+        '<div class="toc-item-sub">' + esc(l.region || '') + (unlocked?'':' · 未解锁') + '</div></div>';
+      if (unlocked) el.onclick = () => { Sfx.click(); enterLocation(l); };
+      group.appendChild(el);
+    });
+    if ($('#tocSub')) $('#tocSub').textContent = locs.length + ' 个地点';
+  }
+}
+
+function playUserChapter(c){
+  const sceneId = 'user_scene_' + c.key;
+  if (!SCENES[sceneId]) {
+    const lines = (c.lines || []).map(l => {
+      if (l.type === 'n') return { cn: l.cn || '' };
+      if (l.type === 's') { const ch = CHARS[l.who]; return { s: ch ? ch.name : (l.char||'？？？'), who: l.who, en: l.en || '', cn: l.cn || '' }; }
+      if (l.type === 'me') return { me: l.cn || '', en: l.en || '' };
+      return { cn: l.cn || '' };
+    });
+    SCENES[sceneId] = {
+      bg: c.bg || 'city', loc: c.location || c.title, chapter: c.title,
+      lines,
+      onEnd: () => { globalData.completedChapters[c.key] = true; saveGlobal(); toast('◈ 完成：' + c.title, 'ok'); saveNow(); setTimeout(()=>showScreen('map'), 600); }
+    };
+  }
+  playScene(sceneId);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §S 记录（4 tab：人物 / 剧情 / 情报 / 结局）
+   ═══════════════════════════════════════════════════════════ */
+let logTab = 'char';
+function renderLog(){
+  const tabs = [
+    { id:'char', label:'人物' }, { id:'story', label:'剧情' },
+    { id:'intel', label:'情报' }, { id:'endings', label:'结局' }
+  ];
+  const tabsEl = $('#logTabs'); if (!tabsEl) return;
+  tabsEl.innerHTML = tabs.map(t => '<button class="log-tab ' + (t.id===logTab?'active':'') + '" data-tab="' + t.id + '">' + t.label + '</button>').join('');
+  tabsEl.querySelectorAll('.log-tab').forEach(b => { b.onclick = () => { Sfx.click(); logTab = b.dataset.tab; renderLog(); }; });
+  const body = $('#logBody'); if (!body) return;
+
+  if (logTab === 'char') {
+    let html = '<div class="char-grid">';
+    Object.keys(CHARS).forEach(id => {
+      if (id === 'narrator' || id === 'me') return;
+      const c = CHARS[id];
+      const aff = (state?.affection?.[id]) || 0;
+      const lv = getLevel(aff);
+      html += '<div class="char-card">' +
+        '<div class="char-head"><div class="char-avatar">' + c.sym + '</div>' +
+        '<div><div class="char-name">' + esc(c.name) + '</div>' +
+        '<div class="char-en">' + esc(c.en) + '</div>' +
+        '<div class="char-title">' + esc(c.title || '') + '</div></div></div>' +
+        '<div class="char-aff">' + esc(lv.name) + ' · ' + aff + ' / 100</div>' +
+        '<div class="char-desc">' + esc(c.desc) + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+    body.innerHTML = html;
+    if ($('#logSub')) $('#logSub').textContent = '已结识 ' + Object.keys(state?.affection || {}).length + ' 人';
+  } else if (logTab === 'story') {
+    if (!state?.log?.length) { body.innerHTML = '<div class="empty">还没有记录。</div>'; return; }
+    body.innerHTML = state.log.slice().reverse().map(l => {
+      if (l.type === 'choice') return '<div class="log-entry choice"><div class="le-cn">▸ ' + esc(l.text||l.cn||'') + '</div></div>';
+      const en = l.en ? '<div class="le-en">' + esc(l.en) + '</div>' : '';
+      return '<div class="log-entry"><span class="le-speaker">' + esc(l.speaker||'') + '</span>' + en + '<div class="le-cn">' + esc(l.cn||'') + '</div></div>';
+    }).join('');
+    if ($('#logSub')) $('#logSub').textContent = state.log.length + ' 条';
+  } else if (logTab === 'intel') {
+    body.innerHTML = INTEL_LIST.map(i => {
+      const done = i.done(state);
+      return '<div class="char-card" style="margin-bottom:10px;">' +
+        '<div class="char-name" style="margin-bottom:6px;">' + (done ? '◈' : '◇') + ' ' + esc(i.name) + '</div>' +
+        '<div class="char-desc" style="margin-top:0;padding-top:0;border:none;color:' + (done?'var(--text)':'var(--text-d)') + ';">' +
+          (done ? esc(i.desc) : '尚未解锁。继续探索剧情与地点。') +
+        '</div></div>';
+    }).join('');
+    if ($('#logSub')) $('#logSub').textContent = INTEL_LIST.filter(i => i.done(state)).length + ' / ' + INTEL_LIST.length;
+  } else if (logTab === 'endings') {
+    const all = Object.keys(CODEX.ending);
+    const got = Object.keys(globalData.seenEndings || {});
+    body.innerHTML = all.map(id => {
+      const e = CODEX.ending[id];
+      const on = got.includes(id);
+      return '<div class="char-card" style="margin-bottom:10px;">' +
+        '<div class="char-name" style="margin-bottom:6px;">' + (on ? '✦' : '◇') + ' ' + (on ? esc(e.name) : '？？？') + '</div>' +
+        '<div class="char-desc" style="margin-top:0;padding-top:0;border:none;">' + (on ? esc(e.desc) : '尚未达成') + '</div>' +
+      '</div>';
+    }).join('');
+    if ($('#logSub')) $('#logSub').textContent = got.length + ' / ' + all.length;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §T 设置（含性别/昵称/UID切换/登出）
+   ═══════════════════════════════════════════════════════════ */
+function renderSettings(){
+  if ($('#setUid')) $('#setUid').textContent = state?.uid || '——';
+  const main = $('#setMain'); if (!main) return;
+  const html =
+    '<div class="set-group">' +
+      '<div class="set-group-head">账 号 与 角 色</div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">UID</div></div><div class="set-ctrl"><span style="font-size:11px;color:var(--gold-d);">' + esc(state?.uid||'——') + '</span></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">主控姓名</div><div class="set-label-d">剧情中显示的正式名称</div></div><div class="set-ctrl"><input class="set-input" id="setName" value="' + esc(state?.player?.name||'记者') + '" maxlength="10"></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">角色昵称</div><div class="set-label-d">其他角色称呼你时使用</div></div><div class="set-ctrl"><input class="set-input" id="setNick" value="' + esc(state?.player?.nick||'记者') + '" maxlength="10"></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">性别</div><div class="set-label-d">影响部分剧情细节</div></div><div class="set-ctrl"><div class="seg" id="setGender">' +
+        ['女','男','不限'].map(g => '<button data-v="' + g + '" class="' + (state?.player?.gender===g?'active':'') + '">' + g + '</button>').join('') +
+      '</div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">性格</div><div class="set-label-d">影响内心独白</div></div><div class="set-ctrl"><div class="seg" id="setPers">' +
+        ['冷静','共情','直率','谨慎'].map(p => '<button data-v="' + p + '" class="' + (state?.player?.personality===p?'active':'') + '">' + p + '</button>').join('') +
+      '</div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">切换账号</div><div class="set-label-d">生成新 UID 并返回标题</div></div><div class="set-ctrl"><button class="mini-btn" id="setNewAcc">切换</button></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">登出</div><div class="set-label-d">返回封面页</div></div><div class="set-ctrl"><button class="mini-btn" id="setLogout">登出</button></div></div>' +
+    '</div>' +
+    '<div class="set-group">' +
+      '<div class="set-group-head">画 面 与 显 示</div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">日夜模式</div></div><div class="set-ctrl"><div class="seg" id="setTheme"><button data-v="night" class="' + (settings.theme==='night'?'active':'') + '">夜</button><button data-v="day" class="' + (settings.theme==='day'?'active':'') + '">日</button></div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">字号缩放</div></div><div class="set-ctrl"><input type="range" class="slider" id="setFontSize" min="0.85" max="1.3" step="0.05" value="' + settings.fontSize + '"></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">界面动画</div></div><div class="set-ctrl"><div class="switch ' + (settings.animations?'on':'') + '" id="setAnim"></div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">屏幕震动</div></div><div class="set-ctrl"><div class="switch ' + (settings.shake?'on':'') + '" id="setShake"></div></div></div>' +
+    '</div>' +
+    '<div class="set-group">' +
+      '<div class="set-group-head">声 音</div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">音效开关</div></div><div class="set-ctrl"><div class="switch ' + (settings.sfxOn?'on':'') + '" id="setSfxOn"></div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">音量</div></div><div class="set-ctrl"><input type="range" class="slider" id="setSfxVol" min="0" max="100" step="5" value="' + settings.sfxVol + '"></div></div>' +
+    '</div>' +
+    '<div class="set-group">' +
+      '<div class="set-group-head">剧 情</div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">文字速度</div></div><div class="set-ctrl"><div class="seg" id="setSpeed">' +
+        ['45','25','12','0'].map(v => '<button data-v="' + v + '" class="' + (String(settings.textSpeed)===v?'active':'') + '">' + ({'45':'慢','25':'中','12':'快','0':'瞬'}[v]) + '</button>').join('') +
+      '</div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">自动播放</div></div><div class="set-ctrl"><div class="switch ' + (settings.autoPlay?'on':'') + '" id="setAuto"></div></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">防误触保护</div></div><div class="set-ctrl"><div class="switch ' + (settings.confirmChoice?'on':'') + '" id="setConfirm"></div></div></div>' +
+    '</div>' +
+    '<div class="set-group">' +
+      '<div class="set-group-head">存 档 与 数 据</div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">手动存档</div><div class="set-label-d">3 个存档槽</div></div><div class="set-ctrl"><button class="mini-btn" id="setSave">管理</button></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">导出存档</div></div><div class="set-ctrl"><button class="mini-btn" id="setExport">导出</button></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">导入存档</div></div><div class="set-ctrl"><button class="mini-btn" id="setImport">导入</button></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">清除缓存 / 重置游戏</div></div><div class="set-ctrl"><button class="mini-btn danger" id="setReset">重置</button></div></div>' +
+      '<div class="set-row"><div class="set-label"><div class="set-label-t">关于本作</div></div><div class="set-ctrl"><button class="mini-btn" id="setAbout">查看</button></div></div>' +
+    '</div>';
+  main.innerHTML = html;
+
+  main.querySelector('#setName').onchange = (e) => { if (state) { state.player.name = (e.target.value||'记者').trim().slice(0,10) || '记者'; saveNow(); toast('◈ 姓名已更新','ok'); } };
+  main.querySelector('#setNick').onchange = (e) => { if (state) { state.player.nick = (e.target.value||'记者').trim().slice(0,10) || '记者'; saveNow(); toast('◈ 昵称已更新','ok'); } };
+  main.querySelectorAll('#setGender button').forEach(b => { b.onclick = () => { Sfx.click(); state.player.gender = b.dataset.v; main.querySelectorAll('#setGender button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); saveNow(); }; });
+  main.querySelectorAll('#setPers button').forEach(b => { b.onclick = () => { Sfx.click(); state.player.personality = b.dataset.v; main.querySelectorAll('#setPers button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); saveNow(); }; });
+  main.querySelector('#setNewAcc').onclick = () => { if (!confirm('切换账号将生成新 UID 并返回标题。当前进度已保存。')) return; saveNow(); if (state) state.uid = 'UID: ' + Math.floor(10000000 + Math.random() * 89999999); saveNow(); Sfx.click(); backToTitle(); };
+  main.querySelector('#setLogout').onclick = () => { Sfx.click(); saveNow(); backToTitle(); };
+  main.querySelectorAll('#setTheme button').forEach(b => { b.onclick = () => { Sfx.click(); settings.theme = b.dataset.v; main.querySelectorAll('#setTheme button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); applySettings(); saveSettings(); }; });
+  main.querySelector('#setFontSize').oninput = (e) => { settings.fontSize = parseFloat(e.target.value); applySettings(); saveSettings(); };
+  main.querySelector('#setAnim').onclick = (e) => { settings.animations = !settings.animations; e.target.classList.toggle('on', settings.animations); saveSettings(); };
+  main.querySelector('#setShake').onclick = (e) => { settings.shake = !settings.shake; e.target.classList.toggle('on', settings.shake); saveSettings(); };
+  main.querySelector('#setSfxOn').onclick = (e) => { settings.sfxOn = !settings.sfxOn; e.target.classList.toggle('on', settings.sfxOn); Sfx.ensure(); Sfx.click(); saveSettings(); };
+  main.querySelector('#setSfxVol').oninput = (e) => { settings.sfxVol = parseInt(e.target.value); saveSettings(); };
+  main.querySelectorAll('#setSpeed button').forEach(b => { b.onclick = () => { Sfx.click(); settings.textSpeed = parseInt(b.dataset.v); main.querySelectorAll('#setSpeed button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); saveSettings(); }; });
+  main.querySelector('#setAuto').onclick = (e) => { settings.autoPlay = !settings.autoPlay; e.target.classList.toggle('on', settings.autoPlay); saveSettings(); };
+  main.querySelector('#setConfirm').onclick = (e) => { settings.confirmChoice = !settings.confirmChoice; e.target.classList.toggle('on', settings.confirmChoice); saveSettings(); };
+  main.querySelector('#setSave').onclick = () => { Sfx.click(); openSaveManager(); };
+  main.querySelector('#setExport').onclick = () => { Sfx.click(); exportSave(); };
+  main.querySelector('#setImport').onclick = () => { Sfx.click(); importSave(); };
+  main.querySelector('#setReset').onclick = () => {
+    Sfx.click();
+    openModal({
+      title:'重 置 游 戏',
+      body:'<p style="font-size:13px;line-height:1.9;color:#d08a9c;">清空所有进度、好感度、银镑、用户内容。<br>此操作不可恢复。</p>',
+      footHTML:'<button class="btn ghost" id="rsCancel">取消</button><button class="btn danger" id="rsConfirm">确认清空</button>',
+      onMount: (w) => {
+        w.querySelector('#rsCancel').onclick = () => { Sfx.click(); closeModal(w); };
+        w.querySelector('#rsConfirm').onclick = () => { Sfx.fail(); try { localStorage.removeItem(K_SAVE); localStorage.removeItem(K_GLOBAL); localStorage.removeItem(K_USER); localStorage.removeItem(K_SLOTS); } catch(e){} closeModal(w); toast('◈ 已重置','warn'); setTimeout(()=>location.reload(), 900); };
+      }
+    });
+  };
+  main.querySelector('#setAbout').onclick = () => { Sfx.click(); openAbout(); };
+}
+
+/* 存档管理 */
+function getSlots(){ try { return JSON.parse(localStorage.getItem(K_SLOTS) || '{}'); } catch(e){ return {}; } }
+function setSlots(s){ try { localStorage.setItem(K_SLOTS, JSON.stringify(s)); } catch(e){} }
+
+function openSaveManager(){
+  const slots = getSlots();
+  let html = '';
+  for (let i = 1; i <= 3; i++) {
+    const s = slots[i];
+    if (s) {
+      const t = new Date(s.ts);
+      const time = t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      html += '<div style="border:1px solid var(--line);padding:12px 14px;margin-bottom:10px;background:rgba(201,169,97,.02);">' +
+        '<div style="font-size:13px;color:var(--gold-b);letter-spacing:.1em;margin-bottom:4px;">存档 ' + i + ' · ' + esc(s.chapterTitle || '未知章节') + '</div>' +
+        '<div style="font-size:10.5px;color:var(--text-d);letter-spacing:.04em;margin-bottom:4px;">' + time + ' · 银镑 ' + (s.silver||0) + '</div>' +
+        (s.preview ? '<div style="font-size:11px;color:var(--gold-d);line-height:1.6;font-style:italic;">「' + esc(s.preview) + '」</div>' : '') +
+        '<div style="display:flex;gap:6px;margin-top:8px;">' +
+          '<button class="mini-btn" data-load="' + i + '">读取</button>' +
+          '<button class="mini-btn" data-save="' + i + '">覆盖</button>' +
+          '<button class="mini-btn danger" data-del="' + i + '">删除</button>' +
+        '</div></div>';
+    } else {
+      html += '<div style="border:1px solid var(--line);padding:12px 14px;margin-bottom:10px;background:rgba(201,169,97,.02);">' +
+        '<div style="font-size:13px;color:var(--text-d);letter-spacing:.1em;font-style:italic;">存档 ' + i + ' · 空</div>' +
+        '<div style="display:flex;gap:6px;margin-top:8px;"><button class="mini-btn" data-save="' + i + '">保存</button></div></div>';
+    }
+  }
+  openModal({
+    title:'存 档',
+    body: html,
+    footHTML:'<button class="btn ghost" id="svClose">关闭</button>',
+    onMount: (w) => {
+      w.querySelector('#svClose').onclick = () => { Sfx.click(); closeModal(w); };
+      w.querySelectorAll('[data-save]').forEach(b => {
+        b.onclick = () => {
+          const slot = b.dataset.save;
+          const slots2 = getSlots();
+          const scene = state ? SCENES[state.sceneId] : null;
+          const chapterTitle = scene?.chapter || scene?.loc || '';
+          const preview = state?.log?.length ? (state.log[state.log.length-1].cn || '').slice(0, 40) : '';
+          slots2[slot] = {
+            ts: Date.now(), chapterTitle, silver: state?.stats?.silver || 0, preview,
+            data: JSON.parse(JSON.stringify({
+              uid: state.uid, player: state.player, stats: state.stats,
+              affection: state.affection, flags: state.flags, readLines: state.readLines,
+              log: state.log, sceneId: state.sceneId, lineIdx: state.lineIdx
+            }))
+          };
+          setSlots(slots2); Sfx.success(); toast('◈ 已保存至存档 ' + slot,'ok');
+          closeModal(w); setTimeout(openSaveManager, 200);
+        };
+      });
+      w.querySelectorAll('[data-load]').forEach(b => {
+        b.onclick = () => {
+          const s = getSlots()[b.dataset.load];
+          if (!s) return;
+          state = newState(s.data.player?.name || '记者');
+          Object.assign(state, JSON.parse(JSON.stringify(s.data)));
+          saveNow(); Sfx.success(); closeModal(w);
+          toast('◈ 已读取','ok');
+          if (state.sceneId && SCENES[state.sceneId]) playScene(state.sceneId);
+          else showScreen('map');
+        };
+      });
+      w.querySelectorAll('[data-del]').forEach(b => {
+        b.onclick = () => { if (!confirm('确定删除？')) return; const slots2 = getSlots(); delete slots2[b.dataset.del]; setSlots(slots2); Sfx.click(); closeModal(w); setTimeout(openSaveManager, 200); };
+      });
+    }
+  });
+}
+
+function exportSave(){
+  const data = {
+    meta:{ game:'nightfalling', v:4, ts:Date.now() },
+    state: state ? { uid:state.uid, player:state.player, stats:state.stats, affection:state.affection, flags:state.flags, readLines:state.readLines, log:state.log, sceneId:state.sceneId, lineIdx:state.lineIdx } : null,
+    slots: getSlots(),
+    user: userContent
+  };
+  const txt = JSON.stringify(data, null, 2);
+  openModal({
+    title:'导 出 存 档',
+    body:'<p style="font-size:12px;color:var(--text-d);margin-bottom:12px;">复制下方文本。包含进度、存档槽和所有自定义内容。</p><textarea class="inp" readonly style="height:200px;font-family:monospace;font-size:11px;" id="expTa">' + esc(txt) + '</textarea>',
+    footHTML:'<button class="btn ghost" id="expClose">关闭</button><button class="btn primary" id="expCopy">复制</button>',
+    onMount: (w) => {
+      w.querySelector('#expClose').onclick = () => { Sfx.click(); closeModal(w); };
+      w.querySelector('#expCopy').onclick = () => { const ta = w.querySelector('#expTa'); ta.select(); try { document.execCommand('copy'); Sfx.success(); toast('◈ 已复制','ok'); } catch(e){ toast('复制失败','warn'); } };
+    }
+  });
+}
+
+function importSave(){
+  openModal({
+    title:'导 入 存 档',
+    body:'<p style="font-size:12px;color:var(--text-d);margin-bottom:12px;">粘贴之前导出的 JSON。</p><textarea class="inp" id="impTa" placeholder="在此粘贴..." style="height:180px;font-family:monospace;font-size:11px;"></textarea>',
+    footHTML:'<button class="btn ghost" id="impCancel">取消</button><button class="btn primary" id="impOk">导入</button>',
+    onMount: (w) => {
+      w.querySelector('#impCancel').onclick = () => { Sfx.click(); closeModal(w); };
+      w.querySelector('#impOk').onclick = () => {
+        try {
+          const raw = w.querySelector('#impTa').value.trim();
+          const d = JSON.parse(raw);
+          if (d.state) { state = newState(d.state.player?.name || '记者'); Object.assign(state, d.state); }
+          if (d.slots) setSlots(d.slots);
+          if (d.user) { userContent = d.user; saveUser(); }
+          saveNow(); Sfx.success(); toast('◈ 导入成功','ok'); closeModal(w);
+          setTimeout(()=>location.reload(), 800);
+        } catch(e) { Sfx.fail(); toast('导入失败：JSON 错误','warn'); }
+      };
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §U 关于 + 档案馆 + 返回标题
+   ═══════════════════════════════════════════════════════════ */
+function openAbout(){
+  openModal({
+    title:'关 于 本 作',
+    body:
+      '<div style="text-align:center;margin-bottom:18px;">' +
+        '<div style="font-family:var(--f-deco);font-size:30px;color:var(--gold-b);letter-spacing:.2em;">入魇</div>' +
+        '<div style="font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--gold-d);margin-top:4px;">Nightfalling</div>' +
+        '<div style="font-size:10px;color:var(--text-d);letter-spacing:.2em;margin-top:8px;">v1.0.0</div>' +
+      '</div>' +
+      '<div style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 4px;text-align:center;margin-bottom:16px;">' +
+        '<p style="font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-b);line-height:1.7;">"Those who can see the sunset are the fortunate ones."</p>' +
+        '<p style="font-size:12px;color:var(--text-d);margin-top:6px;letter-spacing:.1em;">「能看见日落的人，是幸福的。」</p>' +
+      '</div>' +
+      '<p style="font-size:12.5px;line-height:2;color:var(--text);">' +
+        '<span style="color:var(--gold);">◆</span> 点击画面推进对话。<br>' +
+        '<span style="color:var(--gold);">◆</span> 剧情工具条可回溯、记录、自动、跳过、改名、导出。<br>' +
+        '<span style="color:var(--gold);">◆</span> 地图进入地点，触发剧情/小游戏/角色对话。<br>' +
+        '<span style="color:var(--gold);">◆</span> 「剧情工坊」可创建章节、副本、地点、乙游话题、礼物、CG。<br>' +
+        '<span style="color:var(--gold);">◆</span> 所有内容自动保存到本机。' +
+      '</p>',
+    footHTML:'<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>'
+  });
+}
+
+function openArchiveModal(){
+  openModal({
+    title:'档 案 馆',
+    body:
+      '<div class="arc-tabs" id="arcTabs"></div>' +
+      '<div style="display:flex;gap:0;min-height:440px;"><div id="arcList" style="flex:0 0 210px;overflow-y:auto;border-right:1px solid var(--line);padding:12px 0;"></div><div id="arcDetail" style="flex:1;overflow-y:auto;padding:22px 24px;"></div></div>',
+    wide: true,
+    footHTML:'<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>',
+    onMount: (w) => {
+      const tabsEl = w.querySelector('#arcTabs');
+      const tabs = [['character','人物'],['place','地点'],['faction','势力'],['intel','情报'],['task','任务'],['ending','结局'],['dungeon','副本']];
+      let arcTab = 'character';
+      const renderList = () => {
+        tabsEl.querySelectorAll('.arc-tab').forEach(x => x.classList.toggle('active', x.dataset.k === arcTab));
+        const listEl = w.querySelector('#arcList');
+        const detailEl = w.querySelector('#arcDetail');
+        const defs = CODEX[arcTab] || {};
+        listEl.innerHTML = '';
+        Object.keys(defs).forEach((k, i) => {
+          const def = defs[k];
+          const el = document.createElement('div');
+          el.style.cssText = 'padding:10px 18px;font-size:13px;cursor:pointer;color:var(--text);border-left:2px solid transparent;transition:all .28s var(--ease);letter-spacing:.06em;';
+          el.textContent = def.name || k;
+          el.onmouseenter = () => { el.style.background = 'rgba(201,169,97,.07)'; el.style.color = 'var(--gold)'; };
+          el.onmouseleave = () => { el.style.background = ''; el.style.color = 'var(--text)'; };
+          el.onclick = () => {
+            listEl.querySelectorAll('div').forEach(x => { x.style.color = 'var(--text)'; x.style.borderLeftColor = 'transparent'; x.style.background = ''; });
+            el.style.color = 'var(--gold-b)'; el.style.borderLeftColor = 'var(--gold)'; el.style.background = 'rgba(201,169,97,.09)';
+            detailEl.innerHTML = '<h3 style="font-family:var(--f-deco);font-size:17px;color:var(--gold-b);letter-spacing:.16em;font-weight:400;margin-bottom:6px;">' + esc(def.name) + '</h3>' +
+              (def.title ? '<div style="font-size:11px;color:var(--gold-d);letter-spacing:.24em;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--line);">' + esc(def.title) + '</div>' : '') +
+              '<p style="font-size:14px;line-height:2;color:var(--text);">' + esc(def.desc || '').replace(/\n/g,'<br>') + '</p>';
+          };
+          if (i === 0) setTimeout(()=>el.click(), 0);
+          listEl.appendChild(el);
+        });
+      };
+      tabs.forEach(([k, label]) => {
+        const b = document.createElement('button');
+        b.className = 'arc-tab';
+        b.dataset.k = k;
+        b.textContent = label;
+        b.style.cssText = 'background:none;border:none;border-bottom:2px solid transparent;color:var(--text-d);font-family:var(--f-cn);font-size:12.5px;letter-spacing:.18em;padding:13px 15px;cursor:pointer;transition:all .28s var(--ease);margin-bottom:-1px;';
+        b.onclick = () => { arcTab = k; tabsEl.querySelectorAll('.arc-tab').forEach(x => { x.style.color = 'var(--text-d)'; x.style.borderBottomColor = 'transparent'; }); b.style.color = 'var(--gold-b)'; b.style.borderBottomColor = 'var(--gold)'; renderList(); };
+        tabsEl.appendChild(b);
+      });
+      tabsEl.style.cssText = 'display:flex;gap:0;border-bottom:1px solid var(--line);padding:0 20px;flex-wrap:wrap;margin-bottom:0;';
+      renderList();
+    }
+  });
+}
+
+function backToTitle(){
+  closeAllModals(); stopTyping(); clearTimeout(autoTimer);
+  showScreen('title');
+  const nav = $('#bottomNav'); if (nav) nav.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §V 新游戏 / 继续
+   ═══════════════════════════════════════════════════════════ */
+function startNewGame(){
+  openModal({
+    title:'新 的 旅 程',
+    body:
+      '<div style="text-align:center;">' +
+        '<p style="font-size:12px;color:var(--text-d);margin-bottom:14px;letter-spacing:.12em;">请为记者留下姓名</p>' +
+        '<input class="inp" id="newName" placeholder="记者" value="记者" maxlength="10" style="text-align:center;margin-bottom:12px;">' +
+        '<p style="font-size:11px;color:var(--text-d);letter-spacing:.08em;margin-bottom:8px;">角色昵称（其他角色称呼你时使用）</p>' +
+        '<input class="inp" id="newNick" placeholder="记者" value="" maxlength="10" style="text-align:center;margin-bottom:16px;">' +
+        '<p style="font-size:11px;color:var(--text-d);letter-spacing:.08em;margin-bottom:8px;">性别</p>' +
+        '<div class="seg" id="newGender" style="display:inline-flex;margin-bottom:16px;">' +
+          ['女','男','不限'].map((g, i) => '<button data-v="' + g + '" class="' + (i===2?'active':'') + '">' + g + '</button>').join('') +
+        '</div>' +
+        '<p style="font-size:11px;color:var(--text-d);letter-spacing:.08em;margin-bottom:8px;">性格（影响独白）</p>' +
+        '<div class="seg" id="newPers" style="display:inline-flex;">' +
+          ['冷静','共情','直率','谨慎'].map((p, i) => '<button data-v="' + p + '" class="' + (i===0?'active':'') + '">' + p + '</button>').join('') +
+        '</div>' +
+      '</div>',
+    footHTML:'<button class="btn ghost" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">取消</button><button class="btn primary" id="newStart">启 程</button>',
+    onMount: (w) => {
+      let gender = '不限', pers = '冷静';
+      w.querySelectorAll('#newGender button').forEach(b => { b.onclick = () => { gender = b.dataset.v; w.querySelectorAll('#newGender button').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
+      w.querySelectorAll('#newPers button').forEach(b => { b.onclick = () => { pers = b.dataset.v; w.querySelectorAll('#newPers button').forEach(x => x.classList.remove('active')); b.classList.add('active'); }; });
+      w.querySelector('#newStart').onclick = () => {
+        const name = (w.querySelector('#newName').value || '记者').trim().slice(0,10) || '记者';
+        const nick = (w.querySelector('#newNick').value || name).trim().slice(0,10) || name;
+        state = newState(name);
+        state.player.nick = nick;
+        state.player.gender = gender;
+        state.player.personality = pers;
+        saveNow(); Sfx.success(); closeModal(w);
+        setTimeout(() => playScene('prologue_1'), 300);
+      };
+    }
+  });
+}
+
+function continueGame(){
+  const d = loadSaved();
+  if (!d) { toast('没有可继续的进度', 'warn'); return; }
+  state = newState(d.player?.name || '记者');
+  state.uid = d.uid || state.uid;
+  state.player = Object.assign(state.player, d.player || {});
+  state.stats = Object.assign(state.stats, d.stats || {});
+  state.affection = d.affection || {};
+  state.flags = d.flags || {};
+  state.readLines = d.readLines || {};
+  state.log = d.log || [];
+  state.sceneId = d.sceneId;
+  state.lineIdx = typeof d.lineIdx === 'number' ? d.lineIdx : 0;
+  if (state.sceneId && SCENES[state.sceneId]) {
+    playSceneFromSnapshot();
+    toast('◈ 已继续上次进度', 'ok');
+  } else { showScreen('map'); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §W 事件绑定
+   ═══════════════════════════════════════════════════════════ */
+function bindEvents(){
+  /* 标题页按钮 */
+  $$('#screen-title [data-act]').forEach(btn => {
+    btn.onclick = () => {
+      try { Sfx.ensure(); Sfx.click(); } catch(e){}
+      const act = btn.dataset.act;
+      if (act === 'new') startNewGame();
+      else if (act === 'continue') continueGame();
+      else if (act === 'toc') { if (!state) state = newState('记者'); showScreen('toc'); }
+      else if (act === 'workshop') { if (!state) state = newState('记者'); showScreen('workshop'); }
+      else if (act === 'archive') openArchiveModal();
+      else if (act === 'about') openAbout();
+    };
+  });
+  /* 底部导航 */
+  $$('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+      Sfx.click();
+      if (!state) state = newState('记者');
+      const nav = btn.dataset.nav;
+      if (nav === 'game') {
+        if (state.sceneId && SCENES[state.sceneId]) showScreen('game');
+        else { toast('还没有进行中的剧情，从地图进入地点开始吧'); showScreen('map'); }
+      } else showScreen(nav);
+    };
+  });
+  /* 顶栏全局 data-act 按钮 */
+  document.addEventListener('click', (e) => {
+    const tb = e.target.closest('[data-act]');
+    if (!tb) return;
+    const act = tb.dataset.act;
+    if (act === 'map') { Sfx.click(); showScreen('map'); }
+    else if (act === 'archive') { Sfx.click(); openArchiveModal(); }
+    else if (act === 'toc') { Sfx.click(); showScreen('toc'); }
+    else if (act === 'workshop') { Sfx.click(); showScreen('workshop'); }
+    else if (act === 'home') { Sfx.click(); backToTitle(); }
+  });
+  /* 剧情工具条 */
+  const br = $('#btnRewind'); if (br) br.onclick = () => { Sfx.click(); rewindToLastChoice(); };
+  const bh = $('#btnHistory'); if (bh) bh.onclick = () => { Sfx.click(); openStoryLog(); };
+  const ba = $('#btnAuto'); if (ba) ba.onclick = () => {
+    settings.autoPlay = !settings.autoPlay;
+    ba.classList.toggle('active', settings.autoPlay);
+    saveSettings();
+    toast(settings.autoPlay ? '◈ 自动播放已开启' : '◈ 自动播放已关闭');
+    if (settings.autoPlay && !typingState.active) autoTimer = setTimeout(advanceLine, 2000);
+  };
+  const bs = $('#btnSkip'); if (bs) bs.onclick = () => {
+    const scene = SCENES[state?.sceneId]; if (!scene) return;
+    const lines = scene.lines || [];
+    state.lineIdx = lines.length - 1;
+    if (scene.choices && scene.choices.length) { pushSnapshot(); state.choiceMarkers.push(state.snapshots.length - 1); showChoices(scene.choices); }
+    else if (scene.next) playScene(scene.next);
+    else if (scene.onEnd) scene.onEnd();
+  };
+  const brn = $('#btnRename'); if (brn) brn.onclick = () => {
+    Sfx.click();
+    if (!state) return;
+    openModal({
+      title:'修 改 姓 名 / 昵 称',
+      body:
+        '<input class="inp" id="rnName" placeholder="姓名" value="' + esc(state.player.name) + '" maxlength="10" style="margin-bottom:10px;text-align:center;">' +
+        '<input class="inp" id="rnNick" placeholder="昵称" value="' + esc(state.player.nick) + '" maxlength="10" style="text-align:center;">',
+      footHTML:'<button class="btn ghost" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">取消</button><button class="btn primary" id="rnOk">确认</button>',
+      onMount: (w) => {
+        w.querySelector('#rnOk').onclick = () => {
+          state.player.name = (w.querySelector('#rnName').value || '记者').trim().slice(0,10) || '记者';
+          state.player.nick = (w.querySelector('#rnNick').value || state.player.name).trim().slice(0,10) || state.player.name;
+          saveNow(); closeModal(w); toast('◈ 已更新','ok');
+        };
+      }
+    });
+  };
+  const be = $('#btnExport'); if (be) be.onclick = () => { Sfx.click(); exportSave(); };
+  const bH = $('#btnHome'); if (bH) bH.onclick = () => { Sfx.click(); if (confirm('返回标题？当前进度已自动保存。')) { saveNow(); backToTitle(); } };
+  /* 点击推进 */
+  const stage = $('#stage');
+  if (stage) stage.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    if ($('#choices')?.classList.contains('active')) return;
+    if (!state || state.screen !== 'game') return;
+    advanceLine();
+  });
+  /* 键盘 */
+  document.addEventListener('keydown', (e) => {
+    if (modalStack.length) { if (e.key === 'Escape') closeModal(); return; }
+    if (state?.screen === 'game') {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!$('#choices')?.classList.contains('active')) advanceLine(); }
+    }
+  });
+}
+
+function openStoryLog(){
+  const html = (state?.log || []).slice().reverse().map(l => {
+    if (l.type === 'choice') return '<div style="color:var(--gold);font-size:12.5px;padding:8px 12px;border-left:2px solid var(--line-s);background:rgba(201,169,97,.05);margin-bottom:10px;">▸ ' + esc(l.text||l.cn||'') + '</div>';
+    const en = l.en ? '<div style="font-family:var(--f-en);font-style:italic;font-size:12px;color:var(--gold-b);margin-bottom:2px;">' + esc(l.en) + '</div>' : '';
+    const sp = l.speaker ? '<div style="font-family:var(--f-deco);font-size:10.5px;color:var(--gold-b);letter-spacing:.14em;margin-bottom:3px;">' + esc(l.speaker) + '</div>' : '';
+    return '<div style="margin-bottom:12px;">' + sp + en + '<div style="font-size:13px;color:var(--text);line-height:1.75;">' + esc(l.cn||'') + '</div></div>';
+  }).join('') || '<div class="empty">还没有记录。</div>';
+  openModal({
+    title:'对 话 记 录', body: html,
+    footHTML:'<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>'
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   §X 暴露给外部模块
+   ═══════════════════════════════════════════════════════════ */
+window.NF = {
+  state: () => state,
+  settings: () => settings,
+  userContent: () => userContent,
+  saveUser, saveNow, saveSettings, applySettings,
+  openModal, closeModal, toast, Sfx, showScreen, backToTitle,
+  playScene, playUserChapter, showLevelUp, getLevel, LEVELS,
+  CHARS, SYMBOLS, LOCATIONS, CODEX, BOND_TOPICS_BUILTIN, GIFTS_BUILTIN, CGS_BUILTIN, SCENES,
+  getAllLocations, isLocationUnlocked, getLocationIcon,
+  getAllBondTopics, getAllGifts, getAllCGs,
+  renderMap, renderBondGrid, renderTOC, renderLog, renderSettings, openArchiveModal,
+  startNewGame, continueGame
+};
+
+/* ═══════════════════════════════════════════════════════════
+   §Y 初始化
+   ═══════════════════════════════════════════════════════════ */
+(function init(){
+  try {
+    const title = document.getElementById('screen-title');
+    if (title) { title.classList.add('active'); title.style.opacity = '1'; }
+    loadSettings(); loadGlobal(); loadUser();
+    bindEvents(); updateNav('game');
+    console.log('%c入魇 · Nightfalling', 'color:#c9a961;font-size:18px;letter-spacing:6px;');
+    console.log('%c「能看见日落的人，是幸福的。」', 'color:#8a8070;font-size:11px;font-style:italic;');
+    console.log('%cv1.0.0 · GSAP=' + (HAS_GSAP() ? 'loaded' : 'fallback') + ' · 符号库 ' + Object.keys(window.SYMBOLS).reduce((s,k)=>s+window.SYMBOLS[k].length,0) + ' 个', 'color:#7a6636;font-size:10px;');
+    const initAudio = () => { try { Sfx.ensure(); } catch(e){}; document.removeEventListener('touchstart', initAudio); document.removeEventListener('click', initAudio); };
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('click', initAudio, { once: true });
+  } catch(e) { console.error('init error', e); }
+})();
+</script>
+
+<!-- 外部模块（下批交付） -->
+<!-- <script src="workshop.js"></script> -->
+<!-- <script src="minigames.js"></script> -->
 </body>
 </html>
