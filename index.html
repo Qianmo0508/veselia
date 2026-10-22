@@ -7,16 +7,403 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css">
+<style>
+/* ================= 基础样式 ================= */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{ --font-scale: 1; --f-en: "Cormorant Garamond", Georgia, serif; --f-deco: "Cinzel Decorative", serif; --f-cn: "Noto Serif SC", "Songti SC", serif; }
+html[data-theme="light"] { --bg-grad: linear-gradient(180deg, #F2E8D5 0%, #E3D5BE 100%); --panel-bg: rgba(250, 245, 235, 0.98); --text-main: #3E362E; --text-dim: #7A6F61; --accent: #A67C52; --accent-glow: rgba(166, 124, 82, 0.3); --border: rgba(166, 124, 82, 0.4); --nav-bg: #EAE0CD; --shadow: 0 10px 30px rgba(0,0,0,0.08); }
+html[data-theme="dark"] { --bg-grad: linear-gradient(180deg, #141019 0%, #08060A 100%); --panel-bg: rgba(28, 20, 38, 0.95); --text-main: #D8CFBE; --text-dim: #8A8070; --accent: #C9A961; --accent-glow: rgba(201, 169, 97, 0.3); --border: rgba(201, 169, 97, 0.3); --nav-bg: #110b19; --shadow: 0 10px 30px rgba(0,0,0,0.6); }
+
+html, body { height: 100%; overflow: hidden; background: var(--bg-grad); color: var(--text-main); font-family: var(--f-cn); font-size: calc(15px * var(--font-scale)); line-height: 1.6; transition: background 0.4s; -webkit-font-smoothing: antialiased; }
+#app { position: relative; height: 100%; display: flex; flex-direction: column; }
+
+/* ================= 布局与导航 ================= */
+.top-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1); }
+.user-info { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--accent); background: var(--panel-bg); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+.user-name { font-size: 1.1rem; font-weight: 600; font-family: var(--f-en); }
+.user-currency { font-size: 0.9rem; color: var(--accent); font-family: var(--f-en); font-style: italic; }
+.screen-container { flex: 1; position: relative; overflow-y: auto; }
+.bottom-nav { display: flex; justify-content: space-around; align-items: center; height: 65px; background: var(--nav-bg); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom); }
+.nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-dim); font-size: 0.8rem; gap: 4px; cursor: pointer; transition: all 0.3s; }
+.nav-item.active { color: var(--accent); font-weight: bold; transform: translateY(-2px); }
+.nav-icon { font-size: 1.5rem; }
+
+/* ================= 主界面 ================= */
+.home-container { display: flex; flex-direction: column; height: 100%; padding: 20px; align-items: center; }
+.home-clock { font-family: var(--f-deco); font-size: 4.5rem; color: var(--accent); line-height: 1; margin-top: 20px; text-shadow: 0 0 20px var(--accent-glow); }
+.home-date { font-family: var(--f-en); font-style: italic; font-size: 1.2rem; color: var(--text-dim); margin-bottom: 30px; }
+.home-title-en { font-family: var(--f-deco); font-size: 2.5rem; color: var(--accent); line-height: 1.1; text-shadow: 0 0 20px var(--accent-glow); }
+.home-title-cn { font-size: 1rem; color: var(--text-dim); letter-spacing: 0.5em; margin-top: 10px; margin-bottom: 30px; }
+.deco-box { position: relative; border: 1px solid var(--border); background: var(--panel-bg); width: 100%; max-width: 400px; padding: 20px; margin-bottom: 15px; box-shadow: var(--shadow); }
+.deco-box::before, .deco-box::after { content: ''; position: absolute; width: 15px; height: 15px; border: 2px solid var(--accent); opacity: 0.7; }
+.deco-box::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.deco-box::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+.home-quest h3 { color: var(--accent); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed var(--border); padding-bottom: 8px; font-family: var(--f-en); }
+.quick-links { display: flex; gap: 10px; width: 100%; max-width: 400px; margin-bottom: 15px; }
+.quick-btn { flex: 1; padding: 12px; text-align: center; border: 1px solid var(--border); background: rgba(128,128,128,0.05); color: var(--text-main); border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.quick-btn:active { background: var(--accent-glow); transform: scale(0.98); }
+.quick-btn span { font-size: 1.4rem; }
+
+/* ================= 按钮与弹窗 ================= */
+.btn { padding: 12px 24px; border: 1px solid var(--accent); background: transparent; color: var(--accent); font-size: 1rem; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-family: var(--f-cn); display: block; width: 100%; margin-bottom: 10px; text-align: center;}
+.btn:active { background: var(--accent-glow); transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: var(--nav-bg); font-weight: bold; }
+.btn-danger { border-color: #8b2f4f; color: #c07a92; }
+
+.overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { width: 100%; max-width: 440px; max-height: 85vh; background: var(--panel-bg); border: 1px solid var(--accent); border-radius: 8px; box-shadow: var(--shadow); display: flex; flex-direction: column; animation: slideUp 0.3s; }
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:none;opacity:1} }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 1.2rem; color: var(--accent); font-weight: bold; font-family: var(--f-en);}
+.modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+.modal-body { padding: 20px; overflow-y: auto; }
+.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+
+/* 子地点列表（修复点不动的核心：改为显眼的按钮组） */
+.sub-list { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.sub-btn { padding: 14px; background: rgba(128,128,128,0.1); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 1rem; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+.sub-btn:active { background: var(--accent-glow); }
+.sub-btn::after { content: '➔'; color: var(--accent); }
+
+/* 角色列表 */
+.char-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+.char-card { background: rgba(128,128,128,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; }
+.char-card:active { background: var(--accent-glow); }
+.char-avatar { font-size: 2rem; margin-bottom: 5px; }
+.char-name { font-size: 0.95rem; color: var(--accent); font-weight: bold; }
+
+/* 设置界面 */
+.settings-group { margin-bottom: 25px; }
+.settings-group h3 { color: var(--accent); font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; }
+.setting-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed rgba(128,128,128,0.2); }
+.setting-input { width: 120px; text-align: right; border: none; border-bottom: 1px solid var(--border); background: transparent; color: var(--text-main); outline: none; }
+.switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; inset: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--accent); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* 战斗与玩法 */
+.dialog-en { font-family: var(--f-en); font-size: 1.25rem; font-style: italic; border-left: 2px solid var(--border); padding-left: 10px; margin-bottom: 10px; }
+.dialog-cn { font-size: 1rem; color: var(--text-dim); padding-left: 12px; }
+.battle-enemy { text-align: center; margin-bottom: 20px; }
+.enemy-name { color: #c07a92; font-size: 1.2rem; font-weight: bold; }
+.hp-bar-container { width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin-top: 5px; }
+.hp-bar-fill { height: 100%; background: linear-gradient(90deg, #8b2f4f, #c07a92); transition: width 0.3s; }
+.player-san-bar { margin: 15px 0; font-size: 0.9rem; color: var(--text-dim); }
+.battle-log { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 10px; min-height: 80px; font-size: 0.9rem; margin-bottom: 15px; color: var(--text-dim); }
+#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 200; pointer-events: none; }
+.toast-msg { background: var(--panel-bg); border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; border-radius: 20px; box-shadow: var(--shadow); margin-bottom: 10px; animation: slideDown 0.3s; }
+@keyframes slideDown { from{transform:translateY(-20px);opacity:0} to{transform:none;opacity:1} }
+</style>
 </head>
 <body data-theme="dark">
 <div id="app"></div>
-<script src="js/engine/audio.js"></script>
-<script src="js/data/world.js"></script>
-<script src="js/engine/state.js"></script>
-<script src="js/engine/gameplay.js"></script> <!-- 新增玩法引擎 -->
-<script src="js/engine/ui.js"></script>
-<script src="js/engine/map.js"></script>
-<script src="js/main.js"></script>
+
+<script>
+/* ================= 数据与状态 ================= */
+const WORLD = {
+  locations: [
+    { id:'solma', name:'落日之都', desc:'帝国的中心。煤气灯沿着青石板路一盏盏亮起。', subs:[ 
+      { id:'tavern', name:'日不落酒馆', gameType:'tavern' }, 
+      { id:'archive', name:'管理院总部', gameType:'archive' },
+      { id:'ginkgo', name:'银杏林', gameType:'dream' } 
+    ]},
+    { id:'elynburg', name:'伊林堡', desc:'一半黑曜石、一半白大理石的城堡。', subs:[ 
+      { id:'chess', name:'棋局厅', gameType:'chess' }
+    ]},
+    { id:'catrin', name:'卡特琳教堂', desc:'尖顶刺向灰蒙蒙的天空。', subs:[ 
+      { id:'church', name:'大教堂', gameType:'church' } 
+    ]}
+  ]
+};
+
+const CHARACTERS = [
+  { id:'tavana', name:'塔瓦娜', en:'Tavana' }, { id:'cash', name:'卡什', en:'Cash' },
+  { id:'mauvia', name:'莫维奥娅', en:'Mauvia' }, { id:'fiman', name:'菲曼', en:'Fiman' }
+];
+
+let G_STATE = { san: 100, node: 0, enemy: null };
+
+/* ================= 本地存储与音效 ================= */
+const STORE = { ACC: 'veselia_acc_v1', SET: 'veselia_set_v1' };
+function getAcc() { return JSON.parse(localStorage.getItem(STORE.ACC)) || null; }
+function saveAcc(acc) { localStorage.setItem(STORE.ACC, JSON.stringify(acc)); }
+function getSet() { return JSON.parse(localStorage.getItem(STORE.SET)) || { theme: 'dark', sfx: true }; }
+function saveSet(s) { localStorage.setItem(STORE.SET, JSON.stringify(s)); }
+
+const AudioEngine = {
+  ctx: null,
+  playClick() {
+    if(!getSet().sfx) return;
+    if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if(this.ctx.state === 'suspended') this.ctx.resume();
+    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+  }
+};
+document.addEventListener('pointerdown', () => AudioEngine.playClick());
+
+/* ================= 核心 UI 控制 ================= */
+const UI = {
+  app: document.getElementById('app'),
+  tab: 'home',
+
+  init() {
+    const s = getSet();
+    document.documentElement.setAttribute('data-theme', s.theme);
+    const acc = getAcc();
+    if(acc) this.renderHome(); else this.renderLogin();
+  },
+
+  nav(tab) {
+    this.tab = tab;
+    if(tab === 'home') this.renderHome();
+    if(tab === 'map') this.renderMap();
+    if(tab === 'settings') this.renderSettings();
+  },
+
+  layout(html, showNav = true) {
+    const acc = getAcc();
+    let top = acc && showNav ? `
+      <div class="top-bar">
+        <div class="user-info">
+          <div class="avatar">◈</div>
+          <div><div class="user-name">${acc.hero}</div><div class="user-currency">✦ ${acc.silver} 银镑</div></div>
+        </div>
+        <button style="background:none;border:none;font-size:1.5rem;color:var(--text-dim)" onclick="UI.nav('settings')">⚙️</button>
+      </div>` : '';
+    let nav = showNav ? `
+      <div class="bottom-nav">
+        <div class="nav-item ${this.tab==='home'?'active':''}" onclick="UI.nav('home')"><span class="nav-icon">🏛️</span><span>主页</span></div>
+        <div class="nav-item ${this.tab==='map'?'active':''}" onclick="UI.nav('map')"><span class="nav-icon">🗺️</span><span>大陆</span></div>
+        <div class="nav-item ${this.tab==='settings'?'active':''}" onclick="UI.nav('settings')"><span class="nav-icon">⚙️</span><span>设置</span></div>
+      </div>` : '';
+    this.app.innerHTML = `${top}<div class="screen-container">${html}</div>${nav}`;
+  },
+
+  toast(msg) {
+    let t = document.getElementById('toast');
+    if(!t) { t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+    t.innerHTML = `<div class="toast-msg">${msg}</div>`;
+    setTimeout(() => t.innerHTML = '', 2000);
+  },
+
+  /* --- 页面渲染 --- */
+  renderLogin() {
+    this.layout(`
+      <div class="home-container" style="justify-content:center">
+        <div class="home-title-en">Nightfalling</div>
+        <div class="home-title-cn">入 魇</div>
+        <div class="deco-box">
+          <div class="settings-group"><h3>创建档案</h3>
+            <div class="setting-item"><span>主控姓名</span><input class="setting-input" id="heroName" value="记者"></div>
+          </div>
+          <button class="btn btn-primary" onclick="UI.createAcc()">开始旅程</button>
+        </div>
+      </div>`, false);
+  },
+  createAcc() {
+    const name = document.getElementById('heroName').value || '记者';
+    saveAcc({ hero: name, silver: 50, affection: {} });
+    this.renderHome();
+  },
+
+  renderHome() {
+    const d = new Date(); const time = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    this.layout(`
+      <div class="home-container">
+        <div class="home-clock">${time}</div>
+        <div class="home-date">${d.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'})}</div>
+        <div class="home-title-en">Nightfalling</div>
+        <div class="home-title-cn">入 魇</div>
+        <div class="deco-box home-quest"><h3>Objective · 目标</h3><p>前往【大陆】探索各个地点，收集“封印松动”的线索。</p></div>
+        <div class="deco-box"><h3>World Info · 世界观</h3><p style="font-size:0.85rem;color:var(--text-dim)">维塞利亚大陆，魇灾降临三百年。你是来自王翼的记者，奉命调查这吞噬灵魂的噩梦。</p></div>
+      </div>
+    `);
+  },
+
+  renderSettings() {
+    const s = getSet();
+    this.layout(`
+      <div style="padding:20px">
+        <div class="settings-group"><h3>画面</h3>
+          <div class="setting-item"><span>夜间模式</span>
+            <label class="switch"><input type="checkbox" ${s.theme==='dark'?'checked':''} onchange="UI.toggleTheme(this.checked)"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div class="settings-group"><h3>声音</h3>
+          <div class="setting-item"><span>游戏音效</span>
+            <label class="switch"><input type="checkbox" ${s.sfx?'checked':''} onchange="UI.toggleSfx(this.checked)"><span class="slider"></span></label>
+          </div>
+        </div>
+        <button class="btn btn-danger" onclick="localStorage.clear();location.reload()">清除所有存档</button>
+      </div>
+    `);
+  },
+  toggleTheme(isDark) { let s = getSet(); s.theme = isDark ? 'dark' : 'light'; saveSet(s); document.documentElement.setAttribute('data-theme', s.theme); },
+  toggleSfx(on) { let s = getSet(); s.sfx = on; saveSet(s); },
+
+  renderMap() {
+    this.layout(`
+      <div style="padding:20px">
+        ${WORLD.locations.map(l => `<button class="btn" style="text-align:left;padding:20px" onclick="UI.openLoc('${l.id}')">📍 ${l.name}</button>`).join('')}
+      </div>
+    `);
+  },
+
+  /* --- 核心交互：地点与弹窗 --- */
+  openLoc(id) {
+    const loc = WORLD.locations.find(l => l.id === id);
+    let html = `<p style="color:var(--text-dim);margin-bottom:15px">${loc.desc}</p><div class="sub-list">`;
+    loc.subs.forEach((sub, i) => {
+      html += `<div class="sub-btn" onclick="UI.openSub('${loc.id}', ${i})">${sub.name}</div>`;
+    });
+    html += `</div>`;
+    this.modal(loc.name, html);
+  },
+
+  openSub(parentId, idx) {
+    const parent = WORLD.locations.find(l => l.id === parentId);
+    const sub = parent.subs[idx];
+    this.closeModal();
+    if(sub.gameType === 'tavern') this.gameTavern();
+    if(sub.gameType === 'archive') this.gameArchive();
+    if(sub.gameType === 'dream') this.gameDream();
+    if(sub.gameType === 'chess') this.gameChess();
+    if(sub.gameType === 'church') this.gameChurch();
+  },
+
+  /* --- 玩法实现 --- */
+  // 1. 酒馆
+  gameTavern() {
+    let html = `<div class="dialog-en">"The fire crackled. Eyes looked up."</div><div class="dialog-cn">壁炉里的火正烧到第三块柴。你推开门。</div>`;
+    html += `<div class="char-grid">`;
+    CHARACTERS.forEach(c => {
+      html += `<div class="char-card" onclick="UI.talk('${c.name}')"><div class="char-avatar">👤</div><div class="char-name">${c.name}</div></div>`;
+    });
+    html += `</div><button class="btn btn-primary" style="margin-top:20px" onclick="UI.gameBar()">去吧台调酒</button>`;
+    this.modal("日不落酒馆", html);
+  },
+  talk(name) {
+    this.modal("交谈", `<div class="dialog-en">"Welcome to the nightmare."</div><div class="dialog-cn">「欢迎来到噩梦，${name} 对你说。」</div>`, [{text:'结束', act:()=>this.closeModal()}]);
+  },
+  gameBar() {
+    this.modal("调酒博弈", `
+      <p style="margin-bottom:15px">请选出 3 种原料，调配出“晚安落日”：</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn" onclick="UI.barAns(1)">金酒</button>
+        <button class="btn" onclick="UI.barAns(0)">番茄汁</button>
+        <button class="btn" onclick="UI.barAns(1)">葡萄汁</button>
+        <button class="btn" onclick="UI.barAns(1)">苏打水</button>
+      </div>
+    `);
+  },
+  barAns(correct) {
+    if(correct) { this.toast('调酒成功，客人吐露了情报！'); this.closeModal(); }
+    else { this.toast('味道不对，客人皱了皱眉。'); }
+  },
+
+  // 2. 管理院
+  gameArchive() {
+    this.modal("档案室", `
+      <p style="margin-bottom:15px">从卷宗中找出关于“封印”的证据：</p>
+      <button class="btn" onclick="UI.archAns(0)">《日常开销》：购入红茶三磅</button>
+      <button class="btn" onclick="UI.archAns(1)">《密卷》：封印未死，他还会醒</button>
+    `);
+  },
+  archAns(correct) {
+    if(correct) { this.toast('你找出了真相，塔瓦娜震惊了。'); this.closeModal(); }
+    else { this.toast('这只是普通的开支记录。'); }
+  },
+
+  // 3. 教堂选择
+  gameChurch() {
+    this.modal("信仰博弈", `
+      <p style="margin-bottom:15px">修士问你：“有人举报莉迪亚与梦派有关，要抓她吗？”</p>
+      <button class="btn" onclick="UI.toast('你选择了举报，莉迪亚对你失望透顶。');UI.closeModal();">举报她</button>
+      <button class="btn btn-primary" onclick="UI.toast('你保持了沉默，莉迪亚对你心存感激。');UI.closeModal();">隐瞒下来</button>
+    `);
+  },
+
+  // 4. 棋盘走位 (简化)
+  gameChess() {
+    this.modal("棋局厅", `<p style="margin-bottom:15px">你是棋盘上的一枚“兵”，只能向前走。</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+        <div style="height:40px;background:var(--accent)"></div>
+        <div style="height:40px;background:rgba(128,128,128,0.2)"></div>
+        <div style="height:40px;background:rgba(128,128,128,0.2)"></div>
+        <div style="height:40px;background:rgba(128,128,128,0.2)"></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:15px" onclick="UI.toast('你成功升变了！获得王翼尊敬。');UI.closeModal();">向前进发</button>
+    `);
+  },
+
+  // 5. 梦域 Roguelike 与 战斗
+  gameDream() {
+    this.modal("入魇", `<p style="margin-bottom:15px">你被拉入梦域。规则：不能碰地上的乌鸦烙印。</p>
+      <button class="btn" onclick="UI.dreamEvent(true)">绕开烙印</button>
+      <button class="btn btn-danger" onclick="UI.dreamEvent(false)">触碰烙印</button>
+    `);
+  },
+  dreamEvent(safe) {
+    if(safe) { this.toast('你安全通过了。前方出现敌人！'); setTimeout(()=>this.startBattle(), 1000); }
+    else { this.toast('理智狂掉！(-50)'); G_STATE.san -= 50; if(G_STATE.san<=0) this.endDream(false); else setTimeout(()=>this.startBattle(), 1000); }
+  },
+  startBattle() {
+    G_STATE.enemy = { name: '焦土残影', hp: 30, atk: 10 };
+    this.renderBattle("遭遇了敌人！");
+  },
+  renderBattle(log) {
+    this.modal("战斗", `
+      <div class="battle-enemy">
+        <div class="enemy-name">${G_STATE.enemy.name}</div>
+        <div class="hp-bar-container"><div class="hp-bar-fill" style="width:${(G_STATE.enemy.hp/30)*100}%"></div></div>
+      </div>
+      <div class="player-san-bar">理智：${G_STATE.san}/100</div>
+      <div class="battle-log">${log}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-primary" onclick="UI.battleAct('atk')">攻击</button>
+        <button class="btn" onclick="UI.battleAct('def')">防御</button>
+      </div>
+    `);
+  },
+  battleAct(type) {
+    const e = G_STATE.enemy; let log = "";
+    if(type==='atk') { const dmg = Math.floor(Math.random()*15)+10; e.hp -= dmg; log += `你造成 ${dmg} 点伤害。<br>`; }
+    else { log += `你进行防御。<br>`; }
+    if(e.hp <= 0) { this.toast('战斗胜利！获得 50 银镑。'); let a=getAcc(); a.silver+=50; saveAcc(a); this.closeModal(); return; }
+    const edmg = type==='def' ? 5 : 10; G_STATE.san -= edmg; log += `敌人攻击，理智 -${edmg}。<br>`;
+    if(G_STATE.san <= 0) { this.endDream(false); return; }
+    this.renderBattle(log);
+  },
+  endDream(win) {
+    this.modal("探索结束", `<p>${win?'你从噩梦中惊醒。':'你的理智崩溃，沦为未归之人。'}</p>`, [{text:'返回', act:()=>{G_STATE.san=100; this.closeModal();}}]);
+  },
+
+  /* --- 通用弹窗 --- */
+  modal(title, html, buttons) {
+    this.closeModal();
+    const ov = document.createElement('div'); ov.className = 'overlay';
+    let foot = '';
+    if(buttons) {
+      foot = '<div class="modal-footer">' + buttons.map(b => `<button class="btn ${b.primary?'btn-primary':''}" onclick="${b.act}">${b.text}</button>`).join('') + '</div>';
+    }
+    ov.innerHTML = `<div class="modal"><div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="UI.closeModal()">×</button></div><div class="modal-body">${html}</div>${foot}</div>`;
+    document.body.appendChild(ov);
+  },
+  closeModal() { document.querySelectorAll('.overlay').forEach(e => e.remove()); }
+};
+
+// 启动游戏
+UI.init();
+</script>
 </body>
 </html>
