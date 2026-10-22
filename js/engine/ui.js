@@ -1,21 +1,19 @@
 const UI = {
   app: null,
-  currentTab: 'map', // 'map' 或 'settings'
+  currentTab: 'map',
 
   init(){ 
     this.app = document.getElementById('app'); 
-    loadSettings(); // 初始化设置
+    loadSettings(); 
     this.showTitle(); 
   },
 
   clear(){ this.app.innerHTML = ''; },
 
-  // 统一界面框架
   renderLayout(contentHTML, showNav = true) {
     this.clear();
     const acc = currentAccount();
     
-    // 顶部栏
     let topBar = '';
     if(acc && showNav) {
       topBar = `
@@ -30,7 +28,6 @@ const UI = {
         </div>`;
     }
 
-    // 底部导航栏
     let navBar = '';
     if(showNav) {
       navBar = `
@@ -67,8 +64,6 @@ const UI = {
     layer.appendChild(el);
     setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
   },
-
-  // ================== 页面渲染 ==================
 
   showTitle(){
     this.renderLayout(`
@@ -124,17 +119,16 @@ const UI = {
   },
 
   showMap(){
-    this.renderLayout(`<canvas id="mapCanvas" style="width:100%;height:100%"></canvas>`);
+    this.renderLayout(`<canvas id="mapCanvas" style="width:100%;height:100%;background:transparent"></canvas>`);
     setTimeout(() => Map.init(document.getElementById('mapCanvas'), loc => this.showLocation(loc)), 50);
   },
 
-  // 豪华设置面板
   showSettings() {
     const s = JSON.parse(localStorage.getItem('veselia_settings_v1'));
     
     this.renderLayout(`
-      <div style="padding: 0 20px;">
-        <h2 style="color:var(--accent);margin:20px 0;font-weight:normal">设 置</h2>
+      <div style="padding: 0 20px; max-width: 500px; margin: 0 auto;">
+        <h2 style="color:var(--accent);margin:20px 0;font-weight:normal;text-align:center;letter-spacing:.2em">设 置</h2>
         
         <div class="setting-item">
           <span class="setting-label">夜间模式</span>
@@ -183,10 +177,16 @@ const UI = {
   changeSetting(key, val) {
     let s = JSON.parse(localStorage.getItem('veselia_settings_v1'));
     s[key] = val;
-    saveSettings(s);
+    saveSettings(s); // 这里会触发 applySettings 改 CSS 变量和 dark 类
+    
+    // 关键修复：如果改了主题，立刻重绘地图，否则颜色会打架！
+    if(key === 'theme') {
+      if(document.getElementById('mapCanvas')) Map.draw();
+      // 重绘一下当前设置界面，防止滑块/开关状态和实际不符
+      this.showSettings(); 
+    }
   },
 
-  // ================== 地点弹窗 ==================
   showLocation(loc) {
     const acc = currentAccount();
     if(!loc) return;
@@ -222,14 +222,10 @@ const UI = {
 
   showSubLocation(parentId, subId) {
     this.closeModal();
-    
-    // 如果是酒馆，直接触发阶段一的英式对话测试！
     if(subId === 'tavern') {
       this.startDialog('塔瓦娜·卡伊', 'Tavana Kai', "I am afraid you have caught me at an inconvenient hour, my dear correspondent. The fire in the hearth is yet to catch.", "恐怕您来得不是时候，我亲爱的记者。壁炉里的火还没生起来呢。");
       return;
     }
-
-    // 其他子地点暂且弹卡片
     setTimeout(() => {
       this.openModal("探索", `
         <div class="loc-desc" style="text-align:center;color:var(--text-dim)">
@@ -252,7 +248,6 @@ const UI = {
     `, [{ text: '结束对话', act: () => this.closeModal(), primary: true }]);
   },
 
-  // ================== 通用 Modal ==================
   openModal(title, bodyHTML, buttons) {
     this.closeModal();
     const ov = document.createElement('div');
@@ -280,9 +275,7 @@ const UI = {
       });
     }
   },
-  closeModal(){
-    document.querySelectorAll('.overlay.show').forEach(o => o.remove());
-  },
+  closeModal(){ document.querySelectorAll('.overlay.show').forEach(o => o.remove()); },
 
   esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
