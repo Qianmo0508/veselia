@@ -1,525 +1,3558 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="night">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0810">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>入魇 · Nightfalling</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
-/* ================= 基础与主题 ================= */
-:root {
-  --f-deco: "Cinzel Decorative", Georgia, serif;
-  --f-en: "Cormorant Garamond", Georgia, serif;
-  --f-cn: "Noto Serif SC", "Songti SC", serif;
-  --bg: #F2ECE1; --bg2: #E6DECF; --paper: #F9F6F0; --ink: #2C2A28; --ink-soft: #6B655D;
-  --gold: #9B4735; --line: #D6CCBA; --shadow: 0 8px 24px rgba(140,120,90,0.12);
-  --radius: 12px;
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --f-deco:"Cinzel Decorative","Noto Serif SC",serif;
+  --f-en:"Cormorant Garamond",Georgia,serif;
+  --f-cn:"Noto Serif SC","Songti SC","STSong",serif;
+  --gold:#c9a961;--gold-b:#e8d5a0;--gold-d:#7a6636;
+  --bg:#0a0810;--panel:#16121f;--panel2:#1c1428;
+  --text:#ded5c4;--text-d:#8a8070;
+  --accent:#8b2f4f;--purple:#4a2b5e;
+  --line:rgba(201,169,97,.22);--line-s:rgba(201,169,97,.45);
+  --glass:rgba(16,12,24,.72);
+  --font-scale:1;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --nav-h:62px;
 }
-[data-theme="dark"] {
-  --bg: #141210; --bg2: #1C1917; --paper: #24211E; --ink: #E0D8CC; --ink-soft: #A39A8D;
-  --gold: #C5A87C; --line: #3D3630; --shadow: 0 8px 24px rgba(0,0,0,0.5);
+[data-theme="day"]{
+  --gold:#8b6f2f;--gold-b:#5d4620;--gold-d:#a58a4e;
+  --bg:#ece4d2;--panel:#faf5e9;--panel2:#f2ead7;
+  --text:#2a2420;--text-d:#6a6050;
+  --line:rgba(139,111,47,.25);--line-s:rgba(139,111,47,.5);
+  --glass:rgba(250,245,233,.82);
 }
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; overflow: hidden; }
-body { font-family: var(--f-cn); background: var(--bg); color: var(--ink); line-height: 1.6; transition: 0.3s; }
-button { font-family: inherit; color: inherit; border: none; background: none; cursor: pointer; outline: none; }
-input, textarea { font-family: inherit; color: inherit; border: none; background: none; outline: none; }
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--f-cn);-webkit-font-smoothing:antialiased;font-size:calc(15px * var(--font-scale));}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse at 12% 6%,rgba(90,50,120,.22),transparent 55%),
+  radial-gradient(ellipse at 88% 94%,rgba(139,47,79,.18),transparent 55%),
+  radial-gradient(ellipse at 50% 50%,rgba(20,14,32,.5),transparent 80%);
+  pointer-events:none;z-index:0;}
+[data-theme="day"] body::before{background:
+  radial-gradient(ellipse at 12% 6%,rgba(180,150,90,.28),transparent 55%),
+  radial-gradient(ellipse at 88% 94%,rgba(160,120,80,.22),transparent 55%),
+  radial-gradient(ellipse at 50% 50%,rgba(255,245,220,.6),transparent 80%);}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.008) 2px,rgba(255,255,255,.008) 3px);}
+[data-theme="day"] body::after{background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 3px);}
 
-/* ================= 页面容器 ================= */
-#app { position: fixed; inset: 0; overflow: hidden; }
-.page { position: absolute; inset: 0; display: none; flex-direction: column; opacity: 0; transition: opacity 0.3s; background: var(--bg); z-index: 1; }
-.page.active { display: flex; opacity: 1; z-index: 10; }
+#app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;opacity:0;}
+.screen.active{display:flex;opacity:1;}
 
-/* ================= 顶部导航 (修复退不出去的问题) ================= */
-.top-nav {
-  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 20px; padding-top: calc(14px + env(safe-area-inset-top));
-  background: var(--bg2); border-bottom: 1px solid var(--line); z-index: 20;
+/* ============ 通用装饰 ============ */
+.frame{position:relative;border:1px solid var(--line);background:linear-gradient(165deg,var(--panel2),var(--panel));}
+.frame::before,.frame::after{content:'❖';position:absolute;font-size:11px;color:var(--gold);opacity:.85;line-height:1;pointer-events:none;}
+.frame::before{top:-6px;left:-6px;}
+.frame::after{bottom:-6px;right:-6px;}
+.divider{display:flex;align-items:center;gap:10px;color:var(--gold-d);font-size:11px;letter-spacing:.3em;margin:14px 0;}
+.divider::before,.divider::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.divider span{white-space:nowrap;}
+
+/* ============ 按钮 ============ */
+.btn{background:transparent;border:1px solid var(--line-s);color:var(--text);
+  font-family:var(--f-cn);font-size:calc(13px * var(--font-scale));letter-spacing:.18em;
+  padding:12px 18px;cursor:pointer;transition:all .28s cubic-bezier(.16,1,.3,1);
+  position:relative;overflow:hidden;}
+.btn:hover,.btn:active{border-color:var(--gold);color:var(--gold-b);
+  background:rgba(201,169,97,.1);box-shadow:0 0 20px rgba(201,169,97,.2);letter-spacing:.24em;}
+.btn.primary{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.08);}
+.btn.primary:hover{background:rgba(201,169,97,.2);}
+.btn.ghost{border-color:var(--line);color:var(--text-d);font-size:calc(12px * var(--font-scale));padding:9px 14px;}
+.btn.danger{border-color:rgba(160,60,80,.6);color:#d08a9c;}
+.btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;color:#ffb0c4;}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* ============ 标题页 ============ */
+#screen-title{align-items:center;justify-content:center;padding:24px;}
+.title-card{position:relative;max-width:520px;width:100%;padding:44px 30px 34px;
+  text-align:center;border:1px solid var(--line-s);
+  background:linear-gradient(165deg,rgba(28,20,40,.85),rgba(12,8,18,.95));
+  box-shadow:0 0 80px rgba(0,0,0,.9),inset 0 0 90px rgba(201,169,97,.04);
+  max-height:92vh;overflow-y:auto;}
+[data-theme="day"] .title-card{background:linear-gradient(165deg,rgba(255,250,240,.95),rgba(240,230,210,.95));box-shadow:0 0 60px rgba(120,100,60,.2);}
+.title-card .corner{position:absolute;font-size:14px;color:var(--gold);opacity:.9;}
+.title-card .corner.tl{top:6px;left:10px;}
+.title-card .corner.tr{top:6px;right:10px;}
+.title-card .corner.bl{bottom:6px;left:10px;}
+.title-card .corner.br{bottom:6px;right:10px;}
+.title-eyebrow{font-family:var(--f-deco);font-size:11px;letter-spacing:.4em;color:var(--gold-d);margin-bottom:18px;}
+.title-main{font-family:var(--f-deco);font-size:clamp(38px,12vw,64px);letter-spacing:.12em;
+  color:var(--gold-b);text-shadow:0 0 30px rgba(201,169,97,.55),0 0 70px rgba(139,47,79,.3);
+  font-weight:900;line-height:1.1;margin-bottom:8px;}
+.title-sub{font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-d);letter-spacing:.05em;margin-bottom:4px;}
+.title-actions{display:flex;flex-direction:column;gap:10px;max-width:280px;margin:26px auto 0;}
+.title-foot{margin-top:24px;font-size:11px;letter-spacing:.16em;color:var(--text-d);font-style:italic;}
+.title-foot::before{content:'— ';color:var(--gold-d);}
+.title-foot::after{content:' —';color:var(--gold-d);}
+
+/* ============ 顶栏 ============ */
+.topbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:calc(var(--safe-t) + 10px) 14px 10px;height:calc(52px + var(--safe-t));
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border-bottom:1px solid var(--line);position:relative;z-index:20;}
+.topbar::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.tb-left{display:flex;align-items:center;gap:8px;min-width:0;}
+.tb-mark{width:16px;height:16px;border:1px solid var(--gold);transform:rotate(45deg);position:relative;flex-shrink:0;}
+.tb-mark::after{content:'';position:absolute;inset:3px;background:var(--gold);opacity:.65;}
+.tb-title{font-family:var(--f-deco);font-size:13px;letter-spacing:.18em;color:var(--gold-b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-loc{font-size:11px;letter-spacing:.14em;color:var(--text-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ============ 游戏主界面 ============ */
+#screen-game{display:none;flex-direction:column;}
+#screen-game.active{display:flex;}
+.stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;
+  padding-bottom:var(--nav-h);}
+.scene-bg{position:absolute;inset:0;transition:background .8s;z-index:0;}
+.bg-city{background:linear-gradient(180deg,#0e0a16 0%,#1a1224 40%,#2a1c30 100%);}
+.bg-city::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 20% 80%,rgba(201,169,97,.18),transparent 40%),
+             radial-gradient(circle at 80% 70%,rgba(201,169,97,.14),transparent 40%);}
+.bg-tavern{background:linear-gradient(180deg,#1a1010 0%,#2a1810 50%,#1a0e08 100%);}
+.bg-tavern::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 70% 30%,rgba(230,160,80,.25),transparent 50%),
+             radial-gradient(circle at 20% 90%,rgba(160,80,40,.2),transparent 45%);}
+.bg-grove{background:linear-gradient(180deg,#1a1408 0%,#2e2410 50%,#1e1808 100%);}
+.bg-grove::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 30%,rgba(220,180,80,.22),transparent 60%);}
+.bg-manor{background:linear-gradient(180deg,#0a0e18 0%,#141a28 50%,#0c1018 100%);}
+.bg-manor::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(180,200,240,.18),transparent 50%);}
+.bg-archive{background:linear-gradient(180deg,#100c08 0%,#1e160c 50%,#0e0a06 100%);}
+.bg-archive::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 40% 40%,rgba(200,160,80,.15),transparent 55%);}
+.bg-church{background:linear-gradient(180deg,#0c0818 0%,#1a1028 50%,#0a0614 100%);}
+.bg-church::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 20%,rgba(120,80,200,.28),transparent 50%),
+             radial-gradient(circle at 50% 80%,rgba(200,60,80,.18),transparent 55%);}
+.bg-castle{background:linear-gradient(180deg,#060810 0%,#0e1420 50%,#080a14 100%);}
+.bg-castle::before{content:'';position:absolute;inset:0;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.03) 0deg 90deg,transparent 90deg 180deg),
+             radial-gradient(circle at 50% 50%,rgba(200,200,255,.15),transparent 60%);
+  background-size:80px 80px,100% 100%;}
+.bg-dream{background:linear-gradient(180deg,#0c0418 0%,#1e0a28 50%,#080210 100%);}
+.bg-dream::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 30% 30%,rgba(120,60,180,.35),transparent 45%),
+             radial-gradient(circle at 70% 70%,rgba(80,20,140,.3),transparent 50%),
+             radial-gradient(circle at 50% 50%,rgba(200,80,200,.15),transparent 60%);
+  animation:dreamPulse 8s ease-in-out infinite;}
+@keyframes dreamPulse{0%,100%{opacity:.8;}50%{opacity:1;}}
+
+.loc-bar{flex:0 0 auto;padding:8px 18px;font-size:11px;letter-spacing:.22em;color:var(--gold-d);
+  background:linear-gradient(180deg,rgba(25,17,36,.75),rgba(15,10,22,.25));
+  border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;position:relative;z-index:2;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.loc-bar::before{content:'◈';font-size:9px;color:var(--gold-d);}
+
+.dialog-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px 20px 16px;
+  position:relative;z-index:2;scroll-behavior:smooth;}
+.dialog-scroll::-webkit-scrollbar{width:4px;}
+.dialog-scroll::-webkit-scrollbar-thumb{background:var(--line-s);}
+.dialog-inner{max-width:760px;margin:0 auto;padding-bottom:20px;}
+
+.line{margin-bottom:18px;animation:lineIn .45s cubic-bezier(.16,1,.3,1);}
+@keyframes lineIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.line .speaker{font-family:var(--f-deco);font-size:11px;letter-spacing:.2em;color:var(--gold-b);
+  margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.line .speaker::before{content:'';width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;
+  box-shadow:0 0 8px rgba(201,169,97,.7);}
+.line .en{font-family:var(--f-en);font-style:italic;font-weight:600;
+  font-size:calc(17px * var(--font-scale));line-height:1.55;color:var(--gold-b);
+  letter-spacing:.01em;margin-bottom:7px;}
+.line .cn{font-size:calc(14.5px * var(--font-scale));line-height:1.9;color:var(--text);
+  letter-spacing:.01em;padding-left:14px;border-left:2px solid var(--line);word-break:break-word;}
+.line.narration .cn{color:#a89e8e;font-style:italic;}
+.line.monologue .cn{color:#b8a8c8;font-style:italic;}
+[data-theme="day"] .line.narration .cn{color:#5a5040;}
+[data-theme="day"] .line.monologue .cn{color:#5a4a6a;}
+
+.cont-hint{position:absolute;right:26px;bottom:calc(var(--nav-h) + 22px);
+  color:var(--gold);font-size:14px;opacity:.8;animation:bounce 1.6s infinite;
+  pointer-events:none;z-index:5;}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.35;}50%{transform:translateY(6px);opacity:.9;}}
+
+.choices{position:relative;z-index:3;padding:0 20px 12px;max-height:44vh;overflow-y:auto;display:none;}
+.choices.active{display:block;animation:choiceIn .5s cubic-bezier(.16,1,.3,1);}
+@keyframes choiceIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+.choices-inner{max-width:760px;margin:0 auto;}
+.choice-head{font-size:10.5px;letter-spacing:.4em;color:var(--gold-d);margin-bottom:11px;
+  display:flex;align-items:center;gap:10px;}
+.choice-head::before,.choice-head::after{content:'';height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.choice-btn{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;
+  background:linear-gradient(90deg,rgba(201,169,97,.06),transparent);
+  border:1px solid var(--line-s);color:var(--text);
+  font-family:var(--f-cn);font-size:calc(14px * var(--font-scale));line-height:1.65;
+  padding:12px 16px;margin-bottom:9px;cursor:pointer;
+  transition:all .3s cubic-bezier(.16,1,.3,1);position:relative;}
+.choice-btn::after{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--gold);transform:scaleY(0);transition:transform .3s;}
+.choice-btn:hover,.choice-btn:active{background:linear-gradient(90deg,rgba(201,169,97,.18),transparent);
+  border-color:var(--gold);transform:translateX(5px);
+  box-shadow:0 0 22px rgba(201,169,97,.16);color:var(--gold-b);}
+.choice-btn:hover::after{transform:scaleY(1);}
+.choice-idx{color:var(--gold);font-size:13px;flex-shrink:0;margin-top:1px;
+  text-shadow:0 0 8px rgba(201,169,97,.6);}
+.choice-btn.danger{border-color:rgba(160,60,80,.5);}
+.choice-btn.danger .choice-idx{color:#d08a9c;}
+
+/* ============ 底部导航 ============ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;
+  display:flex;align-items:center;justify-content:space-around;
+  height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:linear-gradient(0deg,var(--panel),var(--panel2));
+  border-top:1px solid var(--line);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.bottom-nav::before{content:'';position:absolute;top:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:none;border:none;color:var(--text-d);font-family:var(--f-cn);
+  cursor:pointer;padding:8px 4px;transition:all .25s;position:relative;}
+.nav-btn .nav-ico{font-size:18px;line-height:1;transition:all .25s;}
+.nav-btn .nav-lbl{font-size:10px;letter-spacing:.16em;}
+.nav-btn.active{color:var(--gold-b);}
+.nav-btn.active .nav-ico{transform:translateY(-2px);text-shadow:0 0 14px rgba(201,169,97,.75);}
+.nav-btn.active::after{content:'';position:absolute;bottom:calc(var(--safe-b) + 3px);left:50%;transform:translateX(-50%);
+  width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,169,97,.8);}
+
+/* ============ 地图 ============ */
+#screen-map{display:none;flex-direction:column;}
+#screen-map.active{display:flex;}
+.map-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 16px);}
+.map-region{margin-bottom:24px;}
+.map-region-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  font-family:var(--f-deco);font-size:13px;letter-spacing:.22em;color:var(--gold-b);}
+.map-region-head::before{content:'◆';color:var(--gold);font-size:10px;}
+.map-region-head::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--line-s),transparent);}
+.map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.map-card{position:relative;padding:16px 14px;cursor:pointer;
+  border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));
+  transition:all .3s cubic-bezier(.16,1,.3,1);overflow:hidden;}
+.map-card::before{content:'❖';position:absolute;top:4px;right:6px;font-size:10px;color:var(--gold);opacity:.55;}
+.map-card:hover,.map-card:active{border-color:var(--gold);transform:translateY(-2px);
+  box-shadow:0 6px 22px rgba(0,0,0,.4),0 0 18px rgba(201,169,97,.15);}
+.map-card.locked{opacity:.42;cursor:not-allowed;}
+.map-card.locked:hover{transform:none;border-color:var(--line);box-shadow:none;}
+.map-card-ico{font-size:22px;color:var(--gold);margin-bottom:8px;line-height:1;
+  text-shadow:0 0 12px rgba(201,169,97,.5);}
+.map-card-name{font-family:var(--f-deco);font-size:13px;letter-spacing:.12em;color:var(--gold-b);margin-bottom:4px;}
+.map-card-desc{font-size:11px;color:var(--text-d);line-height:1.6;letter-spacing:.02em;}
+.map-card-tag{display:inline-block;margin-top:8px;font-size:9.5px;letter-spacing:.2em;
+  color:var(--gold-d);border:1px solid var(--line);padding:2px 7px;}
+.map-card-tag.hot{border-color:rgba(160,60,80,.6);color:#d08a9c;}
+
+/* ============ 记录 ============ */
+#screen-log{display:none;flex-direction:column;}
+#screen-log.active{display:flex;}
+.log-main{flex:1;overflow:hidden;display:flex;flex-direction:column;
+  padding-bottom:calc(var(--nav-h) + var(--safe-b));}
+.log-tabs{flex:0 0 auto;display:flex;overflow-x:auto;gap:0;
+  border-bottom:1px solid var(--line);padding:0 10px;background:var(--panel);}
+.log-tabs::-webkit-scrollbar{display:none;}
+.log-tab{background:none;border:none;border-bottom:2px solid transparent;color:var(--text-d);
+  font-family:var(--f-cn);font-size:12.5px;letter-spacing:.16em;padding:13px 14px;
+  cursor:pointer;transition:all .25s;white-space:nowrap;margin-bottom:-1px;}
+.log-tab.active{color:var(--gold-b);border-bottom-color:var(--gold);}
+.log-body{flex:1;overflow-y:auto;padding:16px;}
+.log-body::-webkit-scrollbar{width:4px;}
+.log-body::-webkit-scrollbar-thumb{background:var(--line-s);}
+
+.char-grid{display:grid;gap:10px;}
+.char-card{position:relative;padding:14px;border:1px solid var(--line);
+  background:linear-gradient(160deg,var(--panel2),var(--panel));cursor:pointer;
+  transition:all .3s;}
+.char-card:hover{border-color:var(--gold);box-shadow:0 0 18px rgba(201,169,97,.15);}
+.char-head{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.char-avatar{width:44px;height:44px;border:1px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  color:var(--gold);background:rgba(201,169,97,.05);flex-shrink:0;position:relative;}
+.char-avatar::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);}
+.char-name{font-family:var(--f-deco);font-size:14px;letter-spacing:.1em;color:var(--gold-b);}
+.char-en{font-family:var(--f-en);font-style:italic;font-size:12px;color:var(--text-d);}
+.char-title{font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-top:2px;}
+.char-aff{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:10.5px;color:var(--gold-d);letter-spacing:.1em;}
+.aff-bar{flex:1;height:4px;background:rgba(201,169,97,.12);position:relative;overflow:hidden;}
+.aff-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .5s;}
+.char-desc{font-size:12.5px;line-height:1.85;color:var(--text);margin-top:10px;padding-top:10px;
+  border-top:1px solid var(--line);}
+
+.log-entry{margin-bottom:14px;font-size:13px;line-height:1.85;}
+.log-entry .le-speaker{font-family:var(--f-deco);font-size:11px;letter-spacing:.14em;color:var(--gold-b);
+  display:block;margin-bottom:4px;}
+.log-entry .le-cn{color:var(--text);}
+.log-entry .le-en{font-family:var(--f-en);font-style:italic;color:var(--gold-b);font-size:13px;margin-bottom:3px;}
+.log-entry.narr .le-cn{color:#a89e8e;font-style:italic;}
+.log-entry.choice .le-cn{color:var(--gold);padding-left:10px;border-left:2px solid var(--line-s);}
+
+/* ============ 设置 ============ */
+#screen-settings{display:none;flex-direction:column;}
+#screen-settings.active{display:flex;}
+.set-main{flex:1;overflow-y:auto;padding:16px 16px calc(var(--nav-h) + var(--safe-b) + 16px);}
+.set-main::-webkit-scrollbar{width:4px;}
+.set-main::-webkit-scrollbar-thumb{background:var(--line-s);}
+.set-group{margin-bottom:22px;border:1px solid var(--line);
+  background:linear-gradient(160deg,var(--panel2),var(--panel));}
+.set-group-head{padding:12px 16px;border-bottom:1px solid var(--line);
+  font-family:var(--f-deco);font-size:12px;letter-spacing:.22em;color:var(--gold-b);
+  display:flex;align-items:center;gap:8px;}
+.set-group-head::before{content:'◈';font-size:10px;color:var(--gold);}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 16px;border-bottom:1px solid var(--line);}
+.set-row:last-child{border-bottom:none;}
+.set-label{flex:1;min-width:0;}
+.set-label-t{font-size:13px;color:var(--text);letter-spacing:.04em;}
+.set-label-d{font-size:10.5px;color:var(--text-d);margin-top:3px;letter-spacing:.02em;line-height:1.5;}
+.set-ctrl{flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.set-input{background:rgba(0,0,0,.25);border:1px solid var(--line-s);color:var(--gold-b);
+  font-family:var(--f-cn);font-size:13px;padding:7px 11px;letter-spacing:.06em;
+  outline:none;min-width:110px;text-align:center;transition:all .25s;}
+[data-theme="day"] .set-input{background:rgba(255,255,255,.6);}
+.set-input:focus{border-color:var(--gold);box-shadow:0 0 14px rgba(201,169,97,.25);}
+.seg{display:flex;border:1px solid var(--line-s);overflow:hidden;}
+.seg button{background:transparent;border:none;color:var(--text-d);
+  font-family:var(--f-cn);font-size:11px;letter-spacing:.1em;padding:7px 10px;
+  cursor:pointer;transition:all .25s;border-right:1px solid var(--line);}
+.seg button:last-child{border-right:none;}
+.seg button.active{background:rgba(201,169,97,.18);color:var(--gold-b);}
+.seg button:hover:not(.active){color:var(--gold);}
+.switch{position:relative;width:44px;height:24px;border:1px solid var(--line-s);
+  cursor:pointer;transition:all .3s;background:rgba(0,0,0,.2);}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;
+  background:var(--text-d);transition:all .3s;border-radius:50%;}
+.switch.on{border-color:var(--gold);background:rgba(201,169,97,.15);}
+.switch.on::after{left:22px;background:var(--gold);box-shadow:0 0 10px rgba(201,169,97,.7);}
+.slider{width:120px;-webkit-appearance:none;appearance:none;height:3px;
+  background:rgba(201,169,97,.2);outline:none;border-radius:2px;}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+  background:var(--gold);border-radius:50%;cursor:pointer;
+  box-shadow:0 0 10px rgba(201,169,97,.7);}
+.slider::-moz-range-thumb{width:16px;height:16px;background:var(--gold);
+  border-radius:50%;cursor:pointer;border:none;}
+.save-slot{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px;border:1px solid var(--line);margin-bottom:8px;
+  background:rgba(201,169,97,.02);transition:all .25s;cursor:pointer;}
+.save-slot:hover{border-color:var(--gold);background:rgba(201,169,97,.06);}
+.save-slot-info{flex:1;min-width:0;}
+.save-slot-t{font-size:13px;color:var(--gold-b);letter-spacing:.08em;margin-bottom:3px;}
+.save-slot-m{font-size:10.5px;color:var(--text-d);letter-spacing:.02em;}
+.save-slot-actions{display:flex;gap:6px;flex-shrink:0;}
+.mini-btn{background:none;border:1px solid var(--line-s);color:var(--text-d);
+  font-family:var(--f-cn);font-size:10.5px;padding:5px 9px;cursor:pointer;transition:all .25s;}
+.mini-btn:hover{border-color:var(--gold);color:var(--gold-b);}
+.mini-btn.danger{border-color:rgba(160,60,80,.5);color:#c07a92;}
+.mini-btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;}
+
+/* ============ 弹窗 ============ */
+.modal-layer{position:fixed;inset:0;z-index:1000;display:none;align-items:center;
+  justify-content:center;padding:18px;background:rgba(4,2,7,.85);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+[data-theme="day"] .modal-layer{background:rgba(60,50,30,.55);}
+.modal-layer.open{display:flex;animation:fadeIn .25s;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{position:relative;width:100%;max-width:560px;max-height:88vh;
+  background:linear-gradient(160deg,var(--panel2),var(--panel));
+  border:1px solid var(--line-s);display:flex;flex-direction:column;
+  box-shadow:0 0 70px rgba(0,0,0,.9),inset 0 0 70px rgba(201,169,97,.03);
+  animation:modalIn .4s cubic-bezier(.16,1,.3,1);}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(16px);}to{opacity:1;transform:none;}}
+.modal::before,.modal::after{content:'❖';position:absolute;font-size:12px;color:var(--gold);opacity:.9;}
+.modal::before{top:-7px;left:-7px;}
+.modal::after{bottom:-7px;right:-7px;}
+.modal-head{flex:0 0 auto;padding:16px 20px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.modal-title{font-family:var(--f-deco);font-size:14px;letter-spacing:.24em;color:var(--gold-b);}
+.modal-close{background:none;border:1px solid var(--line-s);color:var(--text-d);
+  width:32px;height:32px;font-size:18px;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;transition:all .25s;flex-shrink:0;}
+.modal-close:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.1);}
+.modal-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.modal-body::-webkit-scrollbar{width:4px;}
+.modal-body::-webkit-scrollbar-thumb{background:var(--line-s);}
+.modal-foot{flex:0 0 auto;padding:14px 20px;border-top:1px solid var(--line);
+  display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* ============ Toast ============ */
+.toast-layer{position:fixed;top:calc(var(--safe-t) + 64px);left:50%;transform:translateX(-50%);
+  z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;
+  pointer-events:none;width:92%;max-width:440px;}
+.toast{background:linear-gradient(90deg,rgba(28,20,40,.96),rgba(20,14,30,.96));
+  border:1px solid var(--line-s);color:var(--gold-b);font-size:12px;
+  letter-spacing:.1em;padding:10px 18px;box-shadow:0 0 26px rgba(0,0,0,.7);
+  animation:toastIn .4s cubic-bezier(.16,1,.3,1);text-align:center;
+  line-height:1.6;max-width:100%;}
+[data-theme="day"] .toast{background:linear-gradient(90deg,rgba(255,250,240,.98),rgba(245,235,215,.98));}
+.toast.ok{border-color:rgba(120,180,120,.6);color:#9dd0a0;}
+.toast.warn{border-color:rgba(160,60,80,.7);color:#d08a9c;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
+.toast.out{animation:toastOut .35s forwards;}
+@keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
+
+/* ============ 小游戏通用 ============ */
+.mini-wrap{padding:6px 0;}
+.mini-title{text-align:center;font-family:var(--f-deco);font-size:15px;letter-spacing:.2em;
+  color:var(--gold-b);margin-bottom:6px;}
+.mini-sub{text-align:center;font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:16px;}
+.mini-hud{display:flex;justify-content:space-between;gap:10px;margin-bottom:14px;
+  padding:9px 14px;border:1px solid var(--line);background:rgba(201,169,97,.04);}
+.mini-hud-item{font-size:11px;color:var(--text-d);letter-spacing:.08em;text-align:center;flex:1;}
+.mini-hud-item b{display:block;font-family:var(--f-deco);font-size:15px;color:var(--gold-b);margin-top:2px;letter-spacing:.06em;}
+.mini-stage{position:relative;border:1px solid var(--line-s);background:rgba(0,0,0,.3);
+  min-height:280px;overflow:hidden;}
+[data-theme="day"] .mini-stage{background:rgba(255,255,255,.35);}
+
+/* 证据链 */
+.evidence-area{position:relative;height:340px;touch-action:none;}
+.ev-card{position:absolute;width:88px;padding:7px 6px;border:1px solid var(--line-s);
+  background:linear-gradient(160deg,var(--panel2),var(--panel));cursor:pointer;
+  font-size:10.5px;line-height:1.35;text-align:center;color:var(--text);
+  transition:box-shadow .25s,border-color .25s;user-select:none;z-index:2;}
+.ev-card .ev-ico{font-size:18px;display:block;margin-bottom:4px;color:var(--gold);}
+.ev-card.sel{border-color:var(--gold);box-shadow:0 0 16px rgba(201,169,97,.6);z-index:5;}
+.ev-card.done{border-color:rgba(120,180,120,.7);background:rgba(120,180,120,.08);pointer-events:none;opacity:.7;}
+.ev-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+
+/* QTE 倒酒 */
+.pour-stage{position:relative;height:280px;display:flex;align-items:flex-end;justify-content:center;gap:30px;padding-bottom:10px;}
+.glass{position:relative;width:90px;height:220px;border:1px solid var(--line-s);
+  border-top:none;background:rgba(0,0,0,.4);overflow:hidden;
+  clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);}
+.glass-liquid{position:absolute;bottom:0;left:0;right:0;height:0;
+  background:linear-gradient(180deg,rgba(220,160,60,.85),rgba(160,90,30,.95));
+  transition:height .04s linear;}
+.glass-marker{position:absolute;left:-4px;right:-4px;height:2px;background:var(--gold);
+  box-shadow:0 0 8px rgba(201,169,97,.9);z-index:3;}
+.glass-marker .mlabel{position:absolute;right:calc(100% + 4px);top:-7px;font-size:9.5px;
+  color:var(--gold-b);letter-spacing:.1em;white-space:nowrap;}
+.glass-marker.m1{background:#e8d5a0;}
+.glass-marker.m2{background:#d08a9c;box-shadow:0 0 8px rgba(208,138,156,.9);}
+.pour-btn{width:100%;padding:16px;border:1px solid var(--gold);background:rgba(201,169,97,.12);
+  color:var(--gold-b);font-family:var(--f-cn);font-size:15px;letter-spacing:.3em;
+  cursor:pointer;user-select:none;transition:all .2s;touch-action:none;}
+.pour-btn:active,.pour-btn.pouring{background:rgba(201,169,97,.3);letter-spacing:.36em;}
+.pour-feedback{text-align:center;margin-top:12px;font-size:12px;letter-spacing:.1em;min-height:18px;}
+
+/* 棋局 */
+.chess-board{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;
+  max-width:340px;margin:0 auto;aspect-ratio:1;padding:8px;
+  border:1px solid var(--line-s);background:rgba(0,0,0,.3);}
+[data-theme="day"] .chess-board{background:rgba(80,60,30,.12);}
+.chess-cell{position:relative;border:1px solid var(--line);display:flex;
+  align-items:center;justify-content:center;font-size:22px;cursor:pointer;
+  transition:all .25s;background:rgba(255,255,255,.02);}
+.chess-cell.light{background:rgba(255,255,255,.07);}
+.chess-cell.dark{background:rgba(0,0,0,.25);}
+.chess-cell.death{background:rgba(160,60,80,.35);border-color:rgba(208,138,156,.6);}
+.chess-cell.death::after{content:'☠';font-size:16px;color:#d08a9c;position:absolute;opacity:.8;}
+.chess-cell.goal{background:rgba(120,180,120,.25);border-color:rgba(157,208,160,.7);}
+.chess-cell.goal::after{content:'♔';font-size:18px;color:#9dd0a0;position:absolute;}
+.chess-cell.player{background:rgba(201,169,97,.35);border-color:var(--gold);
+  box-shadow:inset 0 0 16px rgba(201,169,97,.6);z-index:2;}
+.chess-cell.player::after{content:'♙';font-size:22px;color:var(--gold-b);
+  text-shadow:0 0 10px rgba(201,169,97,.9);position:absolute;}
+.chess-cell.valid{background:rgba(201,169,97,.15);border-color:var(--gold);cursor:pointer;}
+.chess-cell.valid::after{content:'◦';color:var(--gold);font-size:20px;position:absolute;opacity:.85;}
+.chess-cell.death:hover{background:rgba(160,60,80,.5);}
+
+/* 拼图 */
+.puzzle-stage{position:relative;width:280px;height:280px;margin:0 auto;
+  border:2px solid var(--line-s);background:rgba(0,0,0,.4);overflow:hidden;touch-action:none;}
+[data-theme="day"] .puzzle-stage{background:rgba(255,255,255,.3);}
+.puzzle-tile{position:absolute;width:33.3333%;height:33.3333%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:var(--gold);cursor:pointer;
+  transition:transform .28s cubic-bezier(.16,1,.3,1);
+  border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));}
+.puzzle-tile.empty{background:transparent;border:none;cursor:default;}
+.puzzle-tile .sym{opacity:.9;text-shadow:0 0 12px rgba(201,169,97,.5);}
+
+/* 骰子 */
+.dice-area{text-align:center;padding:16px 0;}
+.dice{width:100px;height:100px;margin:0 auto 18px;border:2px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;font-family:var(--f-deco);
+  font-size:42px;color:var(--gold-b);background:radial-gradient(circle,rgba(201,169,97,.15),transparent);
+  box-shadow:0 0 30px rgba(201,169,97,.3);transform-style:preserve-3d;}
+
+/* 战斗 */
+.battle-bar{margin-bottom:12px;}
+.battle-name{font-size:12px;color:var(--text);letter-spacing:.1em;margin-bottom:5px;display:flex;justify-content:space-between;}
+.battle-track{height:8px;background:rgba(0,0,0,.4);border:1px solid var(--line);position:relative;}
+.battle-fill{height:100%;transition:width .4s;background:linear-gradient(90deg,#8b2f4f,#d08a9c);}
+.battle-fill.san{background:linear-gradient(90deg,#4a2b5e,#a78bd0);}
+.battle-fill.hp{background:linear-gradient(90deg,#7a2f2f,#c07a92);}
+.battle-actions{display:flex;gap:10px;margin-top:14px;}
+.battle-actions .btn{flex:1;padding:14px 8px;letter-spacing:.2em;}
+
+/* 角色互动 */
+.dialog-choices{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+
+/* 通用输入 */
+.inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line-s);color:var(--gold-b);
+  font-family:var(--f-cn);font-size:15px;padding:11px 14px;letter-spacing:.08em;
+  outline:none;transition:all .25s;}
+[data-theme="day"] .inp{background:rgba(255,255,255,.6);}
+.inp:focus{border-color:var(--gold);box-shadow:0 0 16px rgba(201,169,97,.22);}
+.inp::placeholder{color:var(--text-d);letter-spacing:.1em;font-size:13px;}
+
+.ending-card{text-align:center;padding:14px 6px;}
+.ending-card .e-icon{font-size:34px;color:var(--gold);margin-bottom:16px;display:block;
+  text-shadow:0 0 28px rgba(201,169,97,.7);animation:pulse 2.4s infinite;}
+@keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+.ending-card .e-title{font-family:var(--f-deco);font-size:22px;color:var(--gold-b);
+  letter-spacing:.28em;margin-bottom:8px;}
+.ending-card .e-sub{font-family:var(--f-en);font-style:italic;font-size:12px;
+  color:var(--gold-d);letter-spacing:.2em;margin-bottom:20px;}
+.ending-card .e-desc{font-size:14px;line-height:2;color:var(--text);text-align:left;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 4px;margin-bottom:16px;}
+
+/* 空状态 */
+.empty{text-align:center;padding:40px 20px;color:var(--text-d);font-size:13px;
+  font-style:italic;letter-spacing:.08em;line-height:1.9;}
+
+/* 响应式 */
+@media (max-width:380px){
+  .title-main{font-size:36px;}
+  .map-grid{grid-template-columns:1fr;}
+  .tb-title{display:none;}
 }
-.brand-logo { font-family: var(--f-deco); font-size: 1.2rem; color: var(--gold); }
-.currency { font-family: var(--f-en); font-size: 1.1rem; font-weight: 600; color: var(--gold); }
-.back-btn { font-size: 1.2rem; color: var(--ink-soft); cursor: pointer; padding: 5px; }
-
-/* ================= 底部导航 (让你知道去哪玩) ================= */
-.bottom-nav {
-  flex: 0 0 auto; display: flex; justify-content: space-around; align-items: center;
-  padding: 10px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom));
-  background: var(--bg2); border-top: 1px solid var(--line); z-index: 20;
+@media (min-width:600px){
+  .map-grid{grid-template-columns:repeat(3,1fr);}
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--ink-soft); font-family: var(--f-en); font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: 0.2s; }
-.nav-item.active { color: var(--gold); }
-.nav-icon { font-size: 1.4rem; }
-
-/* ================= 主页 ================= */
-#page-home { align-items: center; justify-content: center; }
-.home-inner { width: min(500px, 90%); text-align: center; animation: fadeUp 0.6s; }
-.home-time { font-family: var(--f-en); font-size: 4.5rem; font-weight: 600; line-height: 1; color: var(--ink); }
-.home-date { font-family: var(--f-en); font-style: italic; font-size: 1.1rem; color: var(--ink-soft); margin-bottom: 40px; }
-.home-title { font-family: var(--f-deco); font-size: 2.8rem; color: var(--gold); margin-bottom: 8px; }
-.home-sub { font-size: 0.9rem; letter-spacing: 8px; color: var(--ink-soft); margin-bottom: 40px; text-indent: 8px; }
-
-.paper-card {
-  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; text-align: left;
-  position: relative; transition: transform 0.2s; cursor: pointer;
-}
-.paper-card:active { transform: scale(0.98); }
-.card-title { font-family: var(--f-en); font-size: 1.2rem; font-weight: 600; color: var(--gold); margin-bottom: 6px; display: flex; justify-content: space-between; }
-.card-desc { font-size: 0.9rem; color: var(--ink-soft); }
-
-/* ================= 游戏舞台与对话 ================= */
-#page-game { background: var(--bg); }
-.game-stage { flex: 1; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-.dialogue-box {
-  background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: var(--shadow); padding: 30px 24px 24px; min-height: 180px;
-  position: relative; cursor: pointer;
-}
-.speaker-tag {
-  position: absolute; top: -14px; left: 20px; background: var(--gold); color: var(--bg);
-  padding: 4px 16px; border-radius: 20px; font-family: var(--f-en); font-weight: 600; font-size: 0.95rem;
-}
-.speaker-tag.inner { background: var(--ink-soft); }
-.dialogue-text { font-size: 1rem; line-height: 1.9; }
-.dialogue-text.narr { font-style: italic; color: var(--ink-soft); }
-.en-line { font-family: var(--f-en); font-size: 1.2rem; font-style: italic; margin-bottom: 12px; border-left: 3px solid var(--gold); padding-left: 12px; }
-.continue-hint { position: absolute; bottom: 12px; right: 18px; color: var(--gold); font-size: 1.2rem; opacity: 0; transition: 0.3s; }
-.continue-hint.show { opacity: 1; animation: bob 1.5s infinite; }
-
-/* ================= 选项与特殊玩法弹窗 ================= */
-.choices-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; flex-direction: column; justify-content: center; align-items: center; gap: 12px; padding: 20px; z-index: 50; }
-.choices-overlay.show { display: flex; }
-.choice-btn {
-  width: 100%; max-width: 400px; background: var(--paper); border: 1px solid var(--line);
-  padding: 16px 20px; border-radius: var(--radius); font-size: 1rem; text-align: left;
-  box-shadow: var(--shadow); border-left: 4px solid var(--gold); transition: 0.2s;
-}
-.choice-btn:active { transform: scale(0.97); }
-
-/* 掷骰子/战斗面板 */
-.modal-sheet {
-  width: 100%; max-width: 500px; background: var(--paper); border-radius: var(--radius);
-  border: 1px solid var(--line); padding: 24px; text-align: center; box-shadow: var(--shadow);
-}
-.dice-box { width: 80px; height: 80px; margin: 20px auto; background: var(--bg2); border: 2px solid var(--gold); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-family: var(--f-en); font-size: 3rem; font-weight: 700; color: var(--gold); }
-.battle-hp { width: 100%; height: 8px; background: var(--line); border-radius: 4px; margin: 10px 0; overflow: hidden; }
-.battle-hp-fill { height: 100%; background: #8B2F4F; transition: 0.3s; }
-
-/* ================= 设置弹层 (修复丑爆与退不出去) ================= */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); display: none; justify-content: center; align-items: center; z-index: 100; }
-.overlay.show { display: flex; }
-.settings-box {
-  width: 90%; max-width: 400px; background: var(--paper); border-radius: var(--radius);
-  border: 1px solid var(--line); padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-.settings-title { font-family: var(--f-deco); font-size: 1.4rem; color: var(--gold); text-align: center; margin-bottom: 20px; }
-.set-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dashed var(--line); }
-.set-row:last-child { border-bottom: none; }
-.switch { width: 48px; height: 28px; border-radius: 20px; background: var(--line); position: relative; cursor: pointer; transition: 0.3s; }
-.switch.on { background: var(--gold); }
-.switch::after { content: ''; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: 0.3s; }
-.switch.on::after { transform: translateX(20px); }
-
-/* 通用按钮 */
-.btn { padding: 14px 24px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--paper); font-size: 1rem; font-weight: 600; transition: 0.2s; width: 100%; margin-top: 15px; }
-.btn:active { transform: scale(0.96); }
-.btn-primary { background: var(--gold); color: var(--bg); border-color: var(--gold); }
-
-/* 动画 */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
-#toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
-.toast-msg { background: var(--gold); color: var(--bg); padding: 10px 24px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; animation: fadeUp 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 </style>
 </head>
-<body data-theme="dark">
+<body>
 <div id="app">
 
-  <!-- ================= 1. 主页面 ================= -->
-  <section class="page active" id="page-home">
-    <div class="home-inner">
-      <div class="home-time" id="homeTime">00:00</div>
-      <div class="home-date" id="homeDate">Day 1</div>
-      <div class="home-title">Nightfalling</div>
-      <div class="home-sub">入 魇</div>
-
-      <div class="paper-card" onclick="Game.nav('map')">
-        <div class="card-title">Map <span>→</span></div>
-        <div class="card-desc">前往维塞利亚大陆，调查封印松动的真相。</div>
+  <!-- ==================== 标题页 ==================== -->
+  <section class="screen" id="screen-title">
+    <div class="title-card frame">
+      <span class="corner tl">❖</span>
+      <span class="corner tr">❖</span>
+      <span class="corner bl">❖</span>
+      <span class="corner br">❖</span>
+      <div class="title-eyebrow">☽ VESELIA · NIGHTFALLING ☾</div>
+      <h1 class="title-main">入魇</h1>
+      <div class="title-sub">In Nightmare We Trust</div>
+      <div class="divider"><span>✦</span></div>
+      <p style="font-size:12px;color:var(--text-d);letter-spacing:.14em;line-height:1.9;">
+        梦神使叛变，魇灾吞城。<br>
+        能在梦与醒之间活着回来的人，<br>才有资格谈论真相。
+      </p>
+      <div class="title-actions">
+        <button class="btn primary" data-act="new">新 的 旅 程</button>
+        <button class="btn" data-act="continue">继 续 游 戏</button>
+        <button class="btn" data-act="archive">档 案 馆</button>
+        <button class="btn" data-act="about">关 于 本 作</button>
       </div>
-
-      <div class="paper-card" onclick="Game.openSettings()">
-        <div class="card-title">System <span>⚙</span></div>
-        <div class="card-desc">游戏设置 / 日夜切换</div>
-      </div>
+      <div class="title-foot">能看见日落的人，是幸福的</div>
     </div>
   </section>
 
-  <!-- ================= 2. 地图页面 ================= -->
-  <section class="page" id="page-map">
-    <header class="top-nav">
-      <div class="brand-logo">Veselia</div>
-      <div class="currency">✦ <span id="silverCount">50</span></div>
-    </header>
-    <div style="flex:1; overflow-y:auto; padding:20px;">
-      <h2 class="card-title" style="color:var(--gold); margin-bottom:15px;">SOMNIA · 索姆尼亚帝国</h2>
-      
-      <div class="paper-card" onclick="Game.enterLoc('tavern')">
-        <div class="card-title">日不落酒馆</div>
-        <div class="card-desc">梦目院总部。壁炉的火烧得正旺，可以在这里遇到同伴。</div>
+  <!-- ==================== 游戏主界面 ==================== -->
+  <section class="screen" id="screen-game">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-mark"></div>
+        <div class="tb-title">入魇</div>
       </div>
-
-      <div class="paper-card" onclick="Game.enterLoc('archive')">
-        <div class="card-title">管理院档案室</div>
-        <div class="card-desc">浩如烟海的卷宗。寻找关于封印松动的真实证据。</div>
-      </div>
-
-      <div class="paper-card" onclick="Game.enterLoc('ginkgo')">
-        <div class="card-title">银杏林</div>
-        <div class="card-desc" style="color:#8B2F4F;">落叶深处弥漫着焦土的味道，这里似乎是梦域的边缘。</div>
-      </div>
+      <div class="tb-loc" id="topLoc">——</div>
     </div>
-    <nav class="bottom-nav">
-      <div class="nav-item" onclick="Game.nav('home')"><span class="nav-icon">🏛</span>Home</div>
-      <div class="nav-item active"><span class="nav-icon">🗺</span>Map</div>
-    </nav>
+    <main class="stage" id="stage">
+      <div class="scene-bg bg-city" id="sceneBg"></div>
+      <div class="loc-bar"><span id="locLabel">未知之地</span></div>
+      <div class="dialog-scroll" id="dialogScroll">
+        <div class="dialog-inner" id="dialogInner"></div>
+      </div>
+      <div class="choices" id="choices">
+        <div class="choices-inner" id="choicesInner"></div>
+      </div>
+      <div class="cont-hint" id="contHint" style="display:none;">▼</div>
+    </main>
   </section>
 
-  <!-- ================= 3. 游戏舞台 ================= -->
-  <section class="page" id="page-game">
-    <header class="top-nav">
-      <div class="back-btn" onclick="Game.nav('map')">←</div>
-      <div class="brand-logo" id="gameLocName">Location</div>
-      <div style="width:24px;"></div> <!-- 占位 -->
-    </header>
-
-    <div class="game-stage">
-      <div class="dialogue-box" id="dialogueBox" onclick="Game.clickDialogue()">
-        <div class="speaker-tag" id="speakerTag">Speaker</div>
-        <div class="dialogue-text" id="dialogueText"></div>
-        <div class="continue-hint" id="continueHint">▼</div>
+  <!-- ==================== 地图 ==================== -->
+  <section class="screen" id="screen-map">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-mark"></div>
+        <div class="tb-title">地图</div>
       </div>
-
-      <!-- 选项层 -->
-      <div class="choices-overlay" id="choicesOverlay"></div>
-      
-      <!-- 特殊玩法层（掷骰/战斗） -->
-      <div class="choices-overlay" id="eventOverlay" style="background:rgba(20,18,16,0.9);">
-        <div id="eventContent"></div>
-      </div>
+      <div class="tb-loc" id="mapSilver">银镑 0</div>
     </div>
+    <main class="map-main" id="mapMain"></main>
   </section>
 
-  <!-- ================= 4. 设置弹窗 (绝对能退出去) ================= -->
-  <div class="overlay" id="settingsOverlay">
-    <div class="settings-box">
-      <div class="settings-title">Settings</div>
-      
-      <div class="set-row">
-        <div>夜间模式 (Dark Mode)</div>
-        <div class="switch on" id="setTheme" onclick="Game.toggleTheme(this)"></div>
+  <!-- ==================== 记录 ==================== -->
+  <section class="screen" id="screen-log">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-mark"></div>
+        <div class="tb-title">记录</div>
       </div>
-      
-      <button class="btn btn-primary" onclick="Game.closeSettings()">完 成</button>
+      <div class="tb-loc" id="logSub">——</div>
     </div>
-  </div>
+    <main class="log-main">
+      <div class="log-tabs" id="logTabs"></div>
+      <div class="log-body" id="logBody"></div>
+    </main>
+  </section>
 
-  <div id="toast"></div>
+  <!-- ==================== 设置 ==================== -->
+  <section class="screen" id="screen-settings">
+    <div class="topbar">
+      <div class="tb-left">
+        <div class="tb-mark"></div>
+        <div class="tb-title">设置</div>
+      </div>
+      <div class="tb-loc" id="setUid">——</div>
+    </div>
+    <main class="set-main" id="setMain"></main>
+  </section>
+
+  <!-- ==================== 底部导航 ==================== -->
+  <nav class="bottom-nav" id="bottomNav" style="display:none;">
+    <button class="nav-btn active" data-nav="game">
+      <span class="nav-ico">◇</span><span class="nav-lbl">主页</span>
+    </button>
+    <button class="nav-btn" data-nav="map">
+      <span class="nav-ico">◈</span><span class="nav-lbl">地图</span>
+    </button>
+    <button class="nav-btn" data-nav="log">
+      <span class="nav-ico">❖</span><span class="nav-lbl">记录</span>
+    </button>
+    <button class="nav-btn" data-nav="settings">
+      <span class="nav-ico">⚙</span><span class="nav-lbl">设置</span>
+    </button>
+  </nav>
+
 </div>
 
+<div class="modal-layer" id="modalLayer"></div>
+<div class="toast-layer" id="toastLayer"></div>
+
 <script>
-/* ================= 1. 状态与控制器 ================= */
-const GameState = {
-  silver: 50,
-  isDark: true,
-  typing: false,
-  script: null,
-  scriptIndex: 0,
-  onEnd: null,
-  battle: { active: false, enemyHp: 0, maxHp: 0, san: 100 }
+'use strict';
+/* ============================================================
+   常量与工具
+   ============================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ============================================================
+   角色数据
+   ============================================================ */
+const CHARS = {
+  narrator:  { name: '', en: '', sym: '✦' },
+  me:        { name: '我', en: 'Me', sym: '◇' },
+  tavana:    { name: '塔瓦娜·卡伊', en: 'Tavana Kay', sym: '♕', title: '梦目院院长',
+               desc: '温和谨慎，温文尔雅，优雅大方。总戴着一副单片金丝镜，一头浅咖色长发。喜欢看书、咖啡，以及银杏林。姐姐塔尔莎战死，她被迫接任院长。',
+               color: '#e8d5a0' },
+  movioa:    { name: '莫维奥娅·沃特森', en: 'Movioa Watson', sym: '♜', title: '梦目院副院长',
+               desc: '黑发血瞳，黑纱礼帽，肩立黑鸦。言语刻薄，一款冷脸贱，偶尔暴露吊儿郎当的本性。只对塔瓦娜温柔。',
+               color: '#a78bd0' },
+  lidia:     { name: '莉迪亚·简', en: 'Lidia Jane', sym: '♞', title: '联络员',
+               desc: '活泼、聒噪、精力过剩，对一切事物都保持好奇。姐姐是艾尔丝娅。',
+               color: '#c9a961' },
+  elsia:     { name: '艾尔丝娅·简', en: 'Elsia Jane', sym: '♝', title: '特务 / 杀手',
+               desc: '莉迪亚的姐姐。语气谨慎，笑容浅淡，对妹妹略显宠溺，还带点嫌弃。',
+               color: '#8b2f4f' },
+  fiman:     { name: '菲曼·卡桑拉', en: 'Fiman Kasandra', sym: '♖', title: '暗联 / 调酒师',
+               desc: '日不落酒馆的调酒师，其实是接线员。性格直率爽朗活泼，干脆利落。酒馆名字源于奶奶的话："能看见日落的人，是幸福的。"',
+               color: '#d08a5c' },
+  kash:      { name: '卡什·洛克威尔', en: 'Kash Rockwell', sym: '♘', title: '新调入成员',
+               desc: '23岁，美式年轻白男。金发碧眼，半永久墨镜，轻浮、热脸贱，ESTP，享乐主义、爱调情。实则视弱（半米外人畜不分），戴墨镜是为掩饰脆弱。缺乏安全感，深谈时反差极大。',
+               color: '#7aa8c0' },
+  reifina:   { name: '瑞菲纳', en: 'Reifina', sym: '♛', title: '魇境任务小组 队长',
+               desc: '完全帅姐，手心布满茧，人狠话不多的战神，最冷静之人。掌控力统治力都很强，像一个dom。',
+               color: '#c0a0d0' },
+  cassi:     { name: '卡修斯尔', en: 'Cassiusel', sym: '♗', title: '魇境任务小组 副队长',
+               desc: '瑞菲纳的副手。沉默寡言，忠诚，做事稳妥。', color: '#8a9ab0' },
+  morpheus:  { name: '摩耳甫斯', en: 'Morpheus', sym: '☽', title: '初代梦神使 ·「魇」',
+               desc: '传说中，初代「梦魇」曾是神族的梦神使。叛变之后，祂失去理智，成为了「魇」。封印并不完整——祂没有被杀死，只是被压制。祂在等。',
+               color: '#7a4fa0' }
 };
 
-window.onload = () => {
-  Game.updateClock();
-  setInterval(Game.updateClock, 60000);
+/* ============================================================
+   存档状态
+   ============================================================ */
+const STORAGE_KEY = 'nightfalling_save_v1';
+const SETTINGS_KEY = 'nightfalling_settings_v1';
+
+const defaultSettings = {
+  theme: 'night',
+  fontSize: 1,
+  animations: true,
+  shake: true,
+  sfxOn: true,
+  sfxVol: 65,
+  textSpeed: 25,   // ms per char
+  autoPlay: false,
+  skipRead: false,
+  confirmChoice: true
 };
 
-const Game = {
-  nav(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(`page-${pageId}`).classList.add('active');
+let state = {
+  uid: 'UID: ' + Math.floor(10000000 + Math.random() * 89999999),
+  player: { name: '记者', nick: '记者', gender: '不限', personality: '冷静' },
+  stats: { silver: 0, sanity: 100 },
+  affection: {},
+  flags: {},
+  readLines: {},
+  log: [],
+  currentScene: null,      // 当前场景 id
+  currentLineIdx: 0,
+  screen: 'title'
+};
+
+let settings = { ...defaultSettings };
+
+/* ============================================================
+   存档读写
+   ============================================================ */
+function saveGame() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      uid: state.uid,
+      player: state.player,
+      stats: state.stats,
+      affection: state.affection,
+      flags: state.flags,
+      readLines: state.readLines,
+      log: state.log.slice(-200),
+      currentScene: state.currentScene,
+      currentLineIdx: state.currentLineIdx,
+      ts: Date.now()
+    }));
+  } catch (e) { console.warn('save fail', e); }
+}
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    state.uid = d.uid || state.uid;
+    state.player = Object.assign(state.player, d.player || {});
+    state.stats = Object.assign(state.stats, d.stats || {});
+    state.affection = d.affection || {};
+    state.flags = d.flags || {};
+    state.readLines = d.readLines || {};
+    state.log = d.log || [];
+    state.currentScene = d.currentScene || null;
+    state.currentLineIdx = d.currentLineIdx || 0;
+    return true;
+  } catch (e) { return false; }
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) settings = Object.assign(defaultSettings, JSON.parse(raw));
+  } catch (e) {}
+  applySettings();
+}
+function applySettings() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  document.documentElement.style.setProperty('--font-scale', settings.fontSize);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', settings.theme === 'day' ? '#ece4d2' : '#0a0810');
+}
+
+/* ============================================================
+   Web Audio 合成音效
+   ============================================================ */
+const Sfx = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { console.warn('AudioContext unavailable'); }
   },
-
-  updateClock() {
-    const d = new Date();
-    document.getElementById('homeTime').innerText = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
-    document.getElementById('homeDate').innerText = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  ensure() {
+    if (!this.ctx) this.init();
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
   },
-
-  toast(msg) {
-    const t = document.createElement('div');
-    t.className = 'toast-msg'; t.innerText = msg;
-    document.getElementById('toast').appendChild(t);
-    setTimeout(() => t.remove(), 2000);
+  vol() {
+    if (!settings.sfxOn) return 0;
+    return clamp(settings.sfxVol / 100, 0, 1);
   },
-
-  /* ================= 设置控制 ================= */
-  openSettings() { document.getElementById('settingsOverlay').classList.add('show'); },
-  closeSettings() { document.getElementById('settingsOverlay').classList.remove('show'); },
-  toggleTheme(el) {
-    GameState.isDark = !GameState.isDark;
-    el.classList.toggle('on', GameState.isDark);
-    document.body.setAttribute('data-theme', GameState.isDark ? 'dark' : 'light');
+  tone(freq, dur, type = 'sine', vol = 0.15, sweep = null) {
+    this.ensure();
+    if (!this.ctx) return;
+    const v = this.vol() * vol;
+    if (v <= 0) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (sweep) osc.frequency.exponentialRampToValueAtTime(sweep, t + dur);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(v, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
   },
-
-  /* ================= 场景入口 ================= */
-  enterLoc(id) {
-    if (id === 'tavern') {
-      document.getElementById('gameLocName').innerText = '日不落酒馆';
-      this.startScript(Scripts.tavern);
-    }
-    if (id === 'ginkgo') {
-      document.getElementById('gameLocName').innerText = '银杏林';
-      this.startScript(Scripts.ginkgo);
-    }
-    if (id === 'archive') {
-      document.getElementById('gameLocName').innerText = '档案室';
-      this.showArchivePuzzle();
-    }
+  noise(dur = 0.12, vol = 0.15) {
+    this.ensure();
+    if (!this.ctx) return;
+    const v = this.vol() * vol;
+    if (v <= 0) return;
+    const t = this.ctx.currentTime;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(v, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2000;
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    src.start(t);
   },
-
-  /* ================= 剧本系统 ================= */
-  startScript(script) {
-    this.nav('game');
-    GameState.script = script;
-    GameState.scriptIndex = 0;
-    this.renderLine();
+  click() { this.tone(720, 0.06, 'triangle', 0.1); },
+  page()  { this.noise(0.1, 0.1); },
+  success() {
+    this.tone(523, 0.12, 'sine', 0.15);
+    setTimeout(() => this.tone(659, 0.12, 'sine', 0.15), 80);
+    setTimeout(() => this.tone(784, 0.22, 'sine', 0.15), 160);
   },
-
-  renderLine() {
-    let line = GameState.script[GameState.scriptIndex];
-    if (!line) { this.nav('map'); return; } // 脚本结束回地图
-
-    let box = document.getElementById('dialogueBox');
-    let tag = document.getElementById('speakerTag');
-    let txt = document.getElementById('dialogueText');
-
-    box.className = 'dialogue-box';
-    txt.className = 'dialogue-text';
-    tag.className = 'speaker-tag';
-
-    if (line.type === 'narr') {
-      tag.style.display = 'none';
-      txt.classList.add('narr');
-    } else if (line.type === 'inner') {
-      tag.style.display = 'block'; tag.classList.add('inner'); tag.innerText = line.speaker;
-      txt.classList.add('narr');
-    } else {
-      tag.style.display = 'block'; tag.innerText = line.speaker;
-    }
-
-    let html = '';
-    if (line.en) {
-      html += `<div class="en-line">"${line.en}"</div><div>「${line.cn}」</div>`;
-    } else {
-      html += `<div>${line.cn}</div>`;
-    }
-    
-    txt.innerHTML = html;
-    document.getElementById('continueHint').classList.remove('show');
-
-    // 优雅淡入，而不是生硬的打字机
-    txt.style.opacity = 0;
-    setTimeout(() => {
-      txt.style.opacity = 1;
-      document.getElementById('continueHint').classList.add('show');
-    }, 300); 
+  fail() {
+    this.tone(220, 0.18, 'sawtooth', 0.12, 110);
+    setTimeout(() => this.tone(160, 0.28, 'sawtooth', 0.1, 80), 120);
   },
-
-  clickDialogue() {
-    GameState.scriptIndex++;
-    this.renderLine();
+  dice() {
+    for (let i = 0; i < 5; i++) setTimeout(() => this.noise(0.05, 0.06), i * 55);
   },
-
-  /* ================= 玩法 1：档案找证据 ================= */
-  showArchivePuzzle() {
-    this.nav('game');
-    document.getElementById('speakerTag').style.display = 'none';
-    document.getElementById('dialogueText').innerHTML = `
-      <div style="margin-bottom:10px;">在卷宗中，选出 2 份关于“封印松动”的真实证据：</div>
-    `;
-    document.getElementById('continueHint').classList.remove('show');
-    
-    let over = document.getElementById('choicesOverlay');
-    over.innerHTML = ''; over.classList.add('show');
-
-    const docs = [
-      { text: '《日常开销》：购入红茶三磅。', correct: false },
-      { text: '《第三日战报》：缇斯已完全被吞噬。', correct: true },
-      { text: '《封印摘要》：摩耳甫斯未死，仅被压制。', correct: true },
-      { text: '《人事调动》：艾瑞莉调任联络员。', correct: false }
-    ];
-
-    let found = 0;
-    docs.forEach(doc => {
-      let btn = document.createElement('div');
-      btn.className = 'choice-btn'; btn.innerText = doc.text;
-      btn.onclick = () => {
-        if (doc.correct) {
-          btn.style.borderLeftColor = 'var(--gold)'; btn.style.color = 'var(--gold)';
-          btn.style.pointerEvents = 'none';
-          found++;
-          if (found === 2) {
-            setTimeout(() => {
-              over.classList.remove('show');
-              document.getElementById('dialogueText').innerHTML = `<div style="color:var(--gold)">你找出了真相，获得 50 银镑。</div>`;
-              GameState.silver += 50;
-              document.getElementById('silverCount').innerText = GameState.silver;
-              document.getElementById('continueHint').classList.add('show');
-              GameState.script = [{ cn: "" }]; // 假脚本，点一下回地图
-            }, 500);
-          }
-        } else {
-          btn.style.transform = 'translateX(-5px)';
-          setTimeout(() => btn.style.transform = 'none', 200);
-        }
-      };
-      over.appendChild(btn);
-    });
-  },
-
-  /* ================= 玩法 2：梦域掷骰与战斗 ================= */
-  showDreamEvent() {
-    document.getElementById('speakerTag').style.display = 'none';
-    document.getElementById('dialogueText').innerHTML = `<div>前方的乌鸦烙印散发着黑气。你需要进行理智检定。</div>`;
-    
-    let over = document.getElementById('eventOverlay');
-    let content = document.getElementById('eventContent');
-    over.classList.add('show');
-
-    content.innerHTML = `
-      <div class="modal-sheet">
-        <h3 style="font-family:var(--f-deco); color:var(--gold);">理智检定</h3>
-        <div class="dice-box" id="diceBox">?</div>
-        <p style="font-size:0.85rem; color:var(--ink-soft); margin-bottom:20px;">掷骰判定（>10 成功）。失败将进入战斗。</p>
-        <button class="btn btn-primary" onclick="Game.rollDice()">掷 骰</button>
-      </div>
-    `;
-  },
-
-  rollDice() {
-    let box = document.getElementById('diceBox');
-    box.innerText = '...';
-    setTimeout(() => {
-      let roll = Math.floor(Math.random() * 20) + 1;
-      box.innerText = roll;
-      if (roll > 10) {
-        document.getElementById('eventContent').innerHTML = `
-          <div class="modal-sheet">
-            <h3 style="color:var(--gold); margin-bottom:10px;">判定成功 (${roll})</h3>
-            <p>你抵抗了侵蚀，安全通过。</p>
-            <button class="btn btn-primary" onclick="Game.closeEvent()">继续</button>
-          </div>`;
-      } else {
-        document.getElementById('eventContent').innerHTML = `
-          <div class="modal-sheet">
-            <h3 style="color:#8B2F4F; margin-bottom:10px;">判定失败 (${roll})</h3>
-            <p>黑气侵蚀了你，焦土残影扑来！</p>
-            <button class="btn btn-primary" style="background:#8B2F4F; border-color:#8B2F4F;" onclick="Game.startBattle()">进入战斗</button>
-          </div>`;
-      }
-    }, 500);
-  },
-
-  startBattle() {
-    GameState.battle = { active: true, enemyHp: 30, maxHp: 30, san: 100 };
-    this.renderBattle("焦土残影 出现了！");
-  },
-
-  renderBattle(log) {
-    let b = GameState.battle;
-    document.getElementById('eventContent').innerHTML = `
-      <div class="modal-sheet">
-        <h3 style="font-family:var(--f-deco); color:#8B2F4F;">焦土残影</h3>
-        <div class="battle-hp"><div class="battle-hp-fill" style="width:${(b.enemyHp/b.maxHp)*100}%"></div></div>
-        <div style="font-size:0.8rem; color:var(--ink-soft); text-align:left;">理智: ${b.san}</div>
-        <div class="battle-hp" style="height:4px;"><div class="battle-hp-fill" style="width:${b.san}%; background:var(--gold);"></div></div>
-        <div style="text-align:left; font-size:0.85rem; margin:15px 0; min-height:40px;">${log}</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <button class="btn btn-primary" onclick="Game.battleAction('atk')">攻击</button>
-          <button class="btn" style="margin-top:15px;" onclick="Game.battleAction('def')">防御</button>
-        </div>
-      </div>
-    `;
-  },
-
-  battleAction(action) {
-    let b = GameState.battle; let log = "";
-    if (action === 'atk') {
-      let dmg = Math.floor(Math.random() * 10) + 10; b.enemyHp -= dmg;
-      log += `你造成了 ${dmg} 点伤害。<br>`;
-    } else { log += `你进行防御。<br>`; }
-
-    if (b.enemyHp <= 0) {
-      log += `<span style="color:var(--gold)">敌人消散了。</span>`;
-      this.renderBattle(log);
-      document.getElementById('eventContent').querySelector('.btn-primary').onclick = () => Game.closeEvent(true);
-      document.getElementById('eventContent').querySelector('.btn-primary').innerText = "胜利，离开";
-      return;
-    }
-
-    let dmg = action === 'def' ? 5 : 15; b.san -= dmg;
-    log += `敌人攻击，理智损失 ${dmg}。<br>`;
-    if (b.san <= 0) {
-      log += `<span style="color:#8B2F4F">理智崩溃，你死在了梦里。</span>`;
-      this.renderBattle(log);
-      document.getElementById('eventContent').querySelector('.btn-primary').onclick = () => Game.closeEvent(false);
-      document.getElementById('eventContent').querySelector('.btn-primary').innerText = "在噩梦中死去";
-      return;
-    }
-    this.renderBattle(log);
-  },
-
-  closeEvent(win) {
-    document.getElementById('eventOverlay').classList.remove('show');
-    if (win) {
-      GameState.silver += 50;
-      document.getElementById('silverCount').innerText = GameState.silver;
-      this.toast("获得梦域碎片 +50");
-    } else { this.toast("你失去了意识..."); }
-    this.nav('map');
+  hit() { this.tone(90, 0.16, 'square', 0.14, 50); this.noise(0.08, 0.1); },
+  unlock() {
+    this.tone(880, 0.1, 'sine', 0.12);
+    setTimeout(() => this.tone(1047, 0.18, 'sine', 0.12), 70);
   }
 };
 
-/* ================= 2. 剧本数据 ================= */
-const Scripts = {
-  tavern: [
-    { type: 'narr', en: "The fire crackled. Several eyes looked up as you pushed open the oak door.", cn: "壁炉里的火烧得正旺。你推开橡木门，几双眼睛抬头看向你。" },
-    { type: 'dialogue', speaker: '塔瓦娜', en: "I am afraid you have caught me at an inconvenient hour, my dear correspondent.", cn: "恐怕您来得不是时候，我亲爱的记者。" },
-    { type: 'inner', speaker: '记者', cn: "（她坐在角落，捧着红茶，眼神带着防备。）" },
-    { type: 'dialogue', speaker: '卡什', en: "Well, well. Don't tell me you're here to enforce those boring rules too?", cn: "哟。别告诉我你也是来执行那些死板规矩的？" }
+/* ============================================================
+   震动反馈
+   ============================================================ */
+function vibrate(ms) {
+  if (!settings.shake) return;
+  if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {}
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+function toast(msg, type = '', dur = 2400) {
+  const layer = $('#toastLayer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  layer.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 380);
+  }, dur);
+}
+
+/* ============================================================
+   弹窗系统（保证永远能关）
+   ============================================================ */
+let modalStack = [];
+function openModal(opt) {
+  const layer = $('#modalLayer');
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-title">${esc(opt.title || '')}</div>
+      <button class="modal-close" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">${opt.body || ''}</div>
+    ${opt.foot !== false ? `<div class="modal-foot">${opt.footHTML || ''}</div>` : ''}
+  `;
+  layer.appendChild(wrap);
+  layer.classList.add('open');
+  modalStack.push(wrap);
+
+  const close = () => closeModal(wrap);
+  wrap.querySelector('.modal-close').onclick = () => { Sfx.click(); close(); };
+  // 点击遮罩层空白处关闭
+  layer.onclick = (e) => {
+    if (e.target === layer) { Sfx.click(); close(); }
+  };
+
+  if (opt.onMount) opt.onMount(wrap);
+  return { el: wrap, close };
+}
+function closeModal(el) {
+  const layer = $('#modalLayer');
+  const target = el || modalStack[modalStack.length - 1];
+  if (!target) { layer.classList.remove('open'); layer.innerHTML = ''; modalStack = []; return; }
+  const idx = modalStack.indexOf(target);
+  if (idx >= 0) modalStack.splice(idx, 1);
+  target.remove();
+  if (!modalStack.length) layer.classList.remove('open');
+}
+function closeAllModals() {
+  const layer = $('#modalLayer');
+  layer.classList.remove('open');
+  layer.innerHTML = '';
+  modalStack = [];
+}
+
+/* ============================================================
+   页面切换
+   ============================================================ */
+function showScreen(name) {
+  const cur = document.querySelector('.screen.active');
+  const nxt = document.getElementById('screen-' + name);
+  if (!nxt) return;
+  if (cur === nxt) { updateNav(name); return; }
+  state.screen = name;
+
+  const doSwap = () => {
+    if (cur) cur.classList.remove('active');
+    nxt.classList.add('active');
+    if (settings.animations) {
+      gsap.fromTo(nxt, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.32, ease: 'power2.out' });
+    } else {
+      nxt.style.opacity = 1;
+    }
+  };
+  if (settings.animations && cur) {
+    gsap.to(cur, {
+      opacity: 0, duration: 0.18, ease: 'power1.in', onComplete: () => {
+        cur.style.opacity = ''; doSwap();
+      }
+    });
+  } else {
+    doSwap();
+  }
+
+  $('#bottomNav').style.display = (name === 'title') ? 'none' : 'flex';
+  updateNav(name);
+  if (name === 'map') renderMap();
+  if (name === 'log') renderLog();
+  if (name === 'settings') renderSettings();
+}
+
+function updateNav(name) {
+  $$('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === name);
+  });
+}
+
+/* ============================================================
+   章节 / 场景数据结构
+   ============================================================ */
+/* 场景结构：
+{
+  id: 'xxx',
+  bg: 'city|tavern|grove|manor|archive|church|castle|dream',
+  loc: '地点名',
+  lines: [
+    { t:'n', cn:'旁白' },
+    { t:'d', who:'tavana', en:'...', cn:'「...」' },
+    { t:'me', cn:'内心独白' }
   ],
-  ginkgo: [
-    { type: 'narr', en: "The golden leaves fell silently. Suddenly, the air grew heavy, smelling of burnt earth.", cn: "金黄的落叶寂静飘落。突然，空气变得沉重，弥漫着焦土的味道。" },
-    { type: 'inner', speaker: '记者', cn: "（不对……梦域的边界在扭曲。）" }
+  choices: [ { cn:'选项', next:'场景id', set:{flag:1}, act:'...' } ],
+  next: '下一个场景id',
+  onEnd: '动作'
+}
+*/
+
+const SCENES = {};
+
+/* ---- 序章 ---- */
+SCENES.prologue_1 = {
+  bg: 'city', loc: '落日之都 · 城门',
+  lines: [
+    { t: 'n', cn: '暮色像一层薄薄的灰纱，覆在落日之都的煤气灯上。' },
+    { t: 'n', cn: '青石板路还留着午后雨水的痕迹，铁艺阳台在暮色里像一排沉默的剪影。' },
+    { t: 'n', cn: '你拎着行李箱，站在城门下，忽然意识到——这里的人，都在加快脚步。' },
+    { t: 'me', cn: '（王翼的记者证在我胸前的口袋里，纸边已经磨得发毛。）' },
+    { t: 'me', cn: '（这就是维塞利亚大陆的最西端么。）' },
+    { t: 'n', cn: '一个赶路的老人撞了你一下，连声道歉都没有，就消失在巷子里。' },
+    { t: 'me', cn: '（……他们怕的不是贼。）' }
+  ],
+  next: 'prologue_2'
+};
+
+SCENES.prologue_2 = {
+  bg: 'grove', loc: '银杏林 · 小径',
+  lines: [
+    { t: 'n', cn: '沿着银杏林边的小路走，空气里有一种旧纸和红茶混在一起的味道。' },
+    { t: 'n', cn: '金黄的叶子落了满地，踩上去沙沙作响。' },
+    { t: 'n', cn: '路的尽头，一座木板搭成的小酒馆出现在眼前。' },
+    { t: 'n', cn: '房顶的公鸡风向标来回转动，开合门被风吹得嘎吱作响。门外小院的月季和玫瑰修剪得整齐精巧。' },
+    { t: 'n', cn: '二层露台的栅栏旁，几位女性客人正边看风景边谈笑。' },
+    { t: 'd', who: 'fiman', en: 'Evening, stranger. You look like you just walked out of a storm.', cn: '「晚上好，陌生人。你看起来像刚从一场风暴里走出来。」' },
+    { t: 'n', cn: '门口站着一个系着围裙的女人，手里还拿着抹布。她笑起来的时候眼睛会弯起来。' },
+    { t: 'd', who: 'fiman', en: "Fiman. I run this place. Fancy a drink? Or are you here for... something else?", cn: '「菲曼。这店是我开的。来一杯？还是说……你是为了别的事来的？」' }
+  ],
+  choices: [
+    { cn: '「我是王翼来的记者，想调查『魇』。」', next: 'prologue_3a', set: { honest: 1 } },
+    { cn: '「先来一杯吧。走了太久的路。」', next: 'prologue_3b' },
+    { cn: '「这里是不是死过很多人？」', next: 'prologue_3c' }
   ]
 };
 
-// 触发银杏林的特殊玩法
-const originalEnterLoc = Game.enterLoc;
-Game.enterLoc = function(id) {
-  if (id === 'ginkgo') {
-    this.nav('game');
-    document.getElementById('gameLocName').innerText = '银杏林';
-    this.startScript(Scripts.ginkgo);
-    // 延迟触发掷骰
-    setTimeout(() => { this.showDreamEvent(); }, 2000);
+SCENES.prologue_3a = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'me', cn: '我是王翼来的记者，想调查「魇」。' },
+    { t: 'n', cn: '菲曼擦酒杯的手停了一下。' },
+    { t: 'd', who: 'fiman', en: "A reporter. Huh. Well, you're either very brave or very stupid.", cn: '「记者。嗯。那你要么很勇敢，要么很蠢。」' },
+    { t: 'd', who: 'fiman', en: "Come in. First drink's on the house. Then we talk.", cn: '「进来吧。第一杯我请。然后我们再谈。」' },
+    { t: 'n', cn: '她掀开吧台的活动板，示意你进来。' }
+  ],
+  set: { metFiman: 1, aff: { fiman: 5 } },
+  next: 'prologue_4'
+};
+
+SCENES.prologue_3b = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'me', cn: '先来一杯吧。走了太久的路。' },
+    { t: 'd', who: 'fiman', en: 'A woman after my own heart. What'll it be?', cn: '「合我心意。喝点什么？」' },
+    { t: 'me', cn: '威士忌。加冰。' },
+    { t: 'n', cn: '她转身从胡桃木酒柜上取下一瓶，动作利落。' },
+    { t: 'd', who: 'fiman', en: 'You picked the only bottle I do not water down. Good instinct.', cn: '「你挑了我唯一不掺水的那瓶。直觉不错。」' }
+  ],
+  set: { aff: { fiman: 3 } },
+  next: 'prologue_4'
+};
+
+SCENES.prologue_3c = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'me', cn: '这里是不是死过很多人？' },
+    { t: 'n', cn: '菲曼的笑容淡了一点。' },
+    { t: 'd', who: 'fiman', en: "You're direct. I'll give you that.", cn: '「你倒是直接。这点我认。」' },
+    { t: 'd', who: 'fiman', en: "Everyone in this city has lost someone. But nobody talks about it. Not here.", cn: '「这座城里每个人都失去过谁。但没人愿意谈。至少不在这儿。」' },
+    { t: 'n', cn: '她把酒杯推到你面前。' }
+  ],
+  set: { aff: { fiman: 2 } },
+  next: 'prologue_4'
+};
+
+SCENES.prologue_4 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'd', who: 'fiman', en: "There's someone you should meet. A new face, just transferred in. Loud, but harmless.", cn: '「有个人你应该见见。新调来的。吵，但没恶意。」' },
+    { t: 'n', cn: '她朝酒馆角落抬了抬下巴。' },
+    { t: 'n', cn: '那里坐着一个金发碧眼的年轻男人，戴着一副永远不摘的墨镜，正单手撑着脸，跟旁边一位女士调笑。' },
+    { t: 'd', who: 'kash', en: "And then she said— oh, hello. Didn't see you there. Literally. It's the glasses.", cn: '「然后她说——哦，你好。没看见你。字面意义上的。怪这副眼镜。」' },
+    { t: 'n', cn: '他笑嘻嘻地摘了一下墨镜，又立刻戴回去。' },
+    { t: 'd', who: 'fiman', en: "Kash. That's Kash. Don't take anything he says seriously. Including his name.", cn: '「卡什。他叫卡什。他说什么都别当真。包括他的名字。」' }
+  ],
+  next: 'prologue_5'
+};
+
+SCENES.prologue_5 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'd', who: 'kash', en: "You must be the new one. The reporter. Fiman told me about you.", cn: '「你就是新来的那个吧。记者。菲曼跟我提过你。」' },
+    { t: 'd', who: 'kash', en: "Stick with me. I'll show you the good bars, the bad bars, and the ones that don't exist.", cn: '「跟着我。我带你见识好酒吧、烂酒吧，还有那些不存在的酒吧。」' },
+    { t: 'd', who: 'fiman', en: "Don't follow him anywhere.", cn: '「别跟他去任何地方。」' },
+    { t: 'n', cn: '卡什大笑起来，丝毫不以为意。' }
+  ],
+  set: { metKash: 1, aff: { kash: 5 } },
+  next: 'prologue_6'
+};
+
+SCENES.prologue_6 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'n', cn: '门忽然开了。夜风裹着一股冷意吹进来，酒馆里所有说话声都低了下去。' },
+    { t: 'n', cn: '走进来的是一个黑发女人。黑色齐肩短发，黑纱礼帽，肩上立着一只黑鸦。她的瞳孔是血红色的，在煤气灯下显得格外刺目。' },
+    { t: 'n', cn: '她身后还跟着一个人——浅咖色长发，单片金丝镜，深蓝外套，胸前别着一枚银色的眼睛徽章。' },
+    { t: 'd', who: 'movioa', en: "Fiman. Three glasses. The usual.", cn: '「菲曼。三杯。老样子。」' },
+    { t: 'd', who: 'fiman', en: "Three? Who's the third for?", cn: '「三杯？第三杯给谁？」' },
+    { t: 'n', cn: '莫维奥娅没有回答，只是把目光转向了你。' },
+    { t: 'd', who: 'tavana', en: "You must be the reporter from the Wing. I'm Tavana. Head of the Dream Bureau.", cn: '「你一定是王翼来的记者。我是塔瓦娜。梦目院院长。」' },
+    { t: 'd', who: 'tavana', en: "Fiman told me you arrived this evening. I thought I'd come to greet you personally.", cn: '「菲曼说你今晚到了。我想亲自来迎接你。」' }
+  ],
+  set: { metTavana: 1, metMovioa: 1, aff: { tavana: 4, movioa: 1 } },
+  next: 'prologue_7'
+};
+
+SCENES.prologue_7 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'd', who: 'movioa', en: "Tavana. You're being polite. It's exhausting to watch.", cn: '「塔瓦娜。你这么客气。看着都累。」' },
+    { t: 'd', who: 'tavana', en: "Movioa, please.", cn: '「莫维奥娅，拜托。」' },
+    { t: 'd', who: 'movioa', en: "What? I'm just saying what everyone's thinking.", cn: '「怎么？我只是把大家心里想的说出来了而已。」' },
+    { t: 'n', cn: '塔瓦娜轻轻叹了口气，转向你。' },
+    { t: 'd', who: 'tavana', en: "Tomorrow morning, come to the Bureau. There is much to discuss.", cn: '「明早来梦目院。有很多事情要谈。」' }
+  ],
+  next: 'prologue_8'
+};
+
+SCENES.prologue_8 = {
+  bg: 'tavern', loc: '日不落酒馆 · 二楼客房',
+  lines: [
+    { t: 'n', cn: '那天晚上，你住在日不落酒馆二楼。窗户朝着银杏林，月光把叶子照得像镀了银。' },
+    { t: 'n', cn: '楼下隐约传来谈笑声，但很快，一扇扇窗户被关上，门闩落下的声音此起彼伏。' },
+    { t: 'me', cn: '（所有人都在锁门。他们怕的不是贼。）' },
+    { t: 'n', cn: '你把笔记本翻到新的一页，写下第一行字。' },
+    { t: 'n', cn: '「落日之都，第一日。魇真实存在。梦域正在扩张。而那位院长，似乎还有话没说。」' }
+  ],
+  onEnd: () => {
+    toast('◈ 序章完成 · 地图已解锁', 'ok');
+    setTimeout(() => showScreen('map'), 800);
+  }
+};
+
+/* ---- 梦目院 · 初见 ---- */
+SCENES.manor_1 = {
+  bg: 'manor', loc: '梦目院总部 · 大厅',
+  lines: [
+    { t: 'n', cn: '梦目院的大厅比想象中安静。高耸的石柱，冷白色的穹顶，穿深色制服的人匆匆走过，没有人多看你一眼。' },
+    { t: 'd', who: 'tavana', en: "Welcome. Please, sit. Coffee?", cn: '「欢迎。请坐。咖啡？」' },
+    { t: 'n', cn: '塔瓦娜在长桌尽头坐下，摘下单片镜，轻轻揉了揉眉心。' },
+    { t: 'd', who: 'tavana', en: "I'll be direct. You want to investigate the nightmare. I want to know why.", cn: '「我直说了。你想调查魇。我想知道为什么。」' }
+  ],
+  choices: [
+    { cn: '「我是记者。这是我的职责。」', next: 'manor_2a', set: { aff: { tavana: 2 } } },
+    { cn: '「我在王翼见过不该看见的东西。」', next: 'manor_2b', set: { aff: { tavana: 4 }, seenWing: 1 } },
+    { cn: '「我听说……这里有人能让人再也醒不过来。」', next: 'manor_2c', set: { aff: { tavana: 1 } } }
+  ]
+};
+
+SCENES.manor_2a = {
+  bg: 'manor', loc: '梦目院总部 · 大厅',
+  lines: [
+    { t: 'me', cn: '我是记者。这是我的职责。' },
+    { t: 'd', who: 'tavana', en: "A duty. Good. Duty is more reliable than curiosity.", cn: '「职责。很好。职责比好奇心可靠。」' },
+    { t: 'd', who: 'tavana', en: "Then I'll give you a duty. Find out what's happening at the western dream field. Report back to me.", cn: '「那我给你一个职责。去西边梦域查清楚发生了什么。回来向我汇报。」' }
+  ],
+  next: 'manor_3'
+};
+
+SCENES.manor_2b = {
+  bg: 'manor', loc: '梦目院总部 · 大厅',
+  lines: [
+    { t: 'me', cn: '我在王翼见过不该看见的东西。' },
+    { t: 'n', cn: '塔瓦娜的睫毛微微一动。' },
+    { t: 'd', who: 'tavana', en: "In the Wing... What did you see?", cn: '「在王翼……你看见了什么？」' },
+    { t: 'me', cn: '一座城市。所有人都在睡觉。但没有人做梦。' },
+    { t: 'd', who: 'tavana', en: "……That is worse than a nightmare. Much worse.", cn: '「……那比噩梦更糟。糟得多。」' }
+  ],
+  next: 'manor_3'
+};
+
+SCENES.manor_2c = {
+  bg: 'manor', loc: '梦目院总部 · 大厅',
+  lines: [
+    { t: 'me', cn: '我听说……这里有人能让人再也醒不过来。' },
+    { t: 'd', who: 'tavana', en: "Yes. Those are called the Unreturned. And there are more of them every month.", cn: '「是的。那些人叫未归之人。每个月都越来越多。」' },
+    { t: 'd', who: 'tavana', en: "If you want to know how they got there, you'll have to look at the dream fields.", cn: '「如果你想知道他们是怎么变成那样的，得去梦域看看。」' }
+  ],
+  next: 'manor_3'
+};
+
+SCENES.manor_3 = {
+  bg: 'manor', loc: '梦目院总部 · 大厅',
+  lines: [
+    { t: 'd', who: 'tavana', en: "One more thing. Stay away from the church. They don't like outsiders.", cn: '「还有一件事。远离教堂。他们不喜欢外人。」' },
+    { t: 'd', who: 'tavana', en: "And if you see a black bird on someone's shoulder—don't stare. That's Movioa's way of saying hello.", cn: '「要是看见谁肩上站着黑鸦——别盯着看。那是莫维奥娅打招呼的方式。」' },
+    { t: 'n', cn: '她笑了一下，露出一点疲惫。' }
+  ],
+  set: { chapter1Done: 1 },
+  onEnd: () => {
+    toast('◈ 第一章完成 · 地图已更新', 'ok');
+    saveGame();
+    setTimeout(() => showScreen('map'), 800);
+  }
+};
+
+/* ---- 日不落酒馆 · 闲聊 ---- */
+SCENES.tavern_chat = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'n', cn: '你走进酒馆时，菲曼正在擦一只永远擦不干净的杯子。' },
+    { t: 'd', who: 'fiman', en: "Back already? Either you're thirsty or you're bored.", cn: '「又回来了？要么是你渴了，要么是你无聊了。」' }
+  ],
+  choices: [
+    { cn: '「这城市……到底怎么了？」', next: 'tavern_talk1', set: { aff: { fiman: 2 } } },
+    { cn: '「你给我调一杯酒吧。」', next: 'tavern_mix', set: { aff: { fiman: 3 } } },
+    { cn: '「你为什么不离开这里？」', next: 'tavern_talk2', set: { aff: { fiman: 4 } } }
+  ]
+};
+
+SCENES.tavern_talk1 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'd', who: 'fiman', en: "Same thing as always. The dream fields grow. People sleep and don't wake up. The Bureau tries. The church prays.", cn: '「老样子。梦域在长，人们睡下去就醒不来。梦目院在努力。教会在祈祷。」' },
+    { t: 'd', who: 'fiman', en: "And people like me—we keep the lights on and the glasses clean.", cn: '「像我们这样的人——就负责让灯亮着，让杯子干净。」' },
+    { t: 'me', cn: '（她说这话时，笑容没有一点疲惫。这就是她的方式。）' }
+  ],
+  next: 'tavern_end'
+};
+
+SCENES.tavern_talk2 = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'me', cn: '你为什么不离开这里？' },
+    { t: 'd', who: 'fiman', en: "And go where? The Wing? Somnia? Everywhere has its own nightmare now.", cn: '「去哪儿？王翼？索姆尼亚？现在哪儿都有自己的梦魇。」' },
+    { t: 'd', who: 'fiman', en: "Besides. My grandmother built this bar. She said the name meant something.", cn: '「再说，这店是我奶奶留下的。她说这名字有讲究。」' },
+    { t: 'd', who: 'fiman', en: "The Sunset Never Falls. Because if you can still see the sunset, you made it through the day.", cn: '「日不落。因为只要你还看得见日落，就说明你又撑过了一天。」' }
+  ],
+  set: { heardGrandma: 1 },
+  next: 'tavern_end'
+};
+
+SCENES.tavern_mix = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'd', who: 'fiman', en: "You want me to mix you something? Alright. But if you don't finish it, I'm charging double.", cn: '「要我调一杯？行。但你要是不喝完，我收双倍。」' },
+    { t: 'n', cn: '她把一只玻璃杯放在吧台上，把威士忌和柠檬汁推到你面前。' },
+    { t: 'd', who: 'fiman', en: "Go on. I'll tell you when to stop.", cn: '「来。我会告诉你什么时候停。」' }
+  ],
+  onEnd: () => { openPourGame(); }
+};
+
+SCENES.tavern_end = {
+  bg: 'tavern', loc: '日不落酒馆 · 吧台',
+  lines: [
+    { t: 'n', cn: '菲曼把一只杯子放到你面前，杯壁挂着水珠。' },
+    { t: 'd', who: 'fiman', en: "On the house. Don't tell anyone.", cn: '「这杯我请。别告诉别人。」' }
+  ],
+  onEnd: () => { showScreen('map'); }
+};
+
+/* ---- 卡什 ---- */
+SCENES.kash_chat = {
+  bg: 'tavern', loc: '日不落酒馆 · 角落',
+  lines: [
+    { t: 'n', cn: '卡什正对着空气摆出一个夸张的姿势，仿佛在演一出没人看的戏。' },
+    { t: 'd', who: 'kash', en: "Ah! My favourite reporter. Come, sit. I was just telling myself a joke. I didn't laugh. Tough crowd.", cn: '「啊！我最喜欢的记者。来，坐。我刚给自己讲了个笑话。我没笑。难伺候的观众。」' }
+  ],
+  choices: [
+    { cn: '「你为什么一直戴着墨镜？」', next: 'kash_deep', set: { aff: { kash: 5 } } },
+    { cn: '「你对梦域了解多少？」', next: 'kash_talk1', set: { aff: { kash: 2 } } },
+    { cn: '「你和莫维奥娅很熟吗？」', next: 'kash_talk2', set: { aff: { kash: 3 } } }
+  ]
+};
+
+SCENES.kash_deep = {
+  bg: 'tavern', loc: '日不落酒馆 · 角落',
+  lines: [
+    { t: 'me', cn: '你为什么一直戴着墨镜？' },
+    { t: 'n', cn: '卡什的笑容僵了一下。' },
+    { t: 'd', who: 'kash', en: "Oh, you know. Style. Mystery. It makes me look like I know something you don't.", cn: '「哦，你知道的。造型。神秘感。让我看起来像知道些你不知道的事。」' },
+    { t: 'n', cn: '他顿了一下，摘下墨镜。' },
+    { t: 'n', cn: '他的眼睛很漂亮，但焦距有点散。就像在看一个比你稍微远一点的地方。' },
+    { t: 'd', who: 'kash', en: "Truth is. I can barely see past my own nose. Glasses are for me. The style is a bonus.", cn: '「实话是。我连自己的鼻子都看不清。墨镜是为我自己。造型是附赠的。」' },
+    { t: 'me', cn: '（他说这话时，声音比平时低。）' },
+    { t: 'd', who: 'kash', en: "Don't tell anyone, alright? I have a reputation to maintain.", cn: '「别告诉别人，好吗？我还要维持形象呢。」' }
+  ],
+  set: { kashSecret: 1, aff: { kash: 8 } },
+  next: 'kash_end'
+};
+
+SCENES.kash_talk1 = {
+  bg: 'tavern', loc: '日不落酒馆 · 角落',
+  lines: [
+    { t: 'd', who: 'kash', en: "The dream fields? I know enough to stay out of them. Mostly.", cn: '「梦域？我知道的刚好够我离它们远点。大部分时候。」' },
+    { t: 'd', who: 'kash', en: "What I do know is—they're growing. Fast. And the Bureau is running out of people who can walk in and out.", cn: '「我确定的是——它们在长。很快。梦目院快没人能进得去又出得来了。」' }
+  ],
+  next: 'kash_end'
+};
+
+SCENES.kash_talk2 = {
+  bg: 'tavern', loc: '日不落酒馆 · 角落',
+  lines: [
+    { t: 'd', who: 'kash', en: "Movioa? Oh, she loves me. She just doesn't know it yet.", cn: '「莫维奥娅？哦，她爱我。她只是还不知道。」' },
+    { t: 'n', cn: '你差点把酒喷出来。' },
+    { t: 'd', who: 'kash', en: "What? I'm a very lovable person. Ask anyone. Except her.", cn: '「怎么？我是个非常可爱的人。问问别人。除了她。」' }
+  ],
+  next: 'kash_end'
+};
+
+SCENES.kash_end = {
+  bg: 'tavern', loc: '日不落酒馆 · 角落',
+  lines: [
+    { t: 'n', cn: '卡什举起杯子，朝空气敬了一下。' },
+    { t: 'd', who: 'kash', en: "To survival. And to looking good while doing it.", cn: '「敬活着。敬活着的时候还好看。」' }
+  ],
+  onEnd: () => { showScreen('map'); }
+};
+
+/* ============================================================
+   对话引擎
+   ============================================================ */
+let typing = { active: false, timer: null, el: null, full: '', done: null };
+
+function stopTyping() {
+  if (typing.timer) clearTimeout(typing.timer);
+  typing.active = false;
+  if (typing.el) typing.el.textContent = typing.full;
+}
+
+function typeInto(el, text, onDone) {
+  stopTyping();
+  typing.el = el;
+  typing.full = text;
+  el.textContent = '';
+  if (settings.textSpeed <= 0) {
+    el.textContent = text;
+    typing.active = false;
+    onDone && onDone();
     return;
   }
-  originalEnterLoc.call(this, id);
+  let i = 0;
+  typing.active = true;
+  const step = () => {
+    if (!typing.active) return;
+    if (i >= text.length) {
+      typing.active = false;
+      onDone && onDone();
+      return;
+    }
+    el.textContent += text.charAt(i++);
+    typing.timer = setTimeout(step, settings.textSpeed);
+  };
+  step();
+}
+
+function playScene(sceneId) {
+  const scene = SCENES[sceneId];
+  if (!scene) {
+    console.warn('场景不存在', sceneId);
+    showScreen('map');
+    return;
+  }
+  state.currentScene = sceneId;
+  state.currentLineIdx = 0;
+  state.log = state.log || [];
+
+  if (scene.set) applySet(scene.set);
+
+  showScreen('game');
+  $('#sceneBg').className = 'scene-bg bg-' + (scene.bg || 'city');
+  $('#locLabel').textContent = scene.loc || '未知之地';
+  $('#topLoc').textContent = scene.loc || '——';
+
+  $('#dialogInner').innerHTML = '';
+  $('#choices').classList.remove('active');
+  $('#choicesInner').innerHTML = '';
+  $('#contHint').style.display = 'none';
+
+  renderLine(0);
+}
+
+function applySet(set) {
+  if (!set) return;
+  if (set.aff) {
+    for (const k in set.aff) {
+      state.affection[k] = (state.affection[k] || 0) + set.aff[k];
+    }
+  }
+  for (const k in set) {
+    if (k === 'aff') continue;
+    state.flags[k] = set[k];
+  }
+}
+
+function renderLine(idx) {
+  const scene = SCENES[state.currentScene];
+  if (!scene) return;
+  const lines = scene.lines || [];
+
+  if (idx >= lines.length) {
+    // 所有台词结束
+    if (scene.choices && scene.choices.length) {
+      showChoices(scene.choices);
+      return;
+    }
+    if (scene.next) {
+      setTimeout(() => playScene(scene.next), 200);
+      return;
+    }
+    if (scene.onEnd) {
+      scene.onEnd();
+      return;
+    }
+    showScreen('map');
+    return;
+  }
+
+  state.currentLineIdx = idx;
+  const line = lines[idx];
+  const inner = $('#dialogInner');
+  const div = document.createElement('div');
+  div.className = 'line';
+
+  if (line.t === 'n') {
+    div.classList.add('narration');
+    div.innerHTML = '<div class="cn"></div>';
+    inner.appendChild(div);
+    typeInto(div.querySelector('.cn'), line.cn, () => onLineDone());
+    pushLog('旁白', line.cn);
+  } else if (line.t === 'me') {
+    div.classList.add('monologue');
+    div.innerHTML = '<div class="cn"></div>';
+    inner.appendChild(div);
+    typeInto(div.querySelector('.cn'), line.cn, () => onLineDone());
+    pushLog('我', line.cn);
+  } else if (line.t === 'd') {
+    const ch = CHARS[line.who] || { name: line.who, en: '' };
+    div.innerHTML = `<div class="speaker">${esc(ch.name)}${ch.en ? ' · ' + esc(ch.en) : ''}</div>
+      <div class="en"></div><div class="cn"></div>`;
+    inner.appendChild(div);
+    const enEl = div.querySelector('.en');
+    const cnEl = div.querySelector('.cn');
+    enEl.textContent = line.en || '';
+    typeInto(cnEl, line.cn, () => onLineDone());
+    pushLog(ch.name, line.cn, line.en);
+  }
+
+  scrollToBottom();
+  $('#contHint').style.display = 'none';
+}
+
+let autoPlayTimer = null;
+function onLineDone() {
+  if (state.screen !== 'game') return;
+  const scene = SCENES[state.currentScene];
+  if (!scene) return;
+  const lines = scene.lines || [];
+  const isLast = state.currentLineIdx >= lines.length - 1;
+
+  if (isLast && ((scene.choices && scene.choices.length) || scene.next || scene.onEnd)) {
+    // 等玩家点击
+    if (!scene.choices) $('#contHint').style.display = 'block';
+  } else {
+    $('#contHint').style.display = 'block';
+  }
+
+  if (settings.autoPlay) {
+    clearTimeout(autoPlayTimer);
+    autoPlayTimer = setTimeout(() => advanceLine(), 2000);
+  }
+}
+
+function advanceLine() {
+  if (state.screen !== 'game') return;
+  if (typing.active) {
+    stopTyping();
+    onLineDone();
+    return;
+  }
+  const scene = SCENES[state.currentScene];
+  if (!scene) return;
+
+  if (scene.choices && scene.choices.length && state.currentLineIdx >= (scene.lines || []).length - 1) {
+    // 已经在最后一行，显示选项
+    showChoices(scene.choices);
+    return;
+  }
+
+  const nextIdx = state.currentLineIdx + 1;
+  if (nextIdx < (scene.lines || []).length) {
+    Sfx.page();
+    renderLine(nextIdx);
+  } else {
+    renderLine(nextIdx);
+  }
+}
+
+function scrollToBottom() {
+  const el = $('#dialogScroll');
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}
+
+function showChoices(choices) {
+  const box = $('#choices');
+  const inner = $('#choicesInner');
+  inner.innerHTML = '<div class="choice-head">抉 择</div>';
+  choices.forEach((c, i) => {
+    if (c.cond && !c.cond()) return;
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn' + (c.danger ? ' danger' : '');
+    const sym = '①②③④⑤⑥⑦⑧⑨⑩'.charAt(i) || '◆';
+    btn.innerHTML = `<span class="choice-idx">${sym}</span><span>${esc(c.cn)}</span>`;
+    btn.onclick = () => {
+      Sfx.click();
+      if (settings.confirmChoice) {
+        confirmChoice(c);
+      } else {
+        selectChoice(c);
+      }
+    };
+    inner.appendChild(btn);
+  });
+  box.classList.add('active');
+  box.scrollTop = 0;
+  $('#contHint').style.display = 'none';
+
+  if (settings.animations) {
+    gsap.fromTo(box, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+  }
+}
+
+function confirmChoice(c) {
+  openModal({
+    title: '确 认 抉 择',
+    body: `<p style="font-size:14px;line-height:1.9;color:var(--text);">${esc(c.cn)}</p>
+           <p style="font-size:11px;color:var(--text-d);margin-top:12px;letter-spacing:.08em;">此选择将推进剧情。</p>`,
+    footHTML: `<button class="btn ghost" id="ccCancel">再想想</button>
+               <button class="btn primary" id="ccOk">确认</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#ccCancel').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#ccOk').onclick = () => {
+        Sfx.success();
+        closeModal(wrap);
+        selectChoice(c);
+      };
+    }
+  });
+}
+
+function selectChoice(c) {
+  state.log.push({ type: 'choice', text: c.cn });
+  $('#choices').classList.remove('active');
+  $('#choicesInner').innerHTML = '';
+
+  if (c.set) applySet(c.set);
+
+  if (c.act) { c.act(); return; }
+  if (c.next) { playScene(c.next); return; }
+  if (c.ending) { showScreen('map'); return; }
+  showScreen('map');
+}
+
+/* ============================================================
+   日志
+   ============================================================ */
+function pushLog(speaker, cn, en) {
+  if (!state.log) state.log = [];
+  state.log.push({ speaker, cn, en });
+  if (state.log.length > 300) state.log.shift();
+}
+
+/* ============================================================
+   地图
+   ============================================================ */
+const MAP_DATA = [
+  {
+    region: '索姆尼亚帝国 · 落日之都',
+    spots: [
+      { id: 'tavern', name: '日不落酒馆', ico: '♖', desc: '菲曼的酒吧。情报在此交汇。', tag: '酒馆 · 调酒', action: 'tavern' },
+      { id: 'manor', name: '梦目院总部', ico: '♕', desc: '塔瓦娜与莫维奥娅的据点。', tag: '剧情 · 主线', action: 'manor' },
+      { id: 'archive', name: '档案室', ico: '❖', desc: '铁门之后，卷宗与秘密。', tag: '小游戏 · 证据链', action: 'archive' },
+      { id: 'church', name: '卡特琳教堂', ico: '☩', desc: '哥特尖顶，彩窗破碎。', tag: '小游戏 · 拼图', action: 'church' },
+      { id: 'grove', name: '银杏林', ico: '✦', desc: '金叶铺地，边缘有梦域。', tag: '副本 · 梦域', action: 'grove' },
+      { id: 'moon', name: '映月镇', ico: '☽', desc: '日月湖映出两轮月亮。', tag: '未开放', locked: true },
+      { id: 'sun', name: '日往城', ico: '☀', desc: '向日葵花海与避难所。', tag: '未开放', locked: true }
+    ]
+  },
+  {
+    region: '王翼国度 · 伊林堡',
+    spots: [
+      { id: 'chess', name: '棋局厅', ico: '♔', desc: '黑白棋盘，一步之差。', tag: '小游戏 · 走位', action: 'chess' }
+    ]
+  }
+];
+
+function renderMap() {
+  const main = $('#mapMain');
+  $('#mapSilver').textContent = '银镑 ' + state.stats.silver;
+  let html = '';
+  MAP_DATA.forEach(reg => {
+    html += `<div class="map-region">
+      <div class="map-region-head">${esc(reg.region)}</div>
+      <div class="map-grid">`;
+    reg.spots.forEach(s => {
+      const locked = s.locked;
+      html += `<div class="map-card ${locked ? 'locked' : ''}" data-spot="${s.id}">
+        <div class="map-card-ico">${s.ico}</div>
+        <div class="map-card-name">${esc(s.name)}</div>
+        <div class="map-card-desc">${esc(s.desc)}</div>
+        <div class="map-card-tag ${s.tag && s.tag.includes('小游戏') ? 'hot' : ''}">${esc(s.tag || '')}</div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  main.innerHTML = html;
+
+  main.querySelectorAll('.map-card').forEach(card => {
+    card.onclick = () => {
+      if (card.classList.contains('locked')) {
+        Sfx.fail();
+        toast('该地点尚未解锁', 'warn');
+        return;
+      }
+      Sfx.click();
+      const id = card.dataset.spot;
+      const spot = MAP_DATA.flatMap(r => r.spots).find(s => s.id === id);
+      if (spot) handleSpotClick(spot);
+    };
+  });
+}
+
+function handleSpotClick(spot) {
+  switch (spot.action) {
+    case 'tavern':
+      openCharacterSelect('tavern');
+      break;
+    case 'manor':
+      playScene('manor_1');
+      break;
+    case 'archive':
+      openEvidenceGame();
+      break;
+    case 'church':
+      openPuzzleGame();
+      break;
+    case 'grove':
+      openDreamRogue();
+      break;
+    case 'chess':
+      openChessGame();
+      break;
+    default:
+      toast('此处暂无内容', 'warn');
+  }
+}
+
+/* ============================================================
+   角色选择
+   ============================================================ */
+function openCharacterSelect(place) {
+  const list = place === 'tavern'
+    ? ['fiman', 'kash']
+    : ['tavana', 'movioa', 'lidia', 'elsia', 'kash', 'reifina'];
+
+  let html = '<div class="char-grid">';
+  list.forEach(id => {
+    const c = CHARS[id];
+    if (!c) return;
+    const aff = state.affection[id] || 0;
+    html += `<div class="char-card" data-char="${id}">
+      <div class="char-head">
+        <div class="char-avatar">${c.sym}</div>
+        <div>
+          <div class="char-name">${esc(c.name)}</div>
+          <div class="char-en">${esc(c.en)}</div>
+          <div class="char-title">${esc(c.title || '')}</div>
+        </div>
+      </div>
+      <div class="char-aff">亲密 <div class="aff-bar"><div class="aff-fill" style="width:${clamp(aff, 0, 100)}%"></div></div> ${aff}</div>
+    </div>`;
+  });
+  html += '</div>';
+
+  openModal({
+    title: '选 择 对 话 对 象',
+    body: html,
+    onMount: (wrap) => {
+      wrap.querySelectorAll('.char-card').forEach(card => {
+        card.onclick = () => {
+          Sfx.click();
+          closeModal(wrap);
+          const id = card.dataset.char;
+          setTimeout(() => openCharacterMenu(id), 200);
+        };
+      });
+    }
+  });
+}
+
+function openCharacterMenu(id) {
+  const c = CHARS[id];
+  if (!c) return;
+  const aff = state.affection[id] || 0;
+  openModal({
+    title: c.name,
+    body: `
+      <div style="text-align:center;margin-bottom:16px;">
+        <div class="char-avatar" style="width:64px;height:64px;font-size:32px;margin:0 auto 10px;">${c.sym}</div>
+        <div class="char-en" style="font-size:14px;">${esc(c.en)}</div>
+        <div class="char-title" style="margin-top:4px;">${esc(c.title || '')}</div>
+        <div class="char-aff" style="justify-content:center;margin-top:12px;">
+          亲密 <div class="aff-bar" style="max-width:140px;"><div class="aff-fill" style="width:${clamp(aff,0,100)}%"></div></div> ${aff}
+        </div>
+      </div>
+      <p style="font-size:12.5px;line-height:1.9;color:var(--text);padding-top:12px;border-top:1px solid var(--line);">${esc(c.desc)}</p>
+    `,
+    footHTML: `
+      <button class="btn ghost" id="cmChat">闲 聊</button>
+      <button class="btn" id="cmDeep">深 谈</button>
+      <button class="btn" id="cmGift">送 礼</button>
+    `,
+    onMount: (wrap) => {
+      wrap.querySelector('#cmChat').onclick = () => { Sfx.click(); closeModal(wrap); startCharacterDialogue(id, 'chat'); };
+      wrap.querySelector('#cmDeep').onclick = () => { Sfx.click(); closeModal(wrap); startCharacterDialogue(id, 'deep'); };
+      wrap.querySelector('#cmGift').onclick = () => { Sfx.click(); closeModal(wrap); giveGift(id); };
+    }
+  });
+}
+
+const CHAR_DIALOGUES = {
+  fiman: {
+    chat: [
+      { who: 'fiman', en: "You're back. Sit. The usual?", cn: '「你又来了。坐。老样子？」' },
+      { who: 'fiman', en: "Business is slow tonight. That means either a storm is coming, or everyone's already asleep.", cn: '「今晚生意冷清。要么是暴风雨要来了，要么是大家都睡着了。」' },
+      { who: 'fiman', en: "Neither is good news, by the way.", cn: '「顺便说一句，这两样都不是好消息。」' }
+    ],
+    deep: [
+      { who: 'fiman', en: "You want to know something real? Fine. I'm scared. Every night I lock that door and I wonder if I'll wake up.", cn: '「你想听点真的？行。我很怕。每晚我锁上门，都会想明天还能不能醒过来。」' },
+      { who: 'fiman', en: "But someone has to keep the light on. So I do.", cn: '「但总得有人让灯亮着。所以我来做。」' },
+      { who: 'me', cn: '（她把杯子放下，手指在吧台上停了一秒。）' }
+    ]
+  },
+  kash: {
+    chat: [
+      { who: 'kash', en: "Hey! Perfect timing. I was about to do something stupid. Now I can do it with an audience.", cn: '「嘿！来得正好。我正要干点蠢事。现在有观众了。」' },
+      { who: 'kash', en: "Kidding. Mostly. What's up?", cn: '「开玩笑的。大部分是。怎么了？」' }
+    ],
+    deep: [
+      { who: 'kash', en: "You know what I hate? Not being able to see who's coming. Every time someone walks up to me, I have to guess.", cn: '「你知道我讨厌什么吗？看不见谁在走过来。每次有人靠近，我都得猜。」' },
+      { who: 'kash', en: "I joke about it. But it's... it's exhausting.", cn: '「我拿这开玩笑。但……真的很累。」' },
+      { who: 'me', cn: '（他摘下墨镜，揉了揉眼睛。）' }
+    ]
+  },
+  tavana: {
+    chat: [
+      { who: 'tavana', en: "Ah, you're here. I was just reviewing reports. Please, sit.", cn: '「啊，你来了。我正在看报告。请坐。」' },
+      { who: 'tavana', en: "The coffee in this office is terrible. I keep drinking it anyway.", cn: '「这办公室的咖啡很糟。我还是照喝不误。」' }
+    ],
+    deep: [
+      { who: 'tavana', en: "My sister used to say—the nightmare is not the enemy. The enemy is forgetting what morning looks like.", cn: '「我姐姐以前说——梦魇不是敌人。敌人是忘记早晨是什么样子。」' },
+      { who: 'tavana', en: "I try to remember. Every day.", cn: '「我努力记着。每一天。」' }
+    ]
+  },
+  movioa: {
+    chat: [
+      { who: 'movioa', en: "You again. Did I not make myself clear the first time?", cn: '「又是你。我第一次没说清楚吗？」' },
+      { who: 'movioa', en: "…Fine. What do you want?", cn: '「……行吧。你想要什么？」' }
+    ],
+    deep: [
+      { who: 'movioa', en: "My brother was not a monster. He was a fool. There is a difference, and nobody in this city seems to understand it.", cn: '「我哥哥不是怪物。他是个傻子。这有区别，而这座城市里似乎没人懂。」' },
+      { who: 'movioa', en: "…Stop looking at me like that.", cn: '「……别那样看着我。」' }
+    ]
+  },
+  lidia: {
+    chat: [
+      { who: 'lidia', en: "Oh! Oh! It's you! Hi! I have so many questions!", cn: '「哦！哦！是你！嗨！我有一大堆问题！」' },
+      { who: 'lidia', en: "What's the Wing like? Is it true everyone there has a chess piece on their door?", cn: '「王翼是什么样的？是不是每个人门上都挂着一个棋子？」' }
+    ],
+    deep: [
+      { who: 'lidia', en: "My sister says I talk too much. I know I do. It's just—if I stop talking, I start thinking. And thinking is scary here.", cn: '「我姐姐说我话太多。我知道。只是——如果我不说话，我就会开始想事情。而在这里想事情很可怕。」' }
+    ]
+  },
+  elsia: {
+    chat: [
+      { who: 'elsia', en: "You should not be here. This corridor is restricted.", cn: '「你不该在这里。这条走廊是限制区。」' },
+      { who: 'elsia', en: "…But I suppose you already know that.", cn: '「……但我想你已经知道了。」' }
+    ],
+    deep: [
+      { who: 'elsia', en: "People think being an assassin means you stop feeling. It doesn't. It means you learn to carry it.", cn: '「人们以为做杀手就意味着不再有感觉。不是的。那意味着你学会背负着它走。」' }
+    ]
+  },
+  reifina: {
+    chat: [
+      { who: 'reifina', en: "You're the reporter. Good. I need someone who writes things down.", cn: '「你就是那个记者。好。我需要一个会把事情记下来的人。」' },
+      { who: 'reifina', en: "When we go in, you stay behind me. No questions until we're out.", cn: '「我们进去的时候，你跟着我。出来之前不许提问。」' }
+    ],
+    deep: [
+      { who: 'reifina', en: "I've lost three teams in the dream fields. I remember every name. That's why I don't smile much.", cn: '「我在梦域里失去了三支队伍。我记得每一个名字。所以我不怎么笑。」' }
+    ]
+  },
+  cassi: {
+    chat: [
+      { who: 'cassi', en: "Captain's orders. You don't go past the third layer without me.", cn: '「队长的命令。没有我，你不能越过第三层。」' },
+      { who: 'cassi', en: "That's all.", cn: '「就这些。」' }
+    ],
+    deep: [
+      { who: 'cassi', en: "I follow her because she's never lost anyone she could have saved. That's rare.", cn: '「我跟着她，是因为她从没失去过她能救下的人。这很罕见。」' }
+    ]
+  }
 };
+
+function startCharacterDialogue(id, mode) {
+  const c = CHARS[id];
+  const data = CHAR_DIALOGUES[id];
+  if (!c || !data || !data[mode]) {
+    toast('该角色暂无此类型对话', 'warn');
+    return;
+  }
+  const lines = data[mode];
+
+  // 用游戏界面播放
+  showScreen('game');
+  $('#sceneBg').className = 'scene-bg bg-tavern';
+  $('#locLabel').textContent = c.name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊');
+  $('#topLoc').textContent = c.name;
+  $('#dialogInner').innerHTML = '';
+  $('#choices').classList.remove('active');
+  $('#contHint').style.display = 'none';
+
+  // 临时构造场景
+  const tmpId = '__tmp_char_' + id + '_' + mode;
+  SCENES[tmpId] = {
+    bg: 'tavern',
+    loc: c.name + ' · ' + (mode === 'deep' ? '深谈' : '闲聊'),
+    lines: lines.map(l => ({
+      t: l.who === 'me' ? 'me' : 'd',
+      who: l.who,
+      en: l.en,
+      cn: l.cn
+    })),
+    onEnd: () => {
+      const gain = mode === 'deep' ? 10 : 5;
+      state.affection[id] = (state.affection[id] || 0) + gain;
+      Sfx.unlock();
+      toast('◈ 与 ' + c.name + ' 的亲密 +' + gain, 'ok');
+      saveGame();
+      setTimeout(() => showScreen('map'), 600);
+    }
+  };
+  playScene(tmpId);
+}
+
+function giveGift(id) {
+  const c = CHARS[id];
+  const gifts = [
+    { name: '银杏叶书签', cost: 5, aff: 4, icon: '✦' },
+    { name: '旧唱片', cost: 10, aff: 7, icon: '♬' },
+    { name: '黑羽毛钢笔', cost: 20, aff: 15, icon: '✒' }
+  ];
+  let html = '<div class="empty" style="padding:0 0 14px;">选择一份礼物赠予 ' + esc(c.name) + '。</div>';
+  gifts.forEach((g, i) => {
+    html += `<div class="save-slot" data-gift="${i}">
+      <div class="save-slot-info">
+        <div class="save-slot-t">${g.icon} ${esc(g.name)}</div>
+        <div class="save-slot-m">银镑 ${g.cost} · 亲密 +${g.aff}</div>
+      </div>
+      <button class="mini-btn">赠送</button>
+    </div>`;
+  });
+
+  openModal({
+    title: '赠 礼 · ' + c.name,
+    body: html,
+    footHTML: `<button class="btn ghost" id="giftClose">取消</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#giftClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelectorAll('.save-slot').forEach((el, i) => {
+        el.onclick = () => {
+          const g = gifts[i];
+          if (state.stats.silver < g.cost) {
+            Sfx.fail();
+            toast('银镑不足', 'warn');
+            return;
+          }
+          state.stats.silver -= g.cost;
+          state.affection[id] = (state.affection[id] || 0) + g.aff;
+          Sfx.success();
+          toast('◈ 赠送成功 · 亲密 +' + g.aff, 'ok');
+          saveGame();
+          closeModal(wrap);
+          setTimeout(() => openCharacterMenu(id), 200);
+        };
+      });
+    }
+  });
+}
+
+/* ============================================================
+   小游戏 1：档案室 · 证据链连线
+   ============================================================ */
+function openEvidenceGame() {
+  const cards = [
+    { id: 'a', ico: '🪶', name: '染血的\n乌鸦羽毛' },
+    { id: 'b', ico: '♜', name: '封印战场\n焦土样本' },
+    { id: 'c', ico: '✉', name: '第三日\n战报' },
+    { id: 'd', ico: '☽', name: '梦域扩张\n地图' },
+    { id: 'e', ico: '♔', name: '缇斯·沃特森\n身份记录' },
+    { id: 'f', ico: '☠', name: '未归之人\n名单' }
+  ];
+  // 正确配对
+  const pairs = [['a', 'e'], ['b', 'c'], ['d', 'f']];
+
+  openModal({
+    title: '档 案 室 · 证 据 链',
+    body: `
+      <div class="mini-title">◈ 证 据 链 ◈</div>
+      <div class="mini-sub">点击两张相关卡片，建立证据链。连错将损失理智。</div>
+      <div class="mini-hud">
+        <div class="mini-hud-item">已连线<b id="evDone">0 / 3</b></div>
+        <div class="mini-hud-item">理智<b id="evSan">100</b></div>
+      </div>
+      <div class="mini-stage evidence-area" id="evArea"></div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn ghost" id="evReset">重 置</button>
+      </div>
+    `,
+    footHTML: `<button class="btn ghost" id="evClose">关 闭</button>`,
+    onMount: (wrap) => {
+      const area = wrap.querySelector('#evArea');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'ev-svg');
+      area.appendChild(svg);
+
+      let san = 100;
+      let found = 0;
+      let selected = null;
+      let connections = [];
+      const positions = {};
+
+      // 随机位置
+      const W = area.clientWidth || 300;
+      const H = area.clientHeight || 340;
+      cards.forEach((c, i) => {
+        const el = document.createElement('div');
+        el.className = 'ev-card';
+        el.dataset.id = c.id;
+        const x = 10 + (i % 2) * (W / 2 - 10) + Math.random() * 20;
+        const y = 10 + Math.floor(i / 2) * (H / 3) + Math.random() * 20;
+        el.style.left = clamp(x, 4, W - 92) + 'px';
+        el.style.top = clamp(y, 4, H - 70) + 'px';
+        el.innerHTML = `<div class="ev-ico">${c.ico}</div>${c.name.replace(/\n/g, '<br>')}`;
+        area.appendChild(el);
+        positions[c.id] = { el, x: 0, y: 0 };
+
+        el.onclick = () => {
+          if (el.classList.contains('done')) return;
+          if (!selected) {
+            selected = c.id;
+            el.classList.add('sel');
+            Sfx.click();
+          } else if (selected === c.id) {
+            el.classList.remove('sel');
+            selected = null;
+            Sfx.click();
+          } else {
+            const p = pairs.find(pr =>
+              (pr[0] === selected && pr[1] === c.id) || (pr[1] === selected && pr[0] === c.id));
+            const fromEl = positions[selected].el;
+            const toEl = el;
+            if (p) {
+              // 正确
+              Sfx.success();
+              fromEl.classList.remove('sel');
+              fromEl.classList.add('done');
+              toEl.classList.add('done');
+              drawLine(fromEl, toEl, '#c9a961');
+              found++;
+              wrap.querySelector('#evDone').textContent = found + ' / 3';
+              selected = null;
+              if (found >= 3) {
+                setTimeout(() => winEvidence(wrap), 500);
+              }
+            } else {
+              // 错误
+              Sfx.fail();
+              san -= 15;
+              if (settings.shake) vibrate(120);
+              wrap.querySelector('#evSan').textContent = san;
+              drawLine(fromEl, toEl, '#c04060', true);
+              fromEl.classList.remove('sel');
+              selected = null;
+              if (san <= 0) {
+                setTimeout(() => failEvidence(wrap), 500);
+              }
+            }
+          }
+        };
+      });
+
+      function drawLine(fromEl, toEl, color, temp) {
+        const fr = fromEl.getBoundingClientRect();
+        const tr = toEl.getBoundingClientRect();
+        const ar = area.getBoundingClientRect();
+        const x1 = fr.left - ar.left + fr.width / 2;
+        const y1 = fr.top - ar.top + fr.height / 2;
+        const x2 = tr.left - ar.left + tr.width / 2;
+        const y2 = tr.top - ar.top + tr.height / 2;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        line.setAttribute('stroke', color);
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-dasharray', '5,3');
+        line.setAttribute('opacity', temp ? '0.6' : '0.9');
+        svg.appendChild(line);
+        if (temp) {
+          setTimeout(() => line.remove(), 600);
+        }
+      }
+
+      function winEvidence(wrap) {
+        Sfx.success();
+        state.stats.silver += 15;
+        state.flags.archiveDone = 1;
+        saveGame();
+        closeModal(wrap);
+        openModal({
+          title: '证 据 链 · 完 成',
+          body: `<div class="ending-card">
+            <span class="e-icon">✦</span>
+            <div class="e-title">证据链成立</div>
+            <div class="e-sub">Evidence Chain Complete</div>
+            <div class="e-desc">三组线索相互印证：<br>
+              「染血的乌鸦羽毛」与「缇斯·沃特森的身份记录」相符。<br>
+              「封印战场焦土」与「第三日战报」相符。<br>
+              「梦域扩张地图」与「未归之人名单」相符。<br><br>
+              你获得了 15 银镑。
+            </div>
+          </div>`,
+          footHTML: `<button class="btn primary" id="evOk">确认</button>`,
+          onMount: (w) => {
+            w.querySelector('#evOk').onclick = () => { closeModal(w); showScreen('map'); };
+          }
+        });
+      }
+
+      function failEvidence(wrap) {
+        Sfx.fail();
+        closeModal(wrap);
+        openModal({
+          title: '理 智 崩 溃',
+          body: `<div class="ending-card">
+            <span class="e-icon" style="color:#c04060;">☠</span>
+            <div class="e-title" style="color:#c04060;">线索断裂</div>
+            <div class="e-sub">Sanity Depleted</div>
+            <div class="e-desc">太多错误的连接让你的思路一片混乱。<br>你决定先离开档案室，呼吸一下新鲜空气。</div>
+          </div>`,
+          footHTML: `<button class="btn primary" id="evBack">返回</button>`,
+          onMount: (w) => {
+            w.querySelector('#evBack').onclick = () => { closeModal(w); showScreen('map'); };
+          }
+        });
+      }
+
+      wrap.querySelector('#evClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#evReset').onclick = () => {
+        Sfx.click();
+        closeModal(wrap);
+        setTimeout(openEvidenceGame, 200);
+      };
+    }
+  });
+}
+
+/* ============================================================
+   小游戏 2：日不落酒馆 · QTE 倒酒
+   ============================================================ */
+function openPourGame() {
+  openModal({
+    title: '日 不 落 酒 馆 · 调 酒',
+    body: `
+      <div class="mini-title">◈ 调 酒 ◈</div>
+      <div class="mini-sub">按住按钮注入酒液。在标记线处松开手。</div>
+      <div class="mini-hud">
+        <div class="mini-hud-item">轮次<b id="pourRound">1 / 2</b></div>
+        <div class="mini-hud-item">误差<b id="pourErr">--</b></div>
+      </div>
+      <div class="pour-stage">
+        <div class="glass" id="pourGlass">
+          <div class="glass-marker m1" id="m1" style="bottom:40%;"><span class="mlabel">40ml</span></div>
+          <div class="glass-marker m2" id="m2" style="bottom:60%;"><span class="mlabel">60ml</span></div>
+          <div class="glass-liquid" id="pourLiquid"></div>
+        </div>
+      </div>
+      <button class="pour-btn" id="pourBtn">按 住 倒 酒</button>
+      <div class="pour-feedback" id="pourFeedback"></div>
+    `,
+    footHTML: `<button class="btn ghost" id="pourClose">关 闭</button>`,
+    onMount: (wrap) => {
+      const liquid = wrap.querySelector('#pourLiquid');
+      const btn = wrap.querySelector('#pourBtn');
+      const fb = wrap.querySelector('#pourFeedback');
+      const roundEl = wrap.querySelector('#pourRound');
+      const errEl = wrap.querySelector('#pourErr');
+
+      let level = 0;       // 0-100
+      let round = 1;       // 1: 40ml, 2: 60ml
+      let pouring = false;
+      let timer = null;
+      let done1 = false;
+
+      const target1 = 40, target2 = 60;
+
+      function setLevel(v) {
+        level = clamp(v, 0, 100);
+        liquid.style.height = level + '%';
+      }
+
+      function startPour() {
+        if (pouring) return;
+        if (round === 2 && !done1) return;
+        pouring = true;
+        btn.classList.add('pouring');
+        Sfx.tone(180, 0.05, 'sine', 0.03);
+        timer = setInterval(() => {
+          setLevel(level + 0.8);
+          if (level >= 100) stopPour();
+        }, 30);
+      }
+
+      function stopPour() {
+        if (!pouring) return;
+        pouring = false;
+        btn.classList.remove('pouring');
+        clearInterval(timer);
+        timer = null;
+
+        if (round === 1) {
+          const err = Math.abs(level - target1);
+          errEl.textContent = err.toFixed(1) + 'ml';
+          if (err <= 4) {
+            Sfx.success();
+            fb.style.color = '#9dd0a0';
+            fb.textContent = '◈ 完美！威士忌 40ml 达成。';
+            done1 = true;
+            round = 2;
+            roundEl.textContent = '2 / 2';
+            setTimeout(() => {
+              fb.textContent = '继续：柠檬汁 60ml。';
+            }, 1200);
+          } else {
+            Sfx.fail();
+            fb.style.color = '#d08a9c';
+            fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。酒液倒掉了，重新开始。';
+            setTimeout(() => {
+              setLevel(0);
+              errEl.textContent = '--';
+              fb.textContent = '';
+            }, 1400);
+          }
+        } else {
+          const err = Math.abs(level - target2);
+          errEl.textContent = err.toFixed(1) + 'ml';
+          if (err <= 5) {
+            Sfx.success();
+            setTimeout(() => winPour(wrap), 400);
+          } else {
+            Sfx.fail();
+            fb.style.color = '#d08a9c';
+            fb.textContent = '✕ 误差过大（' + err.toFixed(1) + 'ml）。重新开始。';
+            setTimeout(() => {
+              setLevel(0);
+              round = 1;
+              done1 = false;
+              roundEl.textContent = '1 / 2';
+              errEl.textContent = '--';
+              fb.textContent = '';
+            }, 1400);
+          }
+        }
+      }
+
+      btn.addEventListener('mousedown', startPour);
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); startPour(); }, { passive: false });
+      ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
+        btn.addEventListener(ev, (e) => { if (ev.startsWith('touch')) e.preventDefault(); stopPour(); }, { passive: false });
+      });
+
+      wrap.querySelector('#pourClose').onclick = () => {
+        if (timer) clearInterval(timer);
+        Sfx.click(); closeModal(wrap);
+      };
+    }
+  });
+}
+
+function winPour(wrap) {
+  state.stats.silver += 20;
+  state.affection.fiman = (state.affection.fiman || 0) + 8;
+  state.flags.pourDone = 1;
+  saveGame();
+  closeModal(wrap);
+  openModal({
+    title: '调 酒 · 完 成',
+    body: `<div class="ending-card">
+      <span class="e-icon">✦</span>
+      <div class="e-title">完美比例</div>
+      <div class="e-sub">Perfect Mix</div>
+      <div class="e-desc">你把调好的酒推到菲曼面前。她尝了一口，眉毛微微抬起。<br><br>
+        "Not bad. Not bad at all."<br>「不错。相当不错。」<br><br>
+        你获得了 20 银镑，与菲曼的亲密 +8。</div>
+    </div>`,
+    footHTML: `<button class="btn primary" id="pOk">确认</button>`,
+    onMount: (w) => {
+      w.querySelector('#pOk').onclick = () => { closeModal(w); showScreen('map'); };
+    }
+  });
+}
+
+/* ============================================================
+   小游戏 3：伊林堡 · 棋局走位
+   ============================================================ */
+function openChessGame() {
+  // 棋盘数据：true = 死亡格
+  const death = {
+    '1-0': true,
+    '2-1': true,
+    '3-2': true,
+    '1-2': true,
+    '2-0': false
+  };
+  const GOAL = { r: 3, c: 3 };
+
+  openModal({
+    title: '伊 林 堡 · 棋 局 厅',
+    body: `
+      <div class="mini-title">◈ 残 局 走 位 ◈</div>
+      <div class="mini-sub">你是一枚「兵」。只能向前或斜前方移动。在 5 步内抵达升变格。</div>
+      <div class="mini-hud">
+        <div class="mini-hud-item">步数<b id="chMoves">0 / 5</b></div>
+        <div class="mini-hud-item">理智<b id="chSan">100</b></div>
+        <div class="mini-hud-item">状态<b id="chState">前进</b></div>
+      </div>
+      <div class="chess-board" id="chessBoard"></div>
+      <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text-d);letter-spacing:.1em;">
+        ◆ 死亡格 ◆ 升变格 ♙ 你的位置
+      </div>
+    `,
+    footHTML: `<button class="btn ghost" id="chClose">关 闭</button>`,
+    onMount: (wrap) => {
+      const board = wrap.querySelector('#chessBoard');
+      const movesEl = wrap.querySelector('#chMoves');
+      const sanEl = wrap.querySelector('#chSan');
+      const stateEl = wrap.querySelector('#chState');
+
+      let pos = { r: 0, c: 0 };
+      let moves = 0;
+      let san = 100;
+      let playing = true;
+      const MAX_MOVES = 5;
+
+      function render() {
+        board.innerHTML = '';
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'chess-cell ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
+            cell.dataset.r = r;
+            cell.dataset.c = c;
+
+            if (death[r + '-' + c]) cell.classList.add('death');
+            if (r === GOAL.r && c === GOAL.c) cell.classList.add('goal');
+            if (r === pos.r && c === pos.c) cell.classList.add('player');
+
+            // 合法移动检查
+            if (playing && !death[r + '-' + c]) {
+              const dr = r - pos.r;
+              const dc = Math.abs(c - pos.c);
+              if (dr === 1 && dc <= 1) {
+                cell.classList.add('valid');
+                cell.onclick = () => moveTo(r, c);
+              } else if (death[r + '-' + c]) {
+                cell.onclick = () => hitDeath(r, c);
+              }
+            } else if (playing && death[r + '-' + c]) {
+              const dr = r - pos.r;
+              const dc = Math.abs(c - pos.c);
+              if (dr === 1 && dc <= 1) {
+                cell.onclick = () => hitDeath(r, c);
+              }
+            }
+
+            board.appendChild(cell);
+          }
+        }
+      }
+
+      function moveTo(r, c) {
+        if (!playing) return;
+        Sfx.click();
+        moves++;
+        pos = { r, c };
+        movesEl.textContent = moves + ' / ' + MAX_MOVES;
+        render();
+
+        if (r === GOAL.r && c === GOAL.c) {
+          playing = false;
+          setTimeout(winChess, 300);
+          return;
+        }
+        if (moves >= MAX_MOVES) {
+          playing = false;
+          setTimeout(failChess, 400);
+        }
+      }
+
+      function hitDeath(r, c) {
+        if (!playing) return;
+        Sfx.fail();
+        if (settings.shake) vibrate(150);
+        san -= 25;
+        sanEl.textContent = Math.max(0, san);
+        stateEl.textContent = '受伤';
+        stateEl.style.color = '#d08a9c';
+        setTimeout(() => { stateEl.textContent = '前进'; stateEl.style.color = ''; }, 700);
+        if (san <= 0) {
+          playing = false;
+          setTimeout(failChess, 400);
+        }
+      }
+
+      function winChess() {
+        Sfx.success();
+        state.stats.silver += 25;
+        state.flags.chessDone = 1;
+        saveGame();
+        closeModal(wrap);
+        openModal({
+          title: '棋 局 · 完 成',
+          body: `<div class="ending-card">
+            <span class="e-icon">♔</span>
+            <div class="e-title">升 变</div>
+            <div class="e-sub">Promotion</div>
+            <div class="e-desc">你的兵走完了最后一步，落在了棋盘的尽头。<br>
+              黑暗中的某个声音说：<br>
+              "A pawn that reaches the end... becomes something else."<br>
+              「走到尽头的兵……会变成别的东西。」<br><br>
+              你获得了 25 银镑。</div>
+          </div>`,
+          footHTML: `<button class="btn primary" id="chOk">确认</button>`,
+          onMount: (w) => {
+            w.querySelector('#chOk').onclick = () => { closeModal(w); showScreen('map'); };
+          }
+        });
+      }
+
+      function failChess() {
+        Sfx.fail();
+        closeModal(wrap);
+        openModal({
+          title: '棋 局 · 失 败',
+          body: `<div class="ending-card">
+            <span class="e-icon" style="color:#c04060;">☠</span>
+            <div class="e-title" style="color:#c04060;">兵 被 吃 掉 了</div>
+            <div class="e-sub">Pawn Captured</div>
+            <div class="e-desc">你在棋盘上迷失了方向。<br>下次，先看清楚哪些格子是活着的。</div>
+          </div>`,
+          footHTML: `<button class="btn primary" id="chBack">返回</button>`,
+          onMount: (w) => {
+            w.querySelector('#chBack').onclick = () => { closeModal(w); showScreen('map'); };
+          }
+        });
+      }
+
+      render();
+      wrap.querySelector('#chClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+    }
+  });
+}
+
+/* ============================================================
+   小游戏 4：卡特琳教堂 · 滑块拼图
+   ============================================================ */
+function openPuzzleGame() {
+  const SYMS = ['✦', '☽', '♔', '❖', '✧', '✶', '☩', '♕'];
+  // 3x3 滑块拼图：0 代表空格
+  let tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+  // 打乱（保证可解，用随机合法移动）
+  for (let i = 0; i < 60; i++) {
+    const emptyIdx = tiles.indexOf(0);
+    const neighbors = getNeighbors(emptyIdx);
+    const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+    tiles[emptyIdx] = tiles[pick];
+    tiles[pick] = 0;
+  }
+
+  function getNeighbors(i) {
+    const r = Math.floor(i / 3), c = i % 3;
+    const out = [];
+    if (r > 0) out.push(i - 3);
+    if (r < 2) out.push(i + 3);
+    if (c > 0) out.push(i - 1);
+    if (c < 2) out.push(i + 1);
+    return out;
+  }
+
+  openModal({
+    title: '卡 特 琳 教 堂 · 光 影 拼 图',
+    body: `
+      <div class="mini-title">◈ 光 影 拼 图 ◈</div>
+      <div class="mini-sub">滑动方块，拼出完整的神明图案。</div>
+      <div class="mini-hud">
+        <div class="mini-hud-item">步数<b id="pzMoves">0</b></div>
+        <div class="mini-hud-item">状态<b id="pzState">拼合中</b></div>
+      </div>
+      <div class="puzzle-stage" id="puzzleStage"></div>
+    `,
+    footHTML: `<button class="btn ghost" id="pzClose">关 闭</button>
+               <button class="btn" id="pzReset">重 置</button>`,
+    onMount: (wrap) => {
+      const stage = wrap.querySelector('#puzzleStage');
+      const movesEl = wrap.querySelector('#pzMoves');
+      const stateEl = wrap.querySelector('#pzState');
+      let moves = 0;
+
+      function render(animate) {
+        stage.innerHTML = '';
+        tiles.forEach((v, i) => {
+          const el = document.createElement('div');
+          el.className = 'puzzle-tile' + (v === 0 ? ' empty' : '');
+          if (v === 0) { stage.appendChild(el); return; }
+          const row = Math.floor(i / 3), col = i % 3;
+          el.style.left = (col * 33.3333) + '%';
+          el.style.top = (row * 33.3333) + '%';
+          el.innerHTML = `<span class="sym">${SYMS[v - 1]}</span>`;
+          el.dataset.idx = i;
+          el.onclick = () => tryMove(i);
+          if (animate) {
+            el.style.transition = 'all .28s cubic-bezier(.16,1,.3,1)';
+          }
+          stage.appendChild(el);
+        });
+      }
+
+      function tryMove(idx) {
+        const emptyIdx = tiles.indexOf(0);
+        const r1 = Math.floor(idx / 3), c1 = idx % 3;
+        const r2 = Math.floor(emptyIdx / 3), c2 = emptyIdx % 3;
+        if (Math.abs(r1 - r2) + Math.abs(c1 - c2) !== 1) return;
+        Sfx.click();
+        tiles[emptyIdx] = tiles[idx];
+        tiles[idx] = 0;
+        moves++;
+        movesEl.textContent = moves;
+        render(true);
+        setTimeout(checkWin, 300);
+      }
+
+      function checkWin() {
+        const correct = tiles.every((v, i) => {
+          if (i === 8) return v === 0;
+          return v === i + 1;
+        });
+        if (correct) {
+          Sfx.success();
+          state.stats.silver += 30;
+          state.flags.puzzleDone = 1;
+          saveGame();
+          setTimeout(() => winPuzzle(wrap), 300);
+        }
+      }
+
+      function winPuzzle(wrap) {
+        closeModal(wrap);
+        openModal({
+          title: '拼 图 · 完 成',
+          body: `<div class="ending-card">
+            <span class="e-icon">✦</span>
+            <div class="e-title">光 影 复 原</div>
+            <div class="e-sub">Stained Glass Restored</div>
+            <div class="e-desc">彩绘玻璃重新拼合。阳光穿过，在地上投下完整的神明图案。<br>
+              祭坛上的雕像依然闭着眼睛。<br><br>
+              你获得了 30 银镑。</div>
+          </div>`,
+          footHTML: `<button class="btn primary" id="pzOk">确认</button>`,
+          onMount: (w) => {
+            w.querySelector('#pzOk').onclick = () => { closeModal(w); showScreen('map'); };
+          }
+        });
+      }
+
+      render(false);
+      wrap.querySelector('#pzClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#pzReset').onclick = () => {
+        Sfx.click();
+        tiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+        for (let i = 0; i < 60; i++) {
+          const emptyIdx = tiles.indexOf(0);
+          const neighbors = getNeighbors(emptyIdx);
+          const pick = neighbors[Math.floor(Math.random() * neighbors.length)];
+          tiles[emptyIdx] = tiles[pick];
+          tiles[pick] = 0;
+        }
+        moves = 0; movesEl.textContent = 0;
+        render(false);
+      };
+    }
+  });
+}
+
+/* ============================================================
+   梦域 Roguelike：规则怪谈 + D20 + 战斗
+   ============================================================ */
+function openDreamRogue() {
+  // 规则怪谈
+  openModal({
+    title: '梦 域 · 规 则 怪 谈',
+    body: `
+      <div class="mini-title">☽ 进 入 梦 域 ☾</div>
+      <div class="mini-sub">在踏入银杏林边缘的裂隙之前，请牢记以下规则。</div>
+      <div style="border:1px solid var(--line);padding:16px;background:rgba(0,0,0,.25);">
+        <p style="font-size:13px;line-height:2.1;color:var(--text);">
+          <span style="color:var(--gold);">一、</span> 绝对不能触碰地上的乌鸦烙印。<br>
+          <span style="color:var(--gold);">二、</span> 如果有人叫你的名字，先确认对方有影子。<br>
+          <span style="color:var(--gold);">三、</span> 骰子掷出大于 10 的点数，你才能继续前进。<br>
+          <span style="color:var(--gold);">四、</span> 理智归零者，将成为未归之人。
+        </p>
+      </div>
+      <p style="font-size:11px;color:var(--text-d);margin-top:14px;text-align:center;letter-spacing:.1em;">
+        已阅读并理解规则？
+      </p>
+    `,
+    footHTML: `<button class="btn ghost" id="drCancel">离开</button>
+               <button class="btn primary" id="drEnter">进 入</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#drCancel').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#drEnter').onclick = () => {
+        Sfx.click();
+        closeModal(wrap);
+        setTimeout(startDreamRogue, 200);
+      };
+    }
+  });
+}
+
+function startDreamRogue() {
+  const battle = {
+    playerSan: 100,
+    playerHp: 100,
+    enemyHp: 100,
+    enemySan: 100,
+    turn: 0,
+    over: false,
+    diceRolled: false
+  };
+
+  openModal({
+    title: '梦 域 · 焦 土 残 影',
+    body: `
+      <div class="mini-title">☽ 焦 土 残 影 ☾</div>
+      <div class="mini-sub">梦域的守卫正在苏醒。</div>
+
+      <div class="battle-bar">
+        <div class="battle-name"><span>你</span><span>HP <b id="bPhp">100</b> · SAN <b id="bPsan">100</b></span></div>
+        <div class="battle-track"><div class="battle-fill hp" id="bPhpBar" style="width:100%"></div></div>
+        <div class="battle-track" style="margin-top:4px;"><div class="battle-fill san" id="bPsanBar" style="width:100%"></div></div>
+      </div>
+
+      <div class="battle-bar">
+        <div class="battle-name"><span>焦土残影</span><span>HP <b id="bEhp">100</b></span></div>
+        <div class="battle-track"><div class="battle-fill" id="bEhpBar" style="width:100%"></div></div>
+      </div>
+
+      <div class="dice-area">
+        <div class="dice" id="drDice">?</div>
+        <div style="font-size:11px;color:var(--text-d);letter-spacing:.1em;" id="drDiceMsg">掷骰以决定行动成败</div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn" id="drRoll" style="flex:1;">掷 骰</button>
+        <button class="btn" id="drAttack" style="flex:1;" disabled>攻 击</button>
+        <button class="btn" id="drDefend" style="flex:1;" disabled>防 御</button>
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text-d);" id="drLog">—</div>
+    `,
+    footHTML: `<button class="btn ghost" id="drFlee">逃 离 梦 域</button>`,
+    onMount: (wrap) => {
+      const diceEl = wrap.querySelector('#drDice');
+      const msgEl = wrap.querySelector('#drDiceMsg');
+      const logEl = wrap.querySelector('#drLog');
+      const rollBtn = wrap.querySelector('#drRoll');
+      const atkBtn = wrap.querySelector('#drAttack');
+      const defBtn = wrap.querySelector('#drDefend');
+      const phpEl = wrap.querySelector('#bPhp');
+      const psanEl = wrap.querySelector('#bPsan');
+      const ehpEl = wrap.querySelector('#bEhp');
+      const phpBar = wrap.querySelector('#bPhpBar');
+      const psanBar = wrap.querySelector('#bPsanBar');
+      const ehpBar = wrap.querySelector('#bEhpBar');
+
+      let lastRoll = 0;
+
+      function updateBars() {
+        phpEl.textContent = Math.max(0, battle.playerHp);
+        psanEl.textContent = Math.max(0, battle.playerSan);
+        ehpEl.textContent = Math.max(0, battle.enemyHp);
+        phpBar.style.width = clamp(battle.playerHp, 0, 100) + '%';
+        psanBar.style.width = clamp(battle.playerSan, 0, 100) + '%';
+        ehpBar.style.width = clamp(battle.enemyHp, 0, 100) + '%';
+      }
+
+      function rollDice() {
+        if (battle.over) return;
+        if (battle.diceRolled) { msgEl.textContent = '本回合已经掷过骰了。'; return; }
+        Sfx.dice();
+        rollBtn.disabled = true;
+        let count = 0;
+        const interval = setInterval(() => {
+          diceEl.textContent = Math.floor(Math.random() * 20) + 1;
+          count++;
+          if (count >= 10) {
+            clearInterval(interval);
+            lastRoll = Math.floor(Math.random() * 20) + 1;
+            diceEl.textContent = lastRoll;
+            if (settings.animations) {
+              gsap.fromTo(diceEl, { scale: 0.8, rotation: -20 }, { scale: 1, rotation: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' });
+            }
+            if (lastRoll > 10) {
+              Sfx.success();
+              msgEl.textContent = '◈ 判定成功（' + lastRoll + ' > 10）';
+              msgEl.style.color = '#9dd0a0';
+            } else {
+              Sfx.fail();
+              msgEl.textContent = '✕ 判定失败（' + lastRoll + ' ≤ 10）· 理智 -10';
+              msgEl.style.color = '#d08a9c';
+              battle.playerSan -= 10;
+              updateBars();
+              if (settings.shake) vibrate(100);
+            }
+            battle.diceRolled = true;
+            atkBtn.disabled = false;
+            defBtn.disabled = false;
+            if (battle.playerSan <= 0) endBattle('lose');
+          }
+        }, 80);
+      }
+
+      function doAction(type) {
+        if (battle.over || !battle.diceRolled) return;
+        atkBtn.disabled = true;
+        defBtn.disabled = true;
+
+        if (type === 'attack') {
+          Sfx.hit();
+          if (settings.shake) vibrate(60);
+          let dmg = lastRoll * 2 + Math.floor(Math.random() * 10);
+          if (lastRoll > 15) dmg += 15;
+          battle.enemyHp -= dmg;
+          logEl.textContent = '你造成 ' + dmg + ' 点伤害。';
+        } else {
+          battle.playerSan = Math.min(100, battle.playerSan + 8);
+          logEl.textContent = '你稳住了心神。理智 +8。';
+          Sfx.tone(523, 0.15, 'sine', 0.12);
+        }
+
+        updateBars();
+
+        if (battle.enemyHp <= 0) {
+          setTimeout(() => endBattle('win'), 500);
+          return;
+        }
+
+        // 敌方反击
+        setTimeout(() => {
+          const dmg = 8 + Math.floor(Math.random() * 12);
+          battle.playerSan -= dmg;
+          battle.playerHp -= Math.floor(dmg / 2);
+          logEl.textContent += ' 残影反击，理智 -' + dmg + '。';
+          Sfx.hit();
+          if (settings.shake) vibrate(80);
+          updateBars();
+
+          if (battle.playerSan <= 0 || battle.playerHp <= 0) {
+            setTimeout(() => endBattle('lose'), 400);
+            return;
+          }
+
+          battle.diceRolled = false;
+          rollBtn.disabled = false;
+          msgEl.textContent = '新回合。再次掷骰。';
+          msgEl.style.color = '';
+        }, 900);
+      }
+
+      function endBattle(result) {
+        battle.over = true;
+        rollBtn.disabled = true;
+        atkBtn.disabled = true;
+        defBtn.disabled = true;
+        if (result === 'win') {
+          Sfx.success();
+          const silver = 30 + Math.floor(Math.random() * 20);
+          state.stats.silver += silver;
+          state.flags.dreamWin = (state.flags.dreamWin || 0) + 1;
+          saveGame();
+          setTimeout(() => {
+            closeModal(wrap);
+            openModal({
+              title: '梦 域 · 胜 利',
+              body: `<div class="ending-card">
+                <span class="e-icon">✦</span>
+                <div class="e-title">残 影 消 散</div>
+                <div class="e-sub">Dream Shard Collected</div>
+                <div class="e-desc">焦土残影在你面前化为灰烬。<br>
+                  灰烬中落下一枚梦域碎片，你把它收进袋里。<br><br>
+                  获得 <b style="color:var(--gold);">${silver} 银镑</b>。</div>
+              </div>`,
+              footHTML: `<button class="btn primary" id="drBack">返回地图</button>`,
+              onMount: (w) => {
+                w.querySelector('#drBack').onclick = () => { closeModal(w); showScreen('map'); };
+              }
+            });
+          }, 500);
+        } else {
+          Sfx.fail();
+          setTimeout(() => {
+            closeModal(wrap);
+            openModal({
+              title: '梦 域 · 沦 陷',
+              body: `<div class="ending-card">
+                <span class="e-icon" style="color:#c04060;">☠</span>
+                <div class="e-title" style="color:#c04060;">未 归 之 人</div>
+                <div class="e-sub">The Unreturned</div>
+                <div class="e-desc">你的意识正在沉入梦域的底部。<br>
+                  在最后一刻，你被一只黑鸦拖了回来。<br><br>
+                  （你失败了。但至少，你还活着。）</div>
+              </div>`,
+              footHTML: `<button class="btn primary" id="drBack">返回地图</button>`,
+              onMount: (w) => {
+                w.querySelector('#drBack').onclick = () => { closeModal(w); showScreen('map'); };
+              }
+            });
+          }, 500);
+        }
+      }
+
+      rollBtn.onclick = rollDice;
+      atkBtn.onclick = () => doAction('attack');
+      defBtn.onclick = () => doAction('defend');
+      wrap.querySelector('#drFlee').onclick = () => {
+        if (battle.over || confirm('确定要逃离梦域？')) {
+          Sfx.click();
+          closeModal(wrap);
+          showScreen('map');
+        }
+      };
+      updateBars();
+    }
+  });
+}
+
+/* ============================================================
+   记录页
+   ============================================================ */
+let logTab = 'char';
+
+function renderLog() {
+  const tabs = [
+    { id: 'char', label: '人物' },
+    { id: 'story', label: '剧情' },
+    { id: 'intel', label: '情报' },
+    { id: 'endings', label: '结局' }
+  ];
+  const tabsEl = $('#logTabs');
+  tabsEl.innerHTML = tabs.map(t =>
+    `<button class="log-tab ${t.id === logTab ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.log-tab').forEach(btn => {
+    btn.onclick = () => {
+      Sfx.click();
+      logTab = btn.dataset.tab;
+      renderLog();
+    };
+  });
+
+  const body = $('#logBody');
+  if (logTab === 'char') {
+    let html = '<div class="char-grid">';
+    Object.keys(CHARS).forEach(id => {
+      if (id === 'narrator' || id === 'me') return;
+      if (!state.flags['met_' + id] && !state.affection[id] && id !== 'fiman' && id !== 'kash') return;
+      const c = CHARS[id];
+      const aff = state.affection[id] || 0;
+      html += `<div class="char-card">
+        <div class="char-head">
+          <div class="char-avatar">${c.sym}</div>
+          <div>
+            <div class="char-name">${esc(c.name)}</div>
+            <div class="char-en">${esc(c.en)}</div>
+            <div class="char-title">${esc(c.title || '')}</div>
+          </div>
+        </div>
+        <div class="char-aff">亲密 <div class="aff-bar"><div class="aff-fill" style="width:${clamp(aff,0,100)}%"></div></div> ${aff}</div>
+        <div class="char-desc">${esc(c.desc)}</div>
+      </div>`;
+    });
+    html += '</div>';
+    body.innerHTML = html;
+    $('#logSub').textContent = '已结识 ' + Object.keys(state.affection).length + ' 人';
+  } else if (logTab === 'story') {
+    if (!state.log || !state.log.length) {
+      body.innerHTML = '<div class="empty">还没有任何记录。<br>故事从你踏进落日之都的那一刻开始。</div>';
+      $('#logSub').textContent = '——';
+      return;
+    }
+    body.innerHTML = state.log.slice().reverse().map(l => {
+      if (l.type === 'choice') return `<div class="log-entry choice"><div class="le-cn">▸ ${esc(l.text)}</div></div>`;
+      const en = l.en ? `<div class="le-en">${esc(l.en)}</div>` : '';
+      return `<div class="log-entry">
+        <span class="le-speaker">${esc(l.speaker || '')}</span>
+        ${en}
+        <div class="le-cn">${esc(l.cn || l.text || '')}</div>
+      </div>`;
+    }).join('');
+    $('#logSub').textContent = state.log.length + ' 条记录';
+  } else if (logTab === 'intel') {
+    const intels = [
+      { name: '封印并不完全稳固', desc: '封印战场遗址的乌鸦烙印纹路清晰得像昨天才烙上去的。伸手去碰，指尖会感到一阵冰凉——像是碰到了什么还活着的东西。', done: state.flags.archiveDone || state.flags.chessDone },
+      { name: '摩耳甫斯在等待时机', desc: '档案卷宗上只写了一行字：「他还会醒。」封印是暂时的。摩耳甫斯在梦域深处，他只是在等——等有人把他放出来。', done: state.flags.archiveDone },
+      { name: '缇斯是莫维奥娅的哥哥', desc: '被梦魇选中的容器，是副院长的亲哥哥。莫维奥娅不愿提起这个名字。', done: state.flags.kashSecret || state.flags.archiveDone },
+      { name: '梦域正在扩张', desc: '西边的梦域又扩了。有个村子一夜之间所有人都没醒过来。管理院的人进去了，但据说进去的人也没全出来。', done: state.flags.dreamWin },
+      { name: '能看见日落的人，是幸福的', desc: '菲曼的奶奶给酒馆起了这个名字。因为只要你还看得见日落，就说明你又撑过了一天。', done: state.affection.fiman >= 5 }
+    ];
+    body.innerHTML = intels.map(i => `
+      <div class="char-card" style="margin-bottom:10px;">
+        <div class="char-name" style="margin-bottom:6px;">${i.done ? '◈' : '◇'} ${esc(i.name)}</div>
+        <div class="char-desc" style="margin-top:0;padding-top:0;border:none;color:${i.done ? 'var(--text)' : 'var(--text-d)'};">
+          ${i.done ? esc(i.desc) : '尚未解锁。继续探索剧情与地点。'}
+        </div>
+      </div>
+    `).join('');
+    $('#logSub').textContent = intels.filter(i => i.done).length + ' / ' + intels.length;
+  } else if (logTab === 'endings') {
+    body.innerHTML = `
+      <div class="empty">
+        <div style="font-size:40px;color:var(--gold);opacity:.5;margin-bottom:14px;">✦</div>
+        结局收集<br>
+        <span style="color:var(--gold-b);font-size:16px;letter-spacing:.2em;">0 / 3</span>
+        <div style="margin-top:14px;font-size:12px;">继续你的旅程，解锁不同的结局。</div>
+      </div>
+    `;
+    $('#logSub').textContent = '结局';
+  }
+}
+
+/* ============================================================
+   设置页
+   ============================================================ */
+function renderSettings() {
+  $('#setUid').textContent = state.uid;
+  const main = $('#setMain');
+
+  const html = `
+    <div class="set-group">
+      <div class="set-group-head">账 号 与 角 色</div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">UID</div>
+          <div class="set-label-d">本机唯一标识</div>
+        </div>
+        <div class="set-ctrl"><span style="font-size:11px;color:var(--gold-d);letter-spacing:.08em;">${esc(state.uid)}</span></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">主控姓名</div>
+          <div class="set-label-d">剧情中显示的正式名称</div>
+        </div>
+        <div class="set-ctrl"><input class="set-input" id="setName" value="${esc(state.player.name)}" maxlength="10"></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">角色昵称</div>
+          <div class="set-label-d">其他角色称呼你的方式</div>
+        </div>
+        <div class="set-ctrl"><input class="set-input" id="setNick" value="${esc(state.player.nick)}" maxlength="10"></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">主控性别</div>
+          <div class="set-label-d">会影响部分剧情细节</div>
+        </div>
+        <div class="set-ctrl">
+          <div class="seg" id="setGender">
+            <button data-v="女" class="${state.player.gender === '女' ? 'active' : ''}">女</button>
+            <button data-v="男" class="${state.player.gender === '男' ? 'active' : ''}">男</button>
+            <button data-v="不限" class="${state.player.gender === '不限' ? 'active' : ''}">不限</button>
+          </div>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">性格标签</div>
+          <div class="set-label-d">影响部分内心独白</div>
+        </div>
+        <div class="set-ctrl">
+          <div class="seg" id="setPers">
+            ${['冷静', '共情', '直率', '谨慎'].map(p => `<button data-v="${p}" class="${state.player.personality === p ? 'active' : ''}">${p}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">切换账号</div>
+          <div class="set-label-d">重新生成 UID 并返回标题</div>
+        </div>
+        <div class="set-ctrl"><button class="mini-btn" id="setNewAcc">切换</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">登出</div>
+          <div class="set-label-d">返回游戏封面页</div>
+        </div>
+        <div class="set-ctrl"><button class="mini-btn" id="setLogout">登出</button></div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-group-head">画 面 与 显 示</div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">日夜模式</div><div class="set-label-d">切换夜间与白昼主题</div></div>
+        <div class="set-ctrl">
+          <div class="seg" id="setTheme">
+            <button data-v="night" class="${settings.theme === 'night' ? 'active' : ''}">夜</button>
+            <button data-v="day" class="${settings.theme === 'day' ? 'active' : ''}">日</button>
+          </div>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">字号缩放</div><div class="set-label-d">调整全局文字大小</div></div>
+        <div class="set-ctrl">
+          <input type="range" class="slider" id="setFontSize" min="0.85" max="1.3" step="0.05" value="${settings.fontSize}">
+          <span style="font-size:11px;color:var(--gold-d);min-width:30px;text-align:right;" id="fontSizeVal">${Math.round(settings.fontSize * 100)}%</span>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">界面动画</div><div class="set-label-d">开启丝滑过渡效果</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.animations ? 'on' : ''}" id="setAnim"></div></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">屏幕震动</div><div class="set-label-d">受击与判定时震动反馈</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.shake ? 'on' : ''}" id="setShake"></div></div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-group-head">声 音 设 置</div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">总音量开关</div><div class="set-label-d">关闭后所有音效静音</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.sfxOn ? 'on' : ''}" id="setSfxOn"></div></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">音效音量</div><div class="set-label-d">点击、翻页、判定声</div></div>
+        <div class="set-ctrl">
+          <input type="range" class="slider" id="setSfxVol" min="0" max="100" step="5" value="${settings.sfxVol}">
+          <span style="font-size:11px;color:var(--gold-d);min-width:32px;text-align:right;" id="sfxVolVal">${settings.sfxVol}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-group-head">剧 情 与 游 戏 体 验</div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">文字速度</div><div class="set-label-d">打字机逐字速度</div></div>
+        <div class="set-ctrl">
+          <div class="seg" id="setSpeed">
+            <button data-v="45" class="${settings.textSpeed === 45 ? 'active' : ''}">慢</button>
+            <button data-v="25" class="${settings.textSpeed === 25 ? 'active' : ''}">中</button>
+            <button data-v="12" class="${settings.textSpeed === 12 ? 'active' : ''}">快</button>
+            <button data-v="0" class="${settings.textSpeed === 0 ? 'active' : ''}">瞬</button>
+          </div>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">自动播放</div><div class="set-label-d">文字完成后自动推进</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.autoPlay ? 'on' : ''}" id="setAuto"></div></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">跳过已读</div><div class="set-label-d">快速略过看过的内容</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.skipRead ? 'on' : ''}" id="setSkip"></div></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">防误触保护</div><div class="set-label-d">关键选项需二次确认</div></div>
+        <div class="set-ctrl"><div class="switch ${settings.confirmChoice ? 'on' : ''}" id="setConfirm"></div></div>
+      </div>
+    </div>
+
+    <div class="set-group">
+      <div class="set-group-head">存 档 与 数 据</div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">手动存档</div><div class="set-label-d">3 个存档槽位</div></div>
+        <div class="set-ctrl"><button class="mini-btn" id="setSave">管理</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">导出存档</div><div class="set-label-d">生成 JSON 文本</div></div>
+        <div class="set-ctrl"><button class="mini-btn" id="setExport">导出</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">导入存档</div><div class="set-label-d">粘贴 JSON 文本</div></div>
+        <div class="set-ctrl"><button class="mini-btn" id="setImport">导入</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">清除缓存 / 重置游戏</div><div class="set-label-d">清空所有进度，不可恢复</div></div>
+        <div class="set-ctrl"><button class="mini-btn danger" id="setReset">重置</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">关于本作</div><div class="set-label-d">版本号与卷首语</div></div>
+        <div class="set-ctrl"><button class="mini-btn" id="setAbout">查看</button></div>
+      </div>
+      <div class="set-row">
+        <div class="set-label"><div class="set-label-t">返回标题</div><div class="set-label-d">回到游戏启动封面页</div></div>
+        <div class="set-ctrl"><button class="mini-btn" id="setTitle">返回</button></div>
+      </div>
+    </div>
+  `;
+
+  main.innerHTML = html;
+
+  // 绑定事件
+  main.querySelector('#setName').onchange = (e) => {
+    state.player.name = (e.target.value || '记者').trim().slice(0, 10) || '记者';
+    saveGame();
+    toast('◈ 姓名已更新', 'ok');
+  };
+  main.querySelector('#setNick').onchange = (e) => {
+    state.player.nick = (e.target.value || '记者').trim().slice(0, 10) || '记者';
+    saveGame();
+    toast('◈ 昵称已更新', 'ok');
+  };
+  main.querySelectorAll('#setGender button').forEach(b => {
+    b.onclick = () => {
+      Sfx.click();
+      state.player.gender = b.dataset.v;
+      main.querySelectorAll('#setGender button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      saveGame();
+    };
+  });
+  main.querySelectorAll('#setPers button').forEach(b => {
+    b.onclick = () => {
+      Sfx.click();
+      state.player.personality = b.dataset.v;
+      main.querySelectorAll('#setPers button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      saveGame();
+    };
+  });
+  main.querySelector('#setNewAcc').onclick = () => {
+    if (!confirm('切换账号将生成新的 UID 并返回标题。当前进度已保存。')) return;
+    saveGame();
+    state.uid = 'UID: ' + Math.floor(10000000 + Math.random() * 89999999);
+    saveGame();
+    Sfx.click();
+    backToTitle();
+  };
+  main.querySelector('#setLogout').onclick = () => {
+    Sfx.click();
+    saveGame();
+    backToTitle();
+  };
+
+  main.querySelectorAll('#setTheme button').forEach(b => {
+    b.onclick = () => {
+      Sfx.click();
+      settings.theme = b.dataset.v;
+      main.querySelectorAll('#setTheme button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      applySettings();
+      saveSettings();
+    };
+  });
+
+  main.querySelector('#setFontSize').oninput = (e) => {
+    settings.fontSize = parseFloat(e.target.value);
+    main.querySelector('#fontSizeVal').textContent = Math.round(settings.fontSize * 100) + '%';
+    applySettings();
+    saveSettings();
+  };
+  main.querySelector('#setAnim').onclick = (e) => {
+    settings.animations = !settings.animations;
+    e.target.classList.toggle('on', settings.animations);
+    Sfx.click();
+    saveSettings();
+  };
+  main.querySelector('#setShake').onclick = (e) => {
+    settings.shake = !settings.shake;
+    e.target.classList.toggle('on', settings.shake);
+    Sfx.click();
+    saveSettings();
+  };
+  main.querySelector('#setSfxOn').onclick = (e) => {
+    settings.sfxOn = !settings.sfxOn;
+    e.target.classList.toggle('on', settings.sfxOn);
+    Sfx.ensure();
+    Sfx.click();
+    saveSettings();
+  };
+  main.querySelector('#setSfxVol').oninput = (e) => {
+    settings.sfxVol = parseInt(e.target.value);
+    main.querySelector('#sfxVolVal').textContent = settings.sfxVol;
+    saveSettings();
+  };
+  main.querySelectorAll('#setSpeed button').forEach(b => {
+    b.onclick = () => {
+      Sfx.click();
+      settings.textSpeed = parseInt(b.dataset.v);
+      main.querySelectorAll('#setSpeed button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      saveSettings();
+    };
+  });
+  main.querySelector('#setAuto').onclick = (e) => {
+    settings.autoPlay = !settings.autoPlay;
+    e.target.classList.toggle('on', settings.autoPlay);
+    Sfx.click();
+    saveSettings();
+    if (settings.autoPlay && state.screen === 'game' && !typing.active) {
+      clearTimeout(autoPlayTimer);
+      autoPlayTimer = setTimeout(advanceLine, 2000);
+    }
+  };
+  main.querySelector('#setSkip').onclick = (e) => {
+    settings.skipRead = !settings.skipRead;
+    e.target.classList.toggle('on', settings.skipRead);
+    Sfx.click();
+    saveSettings();
+  };
+  main.querySelector('#setConfirm').onclick = (e) => {
+    settings.confirmChoice = !settings.confirmChoice;
+    e.target.classList.toggle('on', settings.confirmChoice);
+    Sfx.click();
+    saveSettings();
+  };
+
+  main.querySelector('#setSave').onclick = () => { Sfx.click(); openSaveManager(); };
+  main.querySelector('#setExport').onclick = () => { Sfx.click(); exportSave(); };
+  main.querySelector('#setImport').onclick = () => { Sfx.click(); openImportModal(); };
+  main.querySelector('#setReset').onclick = () => {
+    Sfx.click();
+    openModal({
+      title: '重 置 游 戏',
+      body: `<p style="font-size:13px;line-height:1.9;color:#d08a9c;">这将清空所有进度、好感度、银镑与已读记录。<br>此操作不可恢复。确定继续？</p>`,
+      footHTML: `<button class="btn ghost" id="rsCancel">取消</button>
+                 <button class="btn danger" id="rsConfirm">再次确认 · 清空</button>`,
+      onMount: (w) => {
+        w.querySelector('#rsCancel').onclick = () => { Sfx.click(); closeModal(w); };
+        w.querySelector('#rsConfirm').onclick = () => {
+          Sfx.fail();
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem('nightfalling_slots_v1');
+          closeModal(w);
+          toast('◈ 已重置所有进度', 'warn');
+          setTimeout(() => { location.reload(); }, 900);
+        };
+      }
+    });
+  };
+  main.querySelector('#setAbout').onclick = () => { Sfx.click(); openAbout(); };
+  main.querySelector('#setTitle').onclick = () => {
+    if (confirm('返回标题界面？当前进度将自动保存。')) {
+      Sfx.click();
+      saveGame();
+      backToTitle();
+    }
+  };
+}
+
+/* ============================================================
+   存档管理
+   ============================================================ */
+const SLOT_KEY = 'nightfalling_slots_v1';
+
+function getSlots() {
+  try {
+    return JSON.parse(localStorage.getItem(SLOT_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+function setSlots(slots) {
+  try { localStorage.setItem(SLOT_KEY, JSON.stringify(slots)); } catch (e) {}
+}
+
+function openSaveManager() {
+  const slots = getSlots();
+  let html = '';
+  for (let i = 1; i <= 3; i++) {
+    const s = slots[i];
+    if (s) {
+      const t = new Date(s.ts);
+      const timeStr = `${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+      html += `<div class="save-slot" data-slot="${i}">
+        <div class="save-slot-info">
+          <div class="save-slot-t">存档 ${i} · ${esc(s.loc || '未知地点')}</div>
+          <div class="save-slot-m">${timeStr} · 银镑 ${s.silver || 0}</div>
+        </div>
+        <div class="save-slot-actions">
+          <button class="mini-btn" data-a="load">读取</button>
+          <button class="mini-btn" data-a="save">覆盖</button>
+          <button class="mini-btn danger" data-a="del">删除</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="save-slot" data-slot="${i}">
+        <div class="save-slot-info">
+          <div class="save-slot-t">存档 ${i} · 空</div>
+          <div class="save-slot-m">尚未保存</div>
+        </div>
+        <div class="save-slot-actions">
+          <button class="mini-btn" data-a="save">保存</button>
+        </div>
+      </div>`;
+    }
+  }
+  openModal({
+    title: '存 档 管 理',
+    body: html,
+    footHTML: `<button class="btn ghost" id="svClose">关闭</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#svClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelectorAll('.mini-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const slot = btn.closest('.save-slot').dataset.slot;
+          const action = btn.dataset.a;
+          if (action === 'save') {
+            const slots2 = getSlots();
+            slots2[slot] = {
+              ts: Date.now(),
+              loc: $('#locLabel').textContent,
+              silver: state.stats.silver,
+              data: JSON.parse(JSON.stringify({
+                player: state.player, stats: state.stats,
+                affection: state.affection, flags: state.flags,
+                readLines: state.readLines, log: state.log,
+                currentScene: state.currentScene, currentLineIdx: state.currentLineIdx,
+                uid: state.uid
+              }))
+            };
+            setSlots(slots2);
+            Sfx.success();
+            toast('◈ 已保存至存档 ' + slot, 'ok');
+            closeModal(wrap);
+            setTimeout(openSaveManager, 200);
+          } else if (action === 'load') {
+            const slots2 = getSlots();
+            const s = slots2[slot];
+            if (!s) return;
+            Sfx.success();
+            Object.assign(state, JSON.parse(JSON.stringify(s.data)));
+            saveGame();
+            closeModal(wrap);
+            toast('◈ 已读取存档 ' + slot, 'ok');
+            setTimeout(() => {
+              if (state.currentScene && SCENES[state.currentScene]) {
+                playScene(state.currentScene);
+              } else {
+                showScreen('map');
+              }
+            }, 300);
+          } else if (action === 'del') {
+            if (!confirm('确定删除此存档？')) return;
+            const slots2 = getSlots();
+            delete slots2[slot];
+            setSlots(slots2);
+            Sfx.click();
+            closeModal(wrap);
+            setTimeout(openSaveManager, 200);
+          }
+        };
+      });
+    }
+  });
+}
+
+function exportSave() {
+  const data = {
+    meta: { game: 'nightfalling', version: 1, ts: Date.now() },
+    state: {
+      player: state.player, stats: state.stats,
+      affection: state.affection, flags: state.flags,
+      readLines: state.readLines, log: state.log,
+      currentScene: state.currentScene, currentLineIdx: state.currentLineIdx,
+      uid: state.uid
+    },
+    slots: getSlots()
+  };
+  const text = JSON.stringify(data, null, 2);
+  openModal({
+    title: '导 出 存 档',
+    body: `<p style="font-size:12px;color:var(--text-d);margin-bottom:12px;letter-spacing:.08em;">复制下方文本保存。跨设备游玩时可在"导入存档"中粘贴。</p>
+           <textarea class="inp" id="expTa" readonly style="height:200px;font-family:monospace;font-size:11px;line-height:1.5;resize:none;">${esc(text)}</textarea>`,
+    footHTML: `<button class="btn ghost" id="expClose">关闭</button>
+               <button class="btn primary" id="expCopy">复制全部</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#expClose').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#expCopy').onclick = () => {
+        const ta = wrap.querySelector('#expTa');
+        ta.select();
+        try {
+          document.execCommand('copy');
+          Sfx.success();
+          toast('◈ 已复制到剪贴板', 'ok');
+        } catch (e) {
+          toast('复制失败，请手动选择', 'warn');
+        }
+      };
+    }
+  });
+}
+
+function openImportModal() {
+  openModal({
+    title: '导 入 存 档',
+    body: `<p style="font-size:12px;color:var(--text-d);margin-bottom:12px;letter-spacing:.08em;">粘贴之前导出的 JSON 文本。导入将覆盖当前进度。</p>
+           <textarea class="inp" id="impTa" placeholder="在此粘贴 JSON 文本..." style="height:180px;font-family:monospace;font-size:11px;line-height:1.5;resize:none;"></textarea>`,
+    footHTML: `<button class="btn ghost" id="impCancel">取消</button>
+               <button class="btn primary" id="impOk">导入</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#impCancel').onclick = () => { Sfx.click(); closeModal(wrap); };
+      wrap.querySelector('#impOk').onclick = () => {
+        const raw = wrap.querySelector('#impTa').value.trim();
+        if (!raw) { toast('请输入 JSON 文本', 'warn'); return; }
+        try {
+          const d = JSON.parse(raw);
+          if (d.state) {
+            Object.assign(state, d.state);
+            if (d.slots) setSlots(d.slots);
+            saveGame();
+            Sfx.success();
+            toast('◈ 存档导入成功', 'ok');
+            closeModal(wrap);
+            setTimeout(() => {
+              if (state.currentScene && SCENES[state.currentScene]) playScene(state.currentScene);
+              else showScreen('map');
+            }, 300);
+          } else {
+            toast('格式不正确：缺少 state', 'warn');
+          }
+        } catch (e) {
+          Sfx.fail();
+          toast('导入失败：JSON 解析错误', 'warn');
+        }
+      };
+    }
+  });
+}
+
+/* ============================================================
+   关于
+   ============================================================ */
+function openAbout() {
+  openModal({
+    title: '关 于 本 作',
+    body: `
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-family:var(--f-deco);font-size:30px;color:var(--gold-b);letter-spacing:.2em;text-shadow:0 0 24px rgba(201,169,97,.5);">入魇</div>
+        <div style="font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--gold-d);margin-top:4px;">Nightfalling</div>
+        <div style="font-size:10px;color:var(--text-d);letter-spacing:.2em;margin-top:8px;">v1.0.0</div>
+      </div>
+      <div style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 4px;text-align:center;margin-bottom:16px;">
+        <p style="font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-b);line-height:1.7;">"Those who can see the sunset are the fortunate ones."</p>
+        <p style="font-size:12px;color:var(--text-d);margin-top:6px;letter-spacing:.1em;">「能看见日落的人，是幸福的。」</p>
+      </div>
+      <p style="font-size:12.5px;line-height:2;color:var(--text);">
+        <span style="color:var(--gold);">◆</span> 点击画面任意处推进对话。打字过程中点击可立即补全。<br>
+        <span style="color:var(--gold);">◆</span> 出现选项时，点击进行抉择；开启防误触保护后需二次确认。<br>
+        <span style="color:var(--gold);">◆</span> 底部导航可随时切换主页、地图、记录、设置。<br>
+        <span style="color:var(--gold);">◆</span> 地图中的地点可触发剧情、小游戏或梦域副本。<br>
+        <span style="color:var(--gold);">◆</span> 与角色闲聊、深谈、送礼可提升亲密。<br>
+        <span style="color:var(--gold);">◆</span> 所有进度保存在本机浏览器中，不会上传。
+      </p>
+    `,
+    footHTML: `<button class="btn primary" id="abOk">关闭</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#abOk').onclick = () => { Sfx.click(); closeModal(wrap); };
+    }
+  });
+}
+
+/* ============================================================
+   返回标题
+   ============================================================ */
+function backToTitle() {
+  closeAllModals();
+  stopTyping();
+  clearTimeout(autoPlayTimer);
+  showScreen('title');
+  $('#bottomNav').style.display = 'none';
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+function bindEvents() {
+  // 标题页按钮
+  $$('#screen-title [data-act]').forEach(btn => {
+    btn.onclick = () => {
+      Sfx.ensure();
+      Sfx.click();
+      const act = btn.dataset.act;
+      if (act === 'new') {
+        openModal({
+          title: '新 的 旅 程',
+          body: `
+            <div style="text-align:center;margin-bottom:14px;">
+              <div style="font-size:12px;color:var(--text-d);letter-spacing:.14em;margin-bottom:14px;">请为记者留下姓名与昵称</div>
+              <input class="inp" id="newName" placeholder="姓名（默认：记者）" maxlength="10" style="margin-bottom:10px;">
+              <input class="inp" id="newNick" placeholder="昵称（默认：记者）" maxlength="10">
+              <div style="margin-top:12px;font-size:11px;color:var(--text-d);letter-spacing:.08em;">性别</div>
+              <div class="seg" id="newGender" style="display:inline-flex;margin-top:8px;">
+                <button data-v="女" class="active">女</button>
+                <button data-v="男">男</button>
+                <button data-v="不限">不限</button>
+              </div>
+            </div>
+          `,
+          footHTML: `<button class="btn ghost" id="newCancel">取消</button>
+                     <button class="btn primary" id="newStart">启 程</button>`,
+          onMount: (wrap) => {
+            wrap.querySelector('#newCancel').onclick = () => { Sfx.click(); closeModal(wrap); };
+            let gender = '女';
+            wrap.querySelectorAll('#newGender button').forEach(b => {
+              b.onclick = () => {
+                gender = b.dataset.v;
+                wrap.querySelectorAll('#newGender button').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+              };
+            });
+            wrap.querySelector('#newStart').onclick = () => {
+              const name = (wrap.querySelector('#newName').value || '记者').trim().slice(0, 10) || '记者';
+              const nick = (wrap.querySelector('#newNick').value || name).trim().slice(0, 10) || name;
+              state.player = { name, nick, gender, personality: '冷静' };
+              state.log = [];
+              state.affection = {};
+              state.flags = {};
+              state.stats = { silver: 0, sanity: 100 };
+              saveGame();
+              Sfx.success();
+              closeModal(wrap);
+              setTimeout(() => playScene('prologue_1'), 300);
+            };
+          }
+        });
+      } else if (act === 'continue') {
+        if (loadGame() && state.currentScene) {
+          if (SCENES[state.currentScene]) {
+            playScene(state.currentScene);
+            toast('◈ 已继续上次进度', 'ok');
+          } else {
+            showScreen('map');
+          }
+        } else {
+          toast('没有可继续的进度', 'warn');
+        }
+      } else if (act === 'archive') {
+        openArchiveModal();
+      } else if (act === 'about') {
+        openAbout();
+      }
+    };
+  });
+
+  // 底部导航
+  $$('.nav-btn').forEach(btn => {
+    btn.onclick = () => {
+      Sfx.click();
+      const nav = btn.dataset.nav;
+      if (nav === 'game') {
+        if (state.currentScene && SCENES[state.currentScene]) {
+          showScreen('game');
+        } else {
+          showScreen('map');
+        }
+      } else {
+        showScreen(nav);
+      }
+    };
+  });
+
+  // 点击推进
+  $('#stage').addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    if ($('.choices').classList.contains('active')) return;
+    if (state.screen !== 'game') return;
+    advanceLine();
+  });
+
+  // 键盘
+  document.addEventListener('keydown', (e) => {
+    if (modalStack.length) {
+      if (e.key === 'Escape') closeModal();
+      return;
+    }
+    if (state.screen === 'game') {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (!$('.choices').classList.contains('active')) advanceLine();
+      }
+    }
+  });
+}
+
+function openArchiveModal() {
+  openModal({
+    title: '档 案 馆',
+    body: `
+      <div style="text-align:center;padding:16px 0;">
+        <div style="font-size:42px;color:var(--gold);opacity:.6;margin-bottom:16px;">❖</div>
+        <div style="font-family:var(--f-deco);font-size:14px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:10px;">永 久 档 案</div>
+        <p style="font-size:12.5px;line-height:1.9;color:var(--text);">
+          档案馆记录你解锁的一切——人物、地点、势力、情报、结局。<br>
+          跨周目、跨存档永久保留。
+        </p>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--line);">
+          <div style="font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:8px;">已收集</div>
+          <div style="font-family:var(--f-deco);font-size:20px;color:var(--gold-b);letter-spacing:.1em;">
+            ${Object.keys(state.affection).length} 人物 · ${Object.keys(state.flags).length} 情报
+          </div>
+        </div>
+      </div>
+    `,
+    footHTML: `<button class="btn primary" id="arcOk">关闭</button>`,
+    onMount: (wrap) => {
+      wrap.querySelector('#arcOk').onclick = () => { Sfx.click(); closeModal(wrap); };
+    }
+  });
+}
+
+/* ============================================================
+   初始化
+   ============================================================ */
+(function init() {
+  loadSettings();
+  bindEvents();
+
+  // 初始显示标题页
+  document.getElementById('screen-title').classList.add('active');
+  $('#bottomNav').style.display = 'none';
+
+  // 预加载用户设置
+  updateNav('game');
+
+  console.log('%c入魇 · Nightfalling', 'color:#c9a961;font-size:18px;font-family:Georgia;letter-spacing:6px;');
+  console.log('%c「能看见日落的人，是幸福的。」', 'color:#8a8070;font-size:11px;font-style:italic;');
+  console.log('%cv1.0.0 · 引擎就绪', 'color:#7a6636;font-size:10px;');
+
+  // 首次用户交互时初始化音频
+  const initAudio = () => {
+    Sfx.ensure();
+    document.removeEventListener('touchstart', initAudio);
+    document.removeEventListener('click', initAudio);
+  };
+  document.addEventListener('touchstart', initAudio, { once: true });
+  document.addEventListener('click', initAudio, { once: true });
+})();
 </script>
 </body>
 </html>
