@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   workshop.js · 剧情工坊全表单（含批量导入）
+   workshop.js · 剧情工坊全表单（含批量导入 + 章节号排序/覆盖）
    依赖 index.html 暴露的 window.NF
    ═══════════════════════════════════════════════════════════ */
 (function () {
@@ -10,26 +10,19 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  /* ─── 状态 ─── */
   let wsType = 'chapter';
   let wsEditKey = null;
   let wsFormData = null;
   let wsEditKind = null;
 
-  /* ─── 空表单工厂 ─── */
   function blankChapter(kind) {
-    return {
-      type: kind === 'dungeon' ? 'dungeon' : 'main',
-      title:'', subtitle:'', location:'', bg:'city',
-      lines: [{ type:'n', cn:'' }]
-    };
+    return { type: kind === 'dungeon' ? 'dungeon' : 'main', title:'', subtitle:'', location:'', bg:'city', lines: [{ type:'n', cn:'' }] };
   }
   function blankLocation() { return { name:'', region:'索姆尼亚帝国', bg:'city', desc:'', entries: [] }; }
   function blankBond() { return { charId:'cash', mode:'chat', title:'', need:0, lines:[{ who:'cash', en:'', cn:'' }] }; }
   function blankGift() { return { name:'', icon:'✦', cost:10, aff:5, likes:[], desc:'' }; }
   function blankCG() { return { charId:'cash', title:'', subtitle:'', need:30, lines:[{ cn:'' }] }; }
 
-  /* ─── 常量 ─── */
   const CHAR_IDS = ['tavana','movioa','lidia','elsia','fiman','cash','reifina','cassi'];
   const BGS = ['city','tavern','grove','manor','archive','church','castle','dream'];
   const MGS = [
@@ -40,9 +33,7 @@
     { id:'dream', name:'梦域副本' }
   ];
 
-  /* ═══════════════════════════════════════════════════════════
-     批量导入 · 文本解析
-     ═══════════════════════════════════════════════════════════ */
+  /* ═══ 批量导入解析 ═══ */
   const CHAR_ALIASES = {
     'fiman': ['fiman','Fiman','菲曼','菲曼·卡桑拉'],
     'cash':  ['cash','Cash','卡什','卡什·洛克威尔','Kash'],
@@ -73,42 +64,25 @@
     for (let raw of rawLines) {
       const line = raw.trim();
       if (!line) continue;
-      /* 标题 */
       if (line.startsWith('## ')) { result.subtitle = line.slice(3).trim(); continue; }
       if (line.startsWith('#')) { result.title = line.replace(/^#+\s*/, '').trim(); continue; }
-      /* 地点 */
       if (line.startsWith('@')) { result.location = line.slice(1).trim(); continue; }
-      /* 背景 */
       if (line.startsWith('!')) { result.bg = line.slice(1).trim(); continue; }
-      /* 分隔符 */
       if (/^[-=*]{3,}$/.test(line)) continue;
-      /* 主角内心独白（括号开头结尾） */
-      if (/^[（(].+[）)]$/.test(line)) {
-        result.lines.push({ type:'me', cn: line.slice(1, -1).trim(), en:'' });
-        continue;
-      }
-      /* 冒号分隔 */
+      if (/^[（(].+[）)]$/.test(line)) { result.lines.push({ type:'me', cn: line.slice(1, -1).trim(), en:'' }); continue; }
       const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
       if (colonMatch) {
         const who = colonMatch[1].trim();
         let body = colonMatch[2].trim();
         if (!body) continue;
-        /* 双语分隔 */
         let en = '', cn = body;
         const pipeIdx = body.indexOf('|');
-        if (pipeIdx >= 0) {
-          en = body.slice(0, pipeIdx).trim();
-          cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim();
-        }
+        if (pipeIdx >= 0) { en = body.slice(0, pipeIdx).trim(); cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim(); }
         const isMe = ['我','主角','你','我(主角)','主人公'].includes(who);
-        if (isMe) {
-          result.lines.push({ type:'me', cn, en });
-        } else {
-          result.lines.push({ type:'s', who: matchCharId(who), char: who, cn, en });
-        }
+        if (isMe) result.lines.push({ type:'me', cn, en });
+        else result.lines.push({ type:'s', who: matchCharId(who), char: who, cn, en });
         continue;
       }
-      /* 其他 → 旁白 */
       result.lines.push({ type:'n', cn: line });
     }
     return result;
@@ -117,31 +91,22 @@
   function renderBulkPreview(box, result) {
     if (!result) { box.innerHTML = ''; return; }
     let html = '';
-    /* 头部信息 */
     const meta = [];
     if (result.title) meta.push('标题：' + esc(result.title));
     if (result.subtitle) meta.push('副标题：' + esc(result.subtitle));
     if (result.location) meta.push('地点：' + esc(result.location));
     if (result.bg && result.bg !== 'city') meta.push('背景：' + esc(result.bg));
-    if (meta.length) {
-      html += '<div style="font-size:11px;color:var(--gold-d);letter-spacing:.08em;padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--line);line-height:1.7;">' + meta.join('　·　') + '</div>';
-    }
-    /* 对话行 */
+    if (meta.length) html += '<div style="font-size:11px;color:var(--gold-d);letter-spacing:.08em;padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed var(--line);line-height:1.7;">' + meta.join('　·　') + '</div>';
     if (!result.lines.length) {
       html += '<p style="color:var(--text-d);font-style:italic;font-size:12px;">尚未输入任何内容。</p>';
     } else {
       result.lines.forEach((l, i) => {
-        const isNarr = l.type === 'n';
-        const isMe = l.type === 'me';
+        const isNarr = l.type === 'n', isMe = l.type === 'me';
         let speaker = '';
-        if (l.type === 's') {
-          const ch = NF.CHARS[l.who];
-          speaker = ch ? ch.name : (l.char || l.who || '？？？');
-        } else if (isMe) speaker = NF.state()?.player?.name || '记者';
+        if (l.type === 's') { const ch = NF.CHARS[l.who]; speaker = ch ? ch.name : (l.char || l.who || '？？？'); }
+        else if (isMe) speaker = NF.state()?.player?.name || '记者';
         html += '<div style="padding:8px 0;' + (i>0?'border-top:1px dashed rgba(201,169,97,.1);':'') + '">' +
-          '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:3px;">' +
-            (isNarr ? '旁白' : (isMe ? '主角 · ' + esc(speaker) : '角色 · ' + esc(speaker))) +
-          '</div>';
+          '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:3px;">' + (isNarr ? '旁白' : (isMe ? '主角 · ' + esc(speaker) : '角色 · ' + esc(speaker))) + '</div>';
         if (l.en) html += '<div style="font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--gold-b);line-height:1.6;">' + esc(l.en) + '</div>';
         if (l.cn) html += '<div style="font-size:12.5px;color:' + (isNarr?'var(--text-d)':'var(--text)') + ';line-height:1.75;' + (isNarr?'font-style:italic;':'') + '">' + esc(l.cn) + '</div>';
         html += '</div>';
@@ -173,7 +138,7 @@
 
   function openBulkImport(formBox, main) {
     const modal = NF.openModal({
-      title: '✎ 批 量 导 入',
+      title: '📋 批 量 导 入',
       wide: true,
       body:
         '<div class="ws-hint" style="margin-bottom:14px;line-height:1.95;font-size:11.5px;">' +
@@ -198,13 +163,9 @@
       onMount: (w) => {
         const textarea = w.querySelector('#biText');
         const preview = w.querySelector('#biPreview');
-        const update = () => {
-          const result = parseBulkText(textarea.value);
-          renderBulkPreview(preview, result);
-        };
+        const update = () => { renderBulkPreview(preview, parseBulkText(textarea.value)); };
         textarea.oninput = update;
         update();
-
         w.querySelector('#biClear').onclick = () => { textarea.value = ''; update(); NF.Sfx.click(); };
         w.querySelector('#biInsertTpl').onclick = () => { textarea.value = BULK_TEMPLATE; update(); NF.Sfx.click(); };
         w.querySelector('#biCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
@@ -214,14 +175,10 @@
           const result = parseBulkText(text);
           if (!result.lines.length) { NF.toast('没有解析出任何对话行','warn'); return; }
           const mode = w.querySelector('#biMode').value;
-          if (mode === 'replace') {
-            wsFormData.lines = result.lines;
-          } else {
-            if (wsFormData.lines.length === 1 && !wsFormData.lines[0].cn && !wsFormData.lines[0].en) {
-              wsFormData.lines = result.lines;
-            } else {
-              wsFormData.lines = wsFormData.lines.concat(result.lines);
-            }
+          if (mode === 'replace') wsFormData.lines = result.lines;
+          else {
+            if (wsFormData.lines.length === 1 && !wsFormData.lines[0].cn && !wsFormData.lines[0].en) wsFormData.lines = result.lines;
+            else wsFormData.lines = wsFormData.lines.concat(result.lines);
           }
           if (result.title && !wsFormData.title) wsFormData.title = result.title;
           if (result.subtitle && !wsFormData.subtitle) wsFormData.subtitle = result.subtitle;
@@ -237,12 +194,9 @@
     });
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     主渲染
-     ═══════════════════════════════════════════════════════════ */
+  /* ═══ 主渲染 ═══ */
   function render() {
-    const main = $('#wsMain');
-    if (!main) return;
+    const main = $('#wsMain'); if (!main) return;
     const types = [
       { id:'chapter',  label:'章节' },
       { id:'dungeon',  label:'副本' },
@@ -252,30 +206,20 @@
       { id:'cg',       label:'特殊CG' }
     ];
     main.innerHTML =
-      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同 key 会覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字。</div>' +
-      '<div class="ws-type-tabs">' +
-        types.map(t => '<button class="ws-type-btn ' + (wsType===t.id?'on':'') + '" data-type="' + t.id + '">' + t.label + '</button>').join('') +
-      '</div>' +
+      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同 key 会覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字。<br><b>章节标题里带「第一章 / 第二章 / 第1章 / Chapter 2」会被自动排序</b>，与内置章节同序号时<b>自动覆盖内置</b>。</div>' +
+      '<div class="ws-type-tabs">' + types.map(t => '<button class="ws-type-btn ' + (wsType===t.id?'on':'') + '" data-type="' + t.id + '">' + t.label + '</button>').join('') + '</div>' +
       '<div id="wsForm"></div>' +
       '<div class="divider" style="margin:26px 0 16px;"><span>已 导 入 的 内 容</span></div>' +
       '<div id="wsList"></div>';
-
     main.querySelectorAll('.ws-type-btn').forEach(b => {
-      b.onclick = () => {
-        NF.Sfx.click();
-        wsType = b.dataset.type;
-        wsFormData = null; wsEditKey = null; wsEditKind = null;
-        render();
-      };
+      b.onclick = () => { NF.Sfx.click(); wsType = b.dataset.type; wsFormData = null; wsEditKey = null; wsEditKind = null; render(); };
     });
-
     renderForm(main);
     renderList(main);
   }
 
   function renderForm(main) {
-    const box = main.querySelector('#wsForm');
-    if (!box) return;
+    const box = main.querySelector('#wsForm'); if (!box) return;
     if (wsType === 'chapter' || wsType === 'dungeon') renderChapterForm(box, main);
     else if (wsType === 'location') renderLocationForm(box, main);
     else if (wsType === 'bond') renderBondForm(box, main);
@@ -283,19 +227,29 @@
     else if (wsType === 'cg') renderCGForm(box, main);
   }
 
-  /* ─────────────── 章节 / 副本表单 ─────────────── */
+  /* ─── 章节表单 ─── */
   function renderChapterForm(box, main) {
     if (!wsFormData) wsFormData = blankChapter(wsType);
     if (wsType === 'dungeon') wsFormData.type = 'dungeon';
     else if (wsType === 'chapter') wsFormData.type = 'main';
 
+    /* 实时显示章节号 */
+    const previewNum = NF.parseChapterNum(wsFormData.title);
+    const numLabel = (previewNum !== null) ? ('第 ' + (previewNum === 0 ? '序' : previewNum) + ' 章') : '未识别（标题里带「第一章 / 第1章 / Chapter 2」即可）';
+    const conflictText = (() => {
+      if (previewNum === null) return '';
+      const list = NF.getChapterList();
+      const conflict = list.find(c => c.num === previewNum && !c.isUser);
+      if (conflict) return '<div style="font-size:11px;color:#d08a9c;margin-top:6px;">⚠ 将覆盖内置章节：' + esc(conflict.name) + '</div>';
+      return '';
+    })();
+
     box.innerHTML =
-      '<div class="ws-field"><label>标 题 <b>（必填）</b></label><input class="inp" id="wsTitle" value="' + esc(wsFormData.title) + '" placeholder="例如：第二章 · 夜与晨"></div>' +
+      '<div class="ws-field"><label>标 题 <b>（必填）</b></label><input class="inp" id="wsTitle" value="' + esc(wsFormData.title) + '" placeholder="例如：第二章 · 夜与晨 / 第1章 / 序章"></div>' +
+      '<div style="font-size:11px;color:var(--gold-d);margin:-12px 0 14px;letter-spacing:.06em;">◈ ' + esc(numLabel) + conflictText + '</div>' +
       '<div class="ws-field"><label>副 标 题</label><input class="inp" id="wsSubtitle" value="' + esc(wsFormData.subtitle) + '" placeholder="例如：落日之都的第二日"></div>' +
       '<div class="ws-field"><label>地 点</label><input class="inp" id="wsLoc" value="' + esc(wsFormData.location) + '" placeholder="例如：日不落酒馆 · 吧台"></div>' +
-      '<div class="ws-field"><label>背 景</label><select class="inp" id="wsBg">' +
-        BGS.map(b => '<option value="' + b + '" ' + (wsFormData.bg===b?'selected':'') + '>' + b + '</option>').join('') +
-      '</select></div>' +
+      '<div class="ws-field"><label>背 景</label><select class="inp" id="wsBg">' + BGS.map(b => '<option value="' + b + '" ' + (wsFormData.bg===b?'selected':'') + '>' + b + '</option>').join('') + '</select></div>' +
       '<div class="ws-field">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap;">' +
           '<label style="margin:0;">对 话 <b>（每行独立）</b></label>' +
@@ -315,7 +269,16 @@
     wsFormData.lines.forEach((l, i) => appendChapterLine(linesBox, l, i, box, main));
     updateChapterPreview(box);
 
-    box.querySelector('#wsTitle').oninput = (e) => wsFormData.title = e.target.value;
+    box.querySelector('#wsTitle').oninput = (e) => {
+      wsFormData.title = e.target.value;
+      const num = NF.parseChapterNum(wsFormData.title);
+      const label = (num !== null) ? ('第 ' + (num === 0 ? '序' : num) + ' 章') : '未识别（标题里带「第一章 / 第1章 / Chapter 2」即可）';
+      const conflictEl = box.querySelector('.ws-field label').nextElementSibling;
+      if (conflictEl) {
+        const conflict = (num !== null) ? NF.getChapterList().find(c => c.num === num && !c.isUser) : null;
+        conflictEl.innerHTML = '◈ ' + esc(label) + (conflict ? '<div style="font-size:11px;color:#d08a9c;margin-top:6px;">⚠ 将覆盖内置章节：' + esc(conflict.name) + '</div>' : '');
+      }
+    };
     box.querySelector('#wsSubtitle').oninput = (e) => wsFormData.subtitle = e.target.value;
     box.querySelector('#wsLoc').oninput = (e) => wsFormData.location = e.target.value;
     box.querySelector('#wsBg').onchange = (e) => wsFormData.bg = e.target.value;
@@ -356,17 +319,11 @@
     card.querySelector('.ws-char').onchange = (e) => { line.who = e.target.value; updateChapterPreview(formBox); };
     card.querySelector('.ws-en').oninput = (e) => { line.en = e.target.value; updateChapterPreview(formBox); };
     card.querySelector('.ws-cn').oninput = (e) => { line.cn = e.target.value; updateChapterPreview(formBox); };
-    card.querySelector('.ws-line-del').onclick = () => {
-      NF.Sfx.click();
-      if (wsFormData.lines.length <= 1) { NF.toast('至少保留一行', 'warn'); return; }
-      wsFormData.lines.splice(i, 1);
-      renderForm(main);
-    };
+    card.querySelector('.ws-line-del').onclick = () => { NF.Sfx.click(); if (wsFormData.lines.length<=1) { NF.toast('至少保留一行','warn'); return; } wsFormData.lines.splice(i,1); renderForm(main); };
   }
 
   function updateChapterPreview(formBox) {
-    const prev = formBox.querySelector('#wsPreview');
-    if (!prev) return;
+    const prev = formBox.querySelector('#wsPreview'); if (!prev) return;
     prev.innerHTML = '<div class="ws-preview-title">◈ PREVIEW</div>' +
       wsFormData.lines.map(l => {
         const isNarr = l.type === 'n';
@@ -385,6 +342,7 @@
     if (!title) { NF.toast('请填标题','warn'); return; }
     const lines = wsFormData.lines.filter(l => l.cn && l.cn.trim());
     if (!lines.length) { NF.toast('至少一行对话','warn'); return; }
+    const chapterNum = NF.parseChapterNum(title);
     const key = wsEditKey || ('ch_' + Date.now());
     const data = {
       key, title,
@@ -392,30 +350,38 @@
       location: formBox.querySelector('#wsLoc').value.trim(),
       bg: formBox.querySelector('#wsBg').value,
       type: wsFormData.type === 'dungeon' ? 'dungeon' : 'main',
+      chapterNum: chapterNum,
       lines, ts: Date.now()
     };
+    /* 冲突提示 */
+    if (chapterNum !== null && (data.type === 'main')) {
+      const conflict = NF.getChapterList().find(c => c.num === chapterNum && !c.isUser);
+      if (conflict) {
+        if (!confirm('「' + conflict.name + '」是同序号的内置章节，保存后会覆盖它。继续？')) return;
+      }
+    }
     const list = NF.userContent().chapters;
     const idx = list.findIndex(x => x.key === key);
     if (idx >= 0) list[idx] = data;
     else list.push(data);
     NF.saveUser();
+    /* 清掉旧 SCENES 缓存 */
+    delete NF.SCENES['user_scene_' + key];
     NF.Sfx.success();
-    NF.toast('◈ 已保存：' + title, 'ok');
+    NF.toast('◈ 已保存：' + title + (chapterNum !== null ? '（' + (chapterNum === 0 ? '序章' : '第 ' + chapterNum + ' 章') + '）' : ''), 'ok');
     wsFormData = null; wsEditKey = null; wsEditKind = null;
     renderForm(document.querySelector('#wsMain'));
     renderList(document.querySelector('#wsMain'));
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─────────────── 地点表单 ─────────────── */
+  /* ─── 地点表单 ─── */
   function renderLocationForm(box, main) {
     if (!wsFormData) wsFormData = blankLocation();
     box.innerHTML =
       '<div class="ws-field"><label>地 点 名 称 <b>（必填）</b></label><input class="inp" id="wsLocName" value="' + esc(wsFormData.name) + '" placeholder="例如：映月镇"></div>' +
       '<div class="ws-field"><label>所 属 区 域</label><input class="inp" id="wsLocRegion" value="' + esc(wsFormData.region) + '" placeholder="例如：索姆尼亚帝国"></div>' +
-      '<div class="ws-field"><label>背 景</label><select class="inp" id="wsLocBg">' +
-        BGS.map(b => '<option value="' + b + '" ' + (wsFormData.bg===b?'selected':'') + '>' + b + '</option>').join('') +
-      '</select></div>' +
+      '<div class="ws-field"><label>背 景</label><select class="inp" id="wsLocBg">' + BGS.map(b => '<option value="' + b + '" ' + (wsFormData.bg===b?'selected':'') + '>' + b + '</option>').join('') + '</select></div>' +
       '<div class="ws-field"><label>描 述</label><textarea class="inp" id="wsLocDesc" style="min-height:80px;">' + esc(wsFormData.desc) + '</textarea></div>' +
       '<div class="ws-field">' +
         '<label>可 交 互 入 口 <b>（可留空）</b></label>' +
@@ -424,7 +390,6 @@
         '<button class="ws-add-line" id="wsLocAddEntry" style="margin-top:10px;">＋ 添 加 一 个 入 口</button>' +
       '</div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">' + (wsEditKey?'覆盖保存':'保存地点') + '</button></div>';
-
     const entriesBox = box.querySelector('#wsLocEntries');
     wsFormData.entries.forEach((e, i) => appendLocEntry(entriesBox, e, i, box, main));
     box.querySelector('#wsLocName').oninput = (e) => wsFormData.name = e.target.value;
@@ -443,14 +408,11 @@
     let idSelector = '';
     if (type === 'scene') {
       const sceneIds = Object.keys(NF.SCENES).filter(k => !k.startsWith('__'));
-      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;"><option value="">（选择场景）</option>' +
-        sceneIds.map(k => '<option value="' + k + '" ' + (entry.id===k?'selected':'') + '>' + k + '</option>').join('') + '</select>';
+      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;"><option value="">（选择场景）</option>' + sceneIds.map(k => '<option value="' + k + '" ' + (entry.id===k?'selected':'') + '>' + k + '</option>').join('') + '</select>';
     } else if (type === 'character') {
-      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' +
-        CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') + '</select>';
+      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') + '</select>';
     } else if (type === 'minigame') {
-      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' +
-        MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') + '</select>';
+      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') + '</select>';
     }
     card.innerHTML =
       '<div class="ws-line-head"><span class="ws-line-num">入口 ' + (i+1) + '</span>' +
@@ -507,13 +469,11 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─────────────── 乙游话题表单 ─────────────── */
+  /* ─── 乙游话题表单 ─── */
   function renderBondForm(box, main) {
     if (!wsFormData) wsFormData = blankBond();
     box.innerHTML =
-      '<div class="ws-field"><label>角 色</label><select class="inp" id="wsBondChar">' +
-        CHAR_IDS.map(id => '<option value="' + id + '" ' + (wsFormData.charId===id?'selected':'') + '>' + NF.CHARS[id].name + '</option>').join('') +
-      '</select></div>' +
+      '<div class="ws-field"><label>角 色</label><select class="inp" id="wsBondChar">' + CHAR_IDS.map(id => '<option value="' + id + '" ' + (wsFormData.charId===id?'selected':'') + '>' + NF.CHARS[id].name + '</option>').join('') + '</select></div>' +
       '<div class="ws-field"><label>类 型</label><select class="inp" id="wsBondMode">' +
         '<option value="chat" ' + (wsFormData.mode==='chat'?'selected':'') + '>闲聊</option>' +
         '<option value="deep" ' + (wsFormData.mode==='deep'?'selected':'') + '>深谈</option>' +
@@ -522,7 +482,6 @@
       '<div class="ws-field"><label>好 感 门 槛（0-100）</label><input class="inp" id="wsBondNeed" type="number" min="0" max="100" value="' + wsFormData.need + '"></div>' +
       '<div class="ws-field"><label>对 话</label><div class="ws-lines" id="wsBondLines"></div><button class="ws-add-line" id="wsBondAddLine">＋ 添加一行</button></div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">保存</button></div>';
-
     const linesBox = box.querySelector('#wsBondLines');
     wsFormData.lines.forEach((l, i) => appendBondLine(linesBox, l, i, box, main));
     box.querySelector('#wsBondChar').onchange = (e) => wsFormData.charId = e.target.value;
@@ -562,11 +521,9 @@
     if (!lines.length) { NF.toast('至少一行对话','warn'); return; }
     const key = wsEditKey || ('bond_' + Date.now());
     const data = {
-      key,
-      charId: box.querySelector('#wsBondChar').value,
+      key, charId: box.querySelector('#wsBondChar').value,
       mode: box.querySelector('#wsBondMode').value,
-      title,
-      need: parseInt(box.querySelector('#wsBondNeed').value) || 0,
+      title, need: parseInt(box.querySelector('#wsBondNeed').value) || 0,
       lines, ts: Date.now()
     };
     const list = NF.userContent().bondTopics;
@@ -583,7 +540,7 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─────────────── 礼物表单 ─────────────── */
+  /* ─── 礼物表单 ─── */
   function renderGiftForm(box, main) {
     if (!wsFormData) wsFormData = blankGift();
     box.innerHTML =
@@ -591,12 +548,9 @@
       '<div class="ws-field"><label>图 标（单字符）</label><input class="inp" id="wsGiftIcon" value="' + esc(wsFormData.icon) + '" maxlength="2"></div>' +
       '<div class="ws-field"><label>银 镑 价 格</label><input class="inp" id="wsGiftCost" type="number" value="' + wsFormData.cost + '"></div>' +
       '<div class="ws-field"><label>好 感 加 成</label><input class="inp" id="wsGiftAff" type="number" value="' + wsFormData.aff + '"></div>' +
-      '<div class="ws-field"><label>喜 欢 的 角 色（多选）</label><div style="display:flex;flex-wrap:wrap;gap:10px;" id="wsGiftLikes">' +
-        CHAR_IDS.map(id => '<label style="font-size:11.5px;color:var(--text);letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" data-char="' + id + '" ' + (wsFormData.likes.includes(id)?'checked':'') + '>' + NF.CHARS[id].name + '</label>').join('') +
-      '</div></div>' +
+      '<div class="ws-field"><label>喜 欢 的 角 色（多选）</label><div style="display:flex;flex-wrap:wrap;gap:10px;" id="wsGiftLikes">' + CHAR_IDS.map(id => '<label style="font-size:11.5px;color:var(--text);letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;gap:4px;"><input type="checkbox" data-char="' + id + '" ' + (wsFormData.likes.includes(id)?'checked':'') + '>' + NF.CHARS[id].name + '</label>').join('') + '</div></div>' +
       '<div class="ws-field"><label>描 述</label><input class="inp" id="wsGiftDesc" value="' + esc(wsFormData.desc) + '"></div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">保存</button></div>';
-
     box.querySelector('#wsGiftName').oninput = (e) => wsFormData.name = e.target.value;
     box.querySelector('#wsGiftIcon').oninput = (e) => wsFormData.icon = e.target.value;
     box.querySelector('#wsGiftCost').oninput = (e) => wsFormData.cost = parseInt(e.target.value) || 0;
@@ -638,19 +592,16 @@
     renderList(document.querySelector('#wsMain'));
   }
 
-  /* ─────────────── CG 表单 ─────────────── */
+  /* ─── CG 表单 ─── */
   function renderCGForm(box, main) {
     if (!wsFormData) wsFormData = blankCG();
     box.innerHTML =
-      '<div class="ws-field"><label>角 色</label><select class="inp" id="wsCgChar">' +
-        CHAR_IDS.map(id => '<option value="' + id + '" ' + (wsFormData.charId===id?'selected':'') + '>' + NF.CHARS[id].name + '</option>').join('') +
-      '</select></div>' +
+      '<div class="ws-field"><label>角 色</label><select class="inp" id="wsCgChar">' + CHAR_IDS.map(id => '<option value="' + id + '" ' + (wsFormData.charId===id?'selected':'') + '>' + NF.CHARS[id].name + '</option>').join('') + '</select></div>' +
       '<div class="ws-field"><label>标 题 <b>（必填）</b></label><input class="inp" id="wsCgTitle" value="' + esc(wsFormData.title) + '"></div>' +
       '<div class="ws-field"><label>副 标 题</label><input class="inp" id="wsCgSub" value="' + esc(wsFormData.subtitle) + '"></div>' +
       '<div class="ws-field"><label>好 感 门 槛</label><input class="inp" id="wsCgNeed" type="number" value="' + wsFormData.need + '"></div>' +
       '<div class="ws-field"><label>对 话</label><div class="ws-lines" id="wsCgLines"></div><button class="ws-add-line" id="wsCgAddLine">＋ 添加一行</button></div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">保存</button></div>';
-
     const linesBox = box.querySelector('#wsCgLines');
     wsFormData.lines.forEach((l, i) => appendCGLine(linesBox, l, i, box, main));
     box.querySelector('#wsCgChar').onchange = (e) => wsFormData.charId = e.target.value;
@@ -687,10 +638,8 @@
     if (!lines.length) { NF.toast('至少一行','warn'); return; }
     const key = wsEditKey || ('cg_' + Date.now());
     const data = {
-      key,
-      charId: box.querySelector('#wsCgChar').value,
-      title,
-      subtitle: box.querySelector('#wsCgSub').value.trim(),
+      key, charId: box.querySelector('#wsCgChar').value,
+      title, subtitle: box.querySelector('#wsCgSub').value.trim(),
       need: parseInt(box.querySelector('#wsCgNeed').value) || 0,
       lines, ts: Date.now()
     };
@@ -707,12 +656,9 @@
     if (NF.renderBondGrid) NF.renderBondGrid();
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     已导入列表
-     ═══════════════════════════════════════════════════════════ */
+  /* ─── 列表 ─── */
   function renderList(main) {
-    const box = main.querySelector('#wsList');
-    if (!box) return;
+    const box = main.querySelector('#wsList'); if (!box) return;
     const u = NF.userContent();
     const all = [
       ...(u.chapters || []).map(c => ({ ...c, _type:'chapter', _kind:c.type || 'main' })),
@@ -722,19 +668,17 @@
       ...(u.cgs || []).map(c => ({ ...c, _type:'cg' }))
     ].sort((a, b) => (b.ts||0) - (a.ts||0));
 
-    if (!all.length) {
-      box.innerHTML = '<div class="empty">还没有任何导入内容。<br>选一个类型开始写吧。</div>';
-      return;
-    }
+    if (!all.length) { box.innerHTML = '<div class="empty">还没有任何导入内容。<br>选一个类型开始写吧。</div>'; return; }
 
     let html = '<div class="ws-pack-list">';
     all.forEach(item => {
       const t = new Date(item.ts || Date.now());
       const time = t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-      const typeLabel = {
-        chapter: item._kind === 'dungeon' ? '副本' : (item._kind === 'side' ? '支线' : '章节'),
-        location: '地点', bond: '乙游话题', gift: '礼物', cg: 'CG'
-      }[item._type] || item._type;
+      let typeLabel = { chapter:'章节', dungeon:'副本', location:'地点', bond:'乙游话题', gift:'礼物', cg:'CG' }[item._type] || item._type;
+      if (item._type === 'chapter') {
+        const n = item.chapterNum;
+        if (n !== null && n !== undefined) typeLabel = (n === 0 ? '序章' : '第 ' + n + ' 章');
+      }
       const name = item.title || item.name || item.key;
       html += '<div class="ws-pack" data-key="' + esc(item.key) + '" data-type="' + item._type + '" data-kind="' + (item._kind||'') + '">' +
         '<div class="ws-pack-head"><div class="ws-pack-title">' + esc(name) + '</div><div style="font-size:11px;color:var(--gold-d);">' + typeLabel + '</div></div>' +
@@ -746,13 +690,10 @@
     box.innerHTML = html;
 
     box.querySelectorAll('.ws-pack').forEach(el => {
-      const key = el.dataset.key;
-      const type = el.dataset.type;
-      const kind = el.dataset.kind;
+      const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind;
       el.querySelector('[data-a="edit"]').onclick = () => {
         NF.Sfx.click();
-        wsEditKey = key;
-        wsEditKind = kind || null;
+        wsEditKey = key; wsEditKind = kind || null;
         wsType = type === 'chapter' ? (kind === 'dungeon' ? 'dungeon' : 'chapter') : type;
         const u = NF.userContent();
         if (type === 'chapter') wsFormData = JSON.parse(JSON.stringify(u.chapters.find(x => x.key === key) || blankChapter(kind)));
@@ -772,6 +713,7 @@
         else if (type === 'gift') u.gifts = u.gifts.filter(x => x.key !== key);
         else if (type === 'cg') u.cgs = u.cgs.filter(x => x.key !== key);
         NF.saveUser();
+        delete NF.SCENES['user_scene_' + key];
         NF.toast('◈ 已删除','ok');
         render();
         if (NF.renderMap) NF.renderMap();
