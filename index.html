@@ -11,9 +11,7 @@
 <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" onerror="window.__gsapFailed=true"></script>
 
 <style>
-/* ═══════════════════════════════════════════════════════════
-   §1 基础变量
-   ═══════════════════════════════════════════════════════════ */
+/* §1 基础变量 */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
   --f-deco:"Cinzel Decorative","Noto Serif SC",serif;
@@ -30,7 +28,6 @@
   --safe-t:env(safe-area-inset-top,0px);
   --nav-h:62px;
   --ease:cubic-bezier(.16,1,.3,1);
-  --ease-soft:cubic-bezier(.32,.72,.28,1);
   --ease-bounce:cubic-bezier(.34,1.56,.64,1);
 }
 [data-theme="day"]{
@@ -50,16 +47,12 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   radial-gradient(ellipse at 50% 50%,rgba(255,250,235,.6),transparent 80%);}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.008) 2px,rgba(255,255,255,.008) 3px);}
-.symbol-font{font-family:var(--f-sym);}
 
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
 .screen{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;opacity:0;}
 .screen.active{display:flex;opacity:1;}
 
-/* ═══════════════════════════════════════════════════════════
-   §2 通用组件（含所有装饰）
-   ═══════════════════════════════════════════════════════════ */
-/* —— 卡片：❖ 双角 + 内框 —— */
+/* §2 通用组件 */
 .frame{position:relative;border:1px solid var(--line);background:linear-gradient(165deg,var(--panel2),var(--panel));}
 .frame::before,.frame::after{content:'❖';position:absolute;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;line-height:1;pointer-events:none;transition:all .4s var(--ease);}
 .frame::before{top:-7px;left:-7px;}
@@ -67,16 +60,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .frame:hover::before{transform:rotate(90deg) scale(1.15);opacity:1;}
 .frame:hover::after{transform:rotate(-90deg) scale(1.15);opacity:1;}
 
-/* —— 内框装饰（用于头像/图标/缩略图）—— */
-.inner-frame{position:relative;}
-.inner-frame::before{content:'';position:absolute;inset:3px;border:1px solid var(--line);pointer-events:none;}
-
-/* —— 分隔线：— ◈ — —— */
 .divider{display:flex;align-items:center;gap:10px;color:var(--gold-d);font-size:11px;letter-spacing:.3em;margin:16px 0;font-family:var(--f-sym);}
 .divider::before,.divider::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
-.divider > span{font-family:var(--f-sym);}
 
-/* —— 按钮 —— */
 .btn{background:transparent;border:1px solid var(--line-s);color:var(--text);
   font-family:var(--f-cn);font-size:calc(13px * var(--font-scale));letter-spacing:.18em;
   padding:13px 20px;cursor:pointer;transition:all .3s var(--ease);position:relative;overflow:hidden;}
@@ -94,7 +80,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .mini-btn.danger{border-color:rgba(160,60,80,.5);color:#c07a92;}
 .mini-btn.danger:hover{background:rgba(160,60,80,.15);border-color:#d08a9c;color:#ffb0c4;}
 
-/* —— 输入框 —— */
 .inp{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line-s);color:var(--gold-b);
   font-family:var(--f-cn);font-size:14px;padding:11px 14px;letter-spacing:.06em;outline:none;transition:all .28s var(--ease);}
 [data-theme="day"] .inp{background:rgba(255,255,255,.6);}
@@ -102,9 +87,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 .inp::placeholder{color:var(--text-d);font-size:12.5px;}
 select.inp{cursor:pointer;}
 
-/* ═══════════════════════════════════════════════════════════
-   §3 标题页
-   ═══════════════════════════════════════════════════════════ */
+/* §3 标题页 */
 #screen-title{align-items:center;justify-content:center;padding:24px;}
 .title-card{position:relative;max-width:560px;width:100%;padding:52px 34px 42px;text-align:center;
   border:1px solid var(--line-s);background:linear-gradient(165deg,rgba(28,20,40,.85),rgba(12,8,18,.95));
@@ -128,9 +111,7 @@ select.inp{cursor:pointer;}
 .title-foot::before{content:'— ';color:var(--gold-d);}
 .title-foot::after{content:' —';color:var(--gold-d);}
 
-/* ═══════════════════════════════════════════════════════════
-   §4 顶栏（含返回键 + 完整按钮）
-   ═══════════════════════════════════════════════════════════ */
+/* §4 顶栏 */
 .topbar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:6px;
   padding:calc(var(--safe-t) + 10px) 12px 10px;height:calc(52px + var(--safe-t));
   background:linear-gradient(180deg,var(--panel2),var(--panel));
@@ -146,11 +127,8 @@ select.inp{cursor:pointer;}
 .tb-right{display:flex;gap:4px;flex-shrink:0;}
 .tb-btn{background:none;border:1px solid var(--line-s);color:var(--gold);font-family:var(--f-cn);font-size:10.5px;letter-spacing:.06em;padding:5px 8px;cursor:pointer;transition:all .28s var(--ease);}
 .tb-btn:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.1);}
-.tb-btn.back{font-family:var(--f-sym);font-size:14px;padding:4px 8px;}
 
-/* ═══════════════════════════════════════════════════════════
-   §5 剧情主界面
-   ═══════════════════════════════════════════════════════════ */
+/* §5 剧情主界面 */
 #screen-game{display:none;flex-direction:column;}
 #screen-game.active{display:flex;}
 .stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;padding-bottom:var(--nav-h);}
@@ -189,7 +167,6 @@ select.inp{cursor:pointer;}
   background:linear-gradient(180deg,rgba(25,17,36,.75),rgba(15,10,22,.25));
   border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;position:relative;z-index:2;
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-[data-theme="day"] .loc-bar{background:linear-gradient(180deg,rgba(255,250,240,.85),rgba(240,230,210,.4));}
 .loc-bar::before{content:'◈';font-family:var(--f-sym);font-size:9px;}
 
 .dialog-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:26px 22px 18px;position:relative;z-index:2;scroll-behavior:smooth;}
@@ -204,7 +181,6 @@ select.inp{cursor:pointer;}
 @keyframes lineIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
 .line .speaker{font-family:var(--f-deco);font-size:11px;letter-spacing:.2em;color:var(--gold-b);
   margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-/* ★ B 恢复：菱形旋转标记 */
 .line .speaker::before{content:'';width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;
   box-shadow:0 0 8px rgba(201,169,97,.75);}
 .line .en{font-family:var(--f-en);font-style:italic;font-weight:600;
@@ -231,16 +207,13 @@ select.inp{cursor:pointer;}
 .choice-btn:hover::after{transform:scaleY(1);}
 .choice-idx{color:var(--gold);font-size:13px;flex-shrink:0;margin-top:1px;font-family:var(--f-sym);}
 
-/* 剧情工具条（含改名/导出/标题） */
 .story-tools{flex:0 0 auto;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel);display:flex;gap:4px;position:relative;z-index:3;overflow-x:auto;}
 .story-tools::-webkit-scrollbar{display:none;}
 .story-tools button{flex:1;min-width:52px;padding:8px 4px;font-family:var(--f-cn);font-size:10px;letter-spacing:.06em;background:transparent;border:1px solid var(--line-s);color:var(--text-d);cursor:pointer;transition:all .28s var(--ease);white-space:nowrap;}
 .story-tools button:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.08);}
 .story-tools button.active{background:rgba(201,169,97,.18);color:var(--gold-b);border-color:var(--gold);}
 
-/* ═══════════════════════════════════════════════════════════
-   §6 底部导航
-   ═══════════════════════════════════════════════════════════ */
+/* §6 底部导航 */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:90;display:flex;align-items:center;justify-content:space-around;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:linear-gradient(0deg,var(--panel),var(--panel2));border-top:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
 .bottom-nav::before{content:'';position:absolute;top:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--line-s),transparent);}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--text-d);font-family:var(--f-cn);cursor:pointer;padding:8px 4px;transition:all .28s var(--ease);position:relative;}
@@ -251,9 +224,7 @@ select.inp{cursor:pointer;}
 .nav-btn.active .nav-ico{transform:translateY(-2px);text-shadow:0 0 14px rgba(201,169,97,.75);}
 .nav-btn.active::after{content:'';position:absolute;bottom:calc(var(--safe-b) + 3px);left:50%;transform:translateX(-50%);width:18px;height:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,169,97,.8);}
 
-/* ═══════════════════════════════════════════════════════════
-   §7 地图
-   ═══════════════════════════════════════════════════════════ */
+/* §7 地图 */
 #screen-map{display:none;flex-direction:column;}
 #screen-map.active{display:flex;}
 .map-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
@@ -262,7 +233,6 @@ select.inp{cursor:pointer;}
 .map-region-head::before{content:'◆';color:var(--gold);font-size:10px;font-family:var(--f-sym);}
 .map-region-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--line-s),transparent);}
 .map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-/* ★ A 恢复：地图卡套 ❖ 双角 */
 .map-card{position:relative;padding:20px 16px;cursor:pointer;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));transition:all .35s var(--ease);overflow:hidden;}
 .map-card::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
 .map-card::after{content:'❖';position:absolute;bottom:-6px;right:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
@@ -275,11 +245,8 @@ select.inp{cursor:pointer;}
 .map-card-name{font-family:var(--f-deco);font-size:13px;letter-spacing:.12em;color:var(--gold-b);margin-bottom:6px;}
 .map-card-desc{font-size:11px;color:var(--text-d);line-height:1.7;}
 .map-card-tag{display:inline-block;margin-top:10px;font-size:9.5px;letter-spacing:.18em;color:var(--gold-d);border:1px solid var(--line);padding:3px 8px;}
-.map-card-tag.hot{border-color:rgba(160,60,80,.6);color:#d08a9c;}
 
-/* ═══════════════════════════════════════════════════════════
-   §8 地点进入页
-   ═══════════════════════════════════════════════════════════ */
+/* §8 地点 */
 #screen-location{display:none;flex-direction:column;}
 #screen-location.active{display:flex;}
 .loc-stage{flex:1;overflow-y:auto;position:relative;padding-bottom:calc(var(--nav-h) + var(--safe-b));}
@@ -296,14 +263,11 @@ select.inp{cursor:pointer;}
 .loc-entry-name{font-family:var(--f-deco);font-size:14px;letter-spacing:.1em;color:var(--gold-b);margin-bottom:4px;}
 .loc-entry-desc{font-size:11.5px;color:var(--text-d);line-height:1.6;}
 
-/* ═══════════════════════════════════════════════════════════
-   §9 乙游（关系）
-   ═══════════════════════════════════════════════════════════ */
+/* §9 乙游 */
 #screen-bond{display:none;flex-direction:column;}
 #screen-bond.active{display:flex;}
 .bond-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
 .bond-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:720px;margin:0 auto;}
-/* ★ A 恢复：角色卡套 ❖ 双角 + 内框 */
 .bond-card{position:relative;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));padding:20px 16px;cursor:pointer;transition:all .35s var(--ease);overflow:hidden;}
 .bond-card::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
 .bond-card::after{content:'❖';position:absolute;bottom:-6px;right:-6px;font-family:var(--f-sym);font-size:12px;color:var(--gold);opacity:.85;transition:all .4s var(--ease);}
@@ -320,7 +284,6 @@ select.inp{cursor:pointer;}
 .bond-card-bar{height:5px;background:rgba(201,169,97,.15);overflow:hidden;border:1px solid var(--line);}
 .bond-card-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s var(--ease);}
 
-/* 角色弹窗 */
 .char-hero{text-align:center;padding:20px 0 20px;border-bottom:1px solid var(--line);margin-bottom:16px;}
 .char-hero-av{width:84px;height:84px;border-radius:50%;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--gold);margin:0 auto 14px;background:radial-gradient(circle,rgba(201,169,97,.18),transparent);box-shadow:0 0 28px rgba(201,169,97,.4);position:relative;font-family:var(--f-sym);}
 .char-hero-av::before{content:'';position:absolute;inset:5px;border-radius:50%;border:1px solid var(--line-s);}
@@ -335,7 +298,6 @@ select.inp{cursor:pointer;}
 .char-desc{font-size:12.5px;line-height:1.95;color:var(--text);padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:14px 0;}
 .char-actions{display:flex;flex-direction:column;gap:10px;}
 
-/* 礼物面板 */
 .gift-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);padding:12px 14px;background:rgba(201,169,97,.02);margin-bottom:10px;cursor:pointer;transition:all .3s var(--ease);}
 .gift-item:hover{border-color:var(--gold);background:rgba(201,169,97,.08);transform:translateX(3px);}
 .gift-ico{width:44px;height:44px;flex-shrink:0;border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gold);background:rgba(201,169,97,.05);position:relative;font-family:var(--f-sym);}
@@ -345,16 +307,13 @@ select.inp{cursor:pointer;}
 .gift-meta{font-size:10.5px;color:var(--text-d);letter-spacing:.04em;}
 .gift-like{font-size:10px;color:#d0a0b0;letter-spacing:.06em;}
 
-/* CG 卡 */
 .cg-card{border:1px solid var(--gold);background:linear-gradient(160deg,var(--panel2),var(--panel));padding:20px;margin-bottom:12px;text-align:center;cursor:pointer;transition:all .35s var(--ease);position:relative;}
 .cg-card::before{content:'✦';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.9;}
 .cg-card:hover{box-shadow:0 0 28px rgba(201,169,97,.3);transform:translateY(-2px);}
 .cg-card-title{font-family:var(--f-deco);font-size:15px;letter-spacing:.16em;color:var(--gold-b);margin-bottom:8px;}
 .cg-card-sub{font-size:11px;color:var(--gold-d);letter-spacing:.1em;}
 
-/* ═══════════════════════════════════════════════════════════
-   §10 目录
-   ═══════════════════════════════════════════════════════════ */
+/* §10 目录 */
 #screen-toc{display:none;flex-direction:column;}
 #screen-toc.active{display:flex;}
 .toc-main{flex:1;overflow-y:auto;padding:20px 16px calc(var(--nav-h) + var(--safe-b) + 20px);}
@@ -378,9 +337,7 @@ select.inp{cursor:pointer;}
 .toc-item-state.done{border-color:rgba(120,180,120,.6);color:#9dd0a0;}
 .toc-item-state.now{border-color:var(--gold);color:var(--gold-b);background:rgba(201,169,97,.15);}
 
-/* ═══════════════════════════════════════════════════════════
-   §11 记录
-   ═══════════════════════════════════════════════════════════ */
+/* §11 记录 */
 #screen-log{display:none;flex-direction:column;}
 #screen-log.active{display:flex;}
 .log-main{flex:1;overflow:hidden;display:flex;flex-direction:column;padding-bottom:calc(var(--nav-h) + var(--safe-b));}
@@ -408,9 +365,7 @@ select.inp{cursor:pointer;}
 .log-entry.narr .le-cn{color:var(--text-d);font-style:italic;}
 .log-entry.choice .le-cn{color:var(--gold);padding-left:10px;border-left:2px solid var(--line-s);}
 
-/* ═══════════════════════════════════════════════════════════
-   §12 设置
-   ═══════════════════════════════════════════════════════════ */
+/* §12 设置 */
 #screen-settings{display:none;flex-direction:column;}
 #screen-settings.active{display:flex;}
 .set-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 18px);}
@@ -438,9 +393,7 @@ select.inp{cursor:pointer;}
 .slider{width:120px;-webkit-appearance:none;appearance:none;height:3px;background:rgba(201,169,97,.2);outline:none;}
 .slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(201,169,97,.7);}
 
-/* ═══════════════════════════════════════════════════════════
-   §13 工坊
-   ═══════════════════════════════════════════════════════════ */
+/* §13 工坊 */
 #screen-workshop{display:none;flex-direction:column;}
 #screen-workshop.active{display:flex;}
 .ws-main{flex:1;overflow-y:auto;padding:18px 16px calc(var(--nav-h) + var(--safe-b) + 18px);max-width:820px;margin:0 auto;width:100%;}
@@ -472,7 +425,6 @@ select.inp{cursor:pointer;}
 .ws-preview-line .pp-en{font-family:var(--f-en);font-style:italic;font-size:14px;color:var(--gold-b);line-height:1.6;margin-bottom:4px;}
 .ws-preview-line .pp-cn{font-size:13px;line-height:1.85;color:var(--text);padding-left:10px;border-left:2px solid var(--line);}
 .ws-preview-line.narr .pp-cn{color:var(--text-d);font-style:italic;}
-/* ★ A 恢复：工坊卡套 ❖ 双角 */
 .ws-pack-list{display:flex;flex-direction:column;gap:10px;}
 .ws-pack{border:1px solid var(--line);background:rgba(201,169,97,.02);padding:14px 16px;position:relative;}
 .ws-pack::before{content:'❖';position:absolute;top:-6px;left:-6px;font-family:var(--f-sym);font-size:11px;color:var(--gold);opacity:.85;}
@@ -484,9 +436,7 @@ select.inp{cursor:pointer;}
 .ws-intro{font-size:12.5px;line-height:1.95;color:var(--text-d);margin-bottom:20px;padding:14px 16px;background:rgba(201,169,97,.04);border-left:2px solid rgba(201,169,97,.35);}
 .ws-intro b{color:var(--gold-b);font-weight:400;}
 
-/* ═══════════════════════════════════════════════════════════
-   §14 弹窗
-   ═══════════════════════════════════════════════════════════ */
+/* §14 弹窗 */
 .modal-layer{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(4,2,7,.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 [data-theme="day"] .modal-layer{background:rgba(60,50,30,.55);}
 .modal-layer.open{display:flex;animation:fadeIn .3s var(--ease);}
@@ -506,22 +456,17 @@ select.inp{cursor:pointer;}
 .modal-body::-webkit-scrollbar-thumb{background:var(--line-s);}
 .modal-foot{flex:0 0 auto;padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
 
-/* ═══════════════════════════════════════════════════════════
-   §15 Toast
-   ═══════════════════════════════════════════════════════════ */
+/* §15 Toast */
 .toast-layer{position:fixed;top:calc(var(--safe-t) + 64px);left:50%;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:92%;max-width:440px;}
 .toast{background:linear-gradient(90deg,rgba(28,20,40,.96),rgba(20,14,30,.96));border:1px solid var(--line-s);color:var(--gold-b);font-size:12px;letter-spacing:.1em;padding:12px 20px;box-shadow:0 0 26px rgba(0,0,0,.7);animation:toastIn .4s var(--ease);text-align:center;line-height:1.7;max-width:100%;}
 [data-theme="day"] .toast{background:linear-gradient(90deg,rgba(255,250,240,.98),rgba(245,235,215,.98));}
 .toast.ok{border-color:rgba(120,180,120,.6);color:#4a8a50;}
-[data-theme="day"] .toast.ok{color:#2e5a30;}
 .toast.warn{border-color:rgba(160,60,80,.7);color:#d08a9c;}
 @keyframes toastIn{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
 .toast.out{animation:toastOut .35s var(--ease) forwards;}
 @keyframes toastOut{to{opacity:0;transform:translateY(-10px);}}
 
-/* ═══════════════════════════════════════════════════════════
-   §16 小游戏样式（供 minigames.js 使用）
-   ═══════════════════════════════════════════════════════════ */
+/* §16 小游戏 */
 .mini-title{text-align:center;font-family:var(--f-deco);font-size:15px;letter-spacing:.2em;color:var(--gold-b);margin-bottom:8px;}
 .mini-sub{text-align:center;font-size:11px;color:var(--text-d);letter-spacing:.1em;margin-bottom:18px;line-height:1.7;}
 .mini-hud{display:flex;justify-content:space-between;gap:10px;margin-bottom:16px;padding:10px 14px;border:1px solid var(--line);background:rgba(201,169,97,.04);}
@@ -568,9 +513,7 @@ select.inp{cursor:pointer;}
 .battle-fill.san{background:linear-gradient(90deg,#4a2b5e,#a78bd0);}
 .battle-fill.hp{background:linear-gradient(90deg,#7a2f2f,#c07a92);}
 
-/* ═══════════════════════════════════════════════════════════
-   §17 结局卡片 + 空状态
-   ═══════════════════════════════════════════════════════════ */
+/* §17 结局卡片 */
 .ending-card{text-align:center;padding:16px 6px;}
 .ending-card .e-icon{font-size:34px;color:var(--gold);margin-bottom:18px;display:block;animation:pulse 2.4s infinite;font-family:var(--f-sym);}
 @keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
@@ -592,7 +535,6 @@ select.inp{cursor:pointer;}
 <body>
 <div id="app">
 
-<!-- ═══ 标题页 ═══ -->
 <section class="screen active" id="screen-title">
   <div class="title-card frame">
     <span class="corner tl">❖</span><span class="corner tr">❖</span>
@@ -617,7 +559,6 @@ select.inp{cursor:pointer;}
   </div>
 </section>
 
-<!-- ═══ 游戏主界面 ═══ -->
 <section class="screen" id="screen-game">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">入魇</div></div>
@@ -647,7 +588,6 @@ select.inp{cursor:pointer;}
   </div>
 </section>
 
-<!-- ═══ 地图 ═══ -->
 <section class="screen" id="screen-map">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">地图</div></div>
@@ -657,7 +597,6 @@ select.inp{cursor:pointer;}
   <main class="map-main" id="mapMain"></main>
 </section>
 
-<!-- ═══ 地点进入页 ═══ -->
 <section class="screen" id="screen-location">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">地点</div></div>
@@ -674,7 +613,6 @@ select.inp{cursor:pointer;}
   </main>
 </section>
 
-<!-- ═══ 乙游 ═══ -->
 <section class="screen" id="screen-bond">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">关系</div></div>
@@ -684,7 +622,6 @@ select.inp{cursor:pointer;}
   <main class="bond-main"><div class="bond-grid" id="bondGrid"></div></main>
 </section>
 
-<!-- ═══ 目录 ═══ -->
 <section class="screen" id="screen-toc">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">目录</div></div>
@@ -697,7 +634,6 @@ select.inp{cursor:pointer;}
   </main>
 </section>
 
-<!-- ═══ 记录 ═══ -->
 <section class="screen" id="screen-log">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">记录</div></div>
@@ -710,7 +646,6 @@ select.inp{cursor:pointer;}
   </main>
 </section>
 
-<!-- ═══ 设置 ═══ -->
 <section class="screen" id="screen-settings">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">设置</div></div>
@@ -720,7 +655,6 @@ select.inp{cursor:pointer;}
   <main class="set-main" id="setMain"></main>
 </section>
 
-<!-- ═══ 工坊 ═══ -->
 <section class="screen" id="screen-workshop">
   <div class="topbar">
     <div class="tb-left"><div class="tb-mark"></div><div class="tb-title">工坊</div></div>
@@ -730,7 +664,6 @@ select.inp{cursor:pointer;}
   <main class="ws-main" id="wsMain"></main>
 </section>
 
-<!-- ═══ 底部导航 ═══ -->
 <nav class="bottom-nav" id="bottomNav" style="display:none;">
   <button class="nav-btn active" data-nav="game"><span class="nav-ico">◇</span><span class="nav-lbl">剧情</span></button>
   <button class="nav-btn" data-nav="map"><span class="nav-ico">◈</span><span class="nav-lbl">地图</span></button>
@@ -747,9 +680,7 @@ select.inp{cursor:pointer;}
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════
-   §A 错误捕获 + 工具
-   ═══════════════════════════════════════════════════════════ */
+/* §A 错误捕获 + 工具 */
 window.addEventListener('error', function(ev){
   try {
     var layer = document.getElementById('toastLayer');
@@ -769,9 +700,7 @@ const HAS_GSAP = () => !!(window.gsap && !window.__gsapFailed);
 function animIn(el, from, to){ if (!el) return; if (HAS_GSAP() && settings.animations) { try{gsap.fromTo(el,from,to);}catch(e){el.style.opacity=1;} } else { el.style.opacity=1; el.style.transform='none'; } }
 function animOut(el, to, cb){ if (!el){cb&&cb();return;} if (HAS_GSAP() && settings.animations) { try{gsap.to(el,Object.assign({},to,{onComplete:cb}));}catch(e){el.style.opacity=0;cb&&cb();} } else { el.style.opacity=0; cb&&cb(); } }
 
-/* ═══════════════════════════════════════════════════════════
-   §B ★ 完整符号库（242 个）
-   ═══════════════════════════════════════════════════════════ */
+/* §B 符号库 */
 window.SYMBOLS = {
   chess:   ['♔','♕','♖','♗','♘','♙','♚','♛','♜','♝','♞','♟'],
   music:   ['♬','♪','♩','♫','♭','♯','𝄞','𝄢','🎼'],
@@ -784,9 +713,7 @@ window.SYMBOLS = {
   ornaments:['✢','✣','✤','✥','✱','✲','✵','✶','✷','✸','✹','✺','✻','✼','✽','✾','✿','❀','❁','❃','❅','❆','❈']
 };
 
-/* ═══════════════════════════════════════════════════════════
-   §C 角色数据（Cash 拼写已修正）
-   ═══════════════════════════════════════════════════════════ */
+/* §C 角色 */
 const CHARS = {
   narrator: { name:'', en:'', sym:'✦' },
   me:       { name:'我', en:'Me', sym:'◇' },
@@ -824,9 +751,7 @@ const LEVELS = [
 ];
 function getLevel(v){ for (const l of LEVELS) if (v>=l.min && v<=l.max) return l; return LEVELS[LEVELS.length-1]; }
 
-/* ═══════════════════════════════════════════════════════════
-   §D 存储键 + 设置
-   ═══════════════════════════════════════════════════════════ */
+/* §D 存储键 + 设置 */
 const K_SAVE    = 'nightfalling_v4_save';
 const K_GLOBAL  = 'nightfalling_v4_global';
 const K_SETTINGS= 'nightfalling_v4_settings';
@@ -839,7 +764,6 @@ const defaultSettings = {
   skipRead:false, confirmChoice:true
 };
 let settings = Object.assign({}, defaultSettings);
-
 function loadSettings(){ try { const raw = localStorage.getItem(K_SETTINGS); if (raw) settings = Object.assign({}, defaultSettings, JSON.parse(raw)); } catch(e){} applySettings(); }
 function saveSettings(){ try { localStorage.setItem(K_SETTINGS, JSON.stringify(settings)); } catch(e){} }
 function applySettings(){
@@ -852,9 +776,7 @@ function applySettings(){
   } catch(e){}
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §E ★ 音效（8 种，hit 恢复双层：square + noise）
-   ═══════════════════════════════════════════════════════════ */
+/* §E 音效 */
 const Sfx = {
   ctx:null,
   init(){ if (this.ctx) return; try { this.ctx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} },
@@ -894,7 +816,6 @@ const Sfx = {
   success(){ this.tone(523, 0.12, 'sine', 0.15); setTimeout(()=>this.tone(659,0.12,'sine',0.15),80); setTimeout(()=>this.tone(784,0.22,'sine',0.15),160); },
   fail(){ this.tone(220, 0.18, 'sawtooth', 0.12, 110); setTimeout(()=>this.tone(160,0.28,'sawtooth',0.1,80),120); },
   dice(){ for (let i=0;i<5;i++) setTimeout(()=>this.noise(0.05,0.06), i*55); },
-  /* ★ D 恢复：双层 */
   hit(){ this.tone(90, 0.16, 'square', 0.14, 50); this.noise(0.08, 0.1); },
   unlock(){ this.tone(880, 0.1, 'sine', 0.12); setTimeout(()=>this.tone(1047,0.18,'sine',0.12),70); }
 };
@@ -908,9 +829,7 @@ function toast(msg, type='', dur=2400){
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 380); }, dur);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §F 弹窗
-   ═══════════════════════════════════════════════════════════ */
+/* §F 弹窗 */
 let modalStack = [];
 function openModal(opt){
   const layer = $('#modalLayer'); if (!layer) return {el:null, close(){}};
@@ -942,9 +861,7 @@ function closeAllModals(){
   layer.classList.remove('open'); layer.innerHTML=''; modalStack = [];
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §G 全局状态 + 存档
-   ═══════════════════════════════════════════════════════════ */
+/* §G 全局状态 */
 function freshUnlocked(){ return { character:{}, place:{}, faction:{}, intel:{}, task:{}, ending:{}, dungeon:{}, chapter:{} }; }
 let globalData = { unlocked: freshUnlocked(), seenEndings: {}, completedChapters: {} };
 function loadGlobal(){ try { const raw = localStorage.getItem(K_GLOBAL); if (raw) { const d = JSON.parse(raw); if (d && d.unlocked) { globalData.unlocked = Object.assign(freshUnlocked(), d.unlocked); globalData.seenEndings = d.seenEndings || {}; globalData.completedChapters = d.completedChapters || {}; } } } catch(e){} }
@@ -983,21 +900,16 @@ function saveNow(){
 }
 function loadSaved(){ try { const raw = localStorage.getItem(K_SAVE); return raw ? JSON.parse(raw) : null; } catch(e){ return null; } }
 
-/* ═══════════════════════════════════════════════════════════
-   §H 用户内容（供工坊写入）
-   ═══════════════════════════════════════════════════════════ */
+/* §H 用户内容 */
 let userContent = { chapters:[], locations:[], bondTopics:[], gifts:[], cgs:[] };
 function loadUser(){
   try { const raw = localStorage.getItem(K_USER); if (raw) { const d = JSON.parse(raw); Object.assign(userContent, d); } } catch(e){}
 }
 function saveUser(){ try { localStorage.setItem(K_USER, JSON.stringify(userContent)); return true; } catch(e){ toast('存储空间可能已满','warn'); return false; } }
 
-/* ═══════════════════════════════════════════════════════════
-   §I ★ 场景数据（完整序章 1-8）
-   ═══════════════════════════════════════════════════════════ */
+/* §I 场景数据 */
 const SCENES = {};
 
-/* 序章 · 场景 1 */
 SCENES.prologue_1 = {
   bg:'city', loc:'落日之都 · 城门', chapter:'序章 · 落日之都',
   lines:[
@@ -1023,7 +935,6 @@ SCENES.prologue_1 = {
       '直率':'（连句道歉都没有。这地方的人心比天冷。）',
       '谨慎':'（……他们怕的不是贼。是别的东西。）'
     }},
-    /* 性别变体 */
     { cn:'（你的性别让你在这条街上显得格外醒目。）', byGender:{
       '女':'（几个醉醺醺的男人从身旁走过，视线黏在你身上。你把外套拉紧了一点。）',
       '男':'（你尽量让自己看起来不好惹。这里的夜晚不欢迎任何单独走路的男人。）',
@@ -1033,7 +944,6 @@ SCENES.prologue_1 = {
   next:'prologue_2'
 };
 
-/* 序章 · 场景 2 */
 SCENES.prologue_2 = {
   bg:'grove', loc:'银杏林 · 小径', chapter:'序章 · 落日之都',
   lines:[
@@ -1052,8 +962,6 @@ SCENES.prologue_2 = {
     { cn:'「这里是不是死过很多人？」', next:'prologue_3c', set:{aff:{fiman:2}, metFiman:true} }
   ]
 };
-
-/* 序章 · 场景 3a/3b/3c 统一指向 4 */
 SCENES.prologue_3a = {
   bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
   lines:[
@@ -1087,8 +995,6 @@ SCENES.prologue_3c = {
   ],
   next:'prologue_4'
 };
-
-/* ★ 序章 · 场景 4（恢复：卡什登场） */
 SCENES.prologue_4 = {
   bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
   lines:[
@@ -1102,8 +1008,6 @@ SCENES.prologue_4 = {
   set:{metCash:true, metFiman:true, aff:{fiman:2, cash:2}},
   next:'prologue_5'
 };
-
-/* ★ 序章 · 场景 5（恢复：卡什调戏 + 菲曼劝阻） */
 SCENES.prologue_5 = {
   bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
   lines:[
@@ -1121,8 +1025,6 @@ SCENES.prologue_5 = {
   set:{aff:{cash:5}},
   next:'prologue_6'
 };
-
-/* ★ 序章 · 场景 6（恢复：莫维奥娅 + 塔瓦娜登场） */
 SCENES.prologue_6 = {
   bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
   lines:[
@@ -1138,8 +1040,6 @@ SCENES.prologue_6 = {
   set:{metTavana:true, metMovioa:true, aff:{tavana:4, movioa:1}},
   next:'prologue_7'
 };
-
-/* ★ 序章 · 场景 7 */
 SCENES.prologue_7 = {
   bg:'tavern', loc:'日不落酒馆 · 吧台', chapter:'序章 · 落日之都',
   lines:[
@@ -1151,8 +1051,6 @@ SCENES.prologue_7 = {
   ],
   next:'prologue_8'
 };
-
-/* ★ 序章 · 场景 8 */
 SCENES.prologue_8 = {
   bg:'tavern', loc:'日不落酒馆 · 二楼客房', chapter:'序章 · 落日之都',
   lines:[
@@ -1172,11 +1070,10 @@ SCENES.prologue_8 = {
     saveGlobal();
     toast('◈ 序章完成 · 地图已解锁', 'ok');
     saveNow();
-    setTimeout(()=>showScreen('map'), 800);
+    setTimeout(() => showChapterEndDialog(0, '序章 · 落日之都'), 500);
   }
 };
 
-/* 第一章 · 面见院长 */
 SCENES.manor_1 = {
   bg:'manor', loc:'梦目院总部 · 大厅', chapter:'第一章 · 塔瓦娜',
   lines:[
@@ -1235,13 +1132,117 @@ SCENES.manor_3 = {
     if (state) state.flags['loc_grove'] = true;
     toast('◈ 第一章完成 · 档案室/教堂/银杏林已解锁', 'ok');
     saveNow();
-    setTimeout(()=>showScreen('map'), 800);
+    setTimeout(() => showChapterEndDialog(1, '第一章 · 塔瓦娜'), 500);
   }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   §J ★ 档案（7 类完整）
-   ═══════════════════════════════════════════════════════════ */
+/* §J ★ 章节序列（新增） */
+const BUILTIN_CHAPTERS = [
+  { num: 0, name: '序章 · 落日之都', entry: 'prologue_1', end: 'prologue_8', chapterKey: 'prologue' },
+  { num: 1, name: '第一章 · 塔瓦娜', entry: 'manor_1', end: 'manor_3', chapterKey: 'ch1' }
+];
+
+function parseChapterNum(title) {
+  if (!title) return null;
+  const t = String(title).trim();
+  if (/^序章|^序幕|^prologue/i.test(t)) return 0;
+  let m = t.match(/第\s*(\d+)\s*章/);
+  if (m) return parseInt(m[1]);
+  m = t.match(/[Cc]hapter\s*(\d+)/);
+  if (m) return parseInt(m[1]);
+  const cn = { '零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10 };
+  m = t.match(/第\s*([零一二三四五六七八九十]+)\s*章/);
+  if (m) {
+    const s = m[1];
+    if (s.length === 1) return cn[s] !== undefined ? cn[s] : null;
+    if (s.startsWith('十')) return 10 + (cn[s.slice(1)] || 0);
+    if (s.endsWith('十')) return (cn[s[0]] || 0) * 10;
+    if (s.includes('十')) {
+      const parts = s.split('十');
+      return (cn[parts[0]] || 0) * 10 + (cn[parts[1]] || 0);
+    }
+  }
+  return null;
+}
+
+function getChapterList() {
+  const list = BUILTIN_CHAPTERS.map(c => ({ ...c }));
+  (userContent.chapters || []).forEach(c => {
+    if ((c.type || 'main') !== 'main') return;
+    let num = c.chapterNum;
+    if (num === null || num === undefined) num = parseChapterNum(c.title);
+    if (num === null || num === undefined) return;
+    const userCh = {
+      num: num,
+      name: c.title,
+      entry: 'user_scene_' + c.key,
+      end: 'user_scene_' + c.key,
+      chapterKey: c.key,
+      isUser: true,
+      _c: c
+    };
+    const idx = list.findIndex(x => x.num === num);
+    if (idx >= 0) list[idx] = userCh;
+    else list.push(userCh);
+  });
+  list.sort((a, b) => a.num - b.num);
+  return list;
+}
+
+function findNextChapterByNum(currentNum) {
+  const list = getChapterList();
+  const idx = list.findIndex(x => x.num === currentNum);
+  if (idx < 0 || idx >= list.length - 1) return null;
+  return list[idx + 1];
+}
+
+/* ★ 章节结束弹窗（新增） */
+function showChapterEndDialog(chapterNum, chapterName) {
+  const next = findNextChapterByNum(chapterNum);
+  if (next) {
+    const nextTitle = next.name;
+    openModal({
+      title: '章 节 完 成',
+      body:
+        '<div style="text-align:center;padding:22px 8px;">' +
+          '<div style="font-size:34px;color:var(--gold);margin-bottom:16px;">✦</div>' +
+          '<div style="font-family:var(--f-deco);font-size:18px;letter-spacing:.28em;color:var(--gold-b);margin-bottom:12px;text-indent:.28em;">' + esc(chapterName || '本章') + '　完</div>' +
+          '<div style="font-size:12px;color:var(--text-d);line-height:2;">新的一章已经准备好。</div>' +
+        '</div>',
+      footHTML:
+        '<button class="btn ghost" id="ceStay">留 在 原 地</button>' +
+        '<button class="btn primary" id="ceNext">继续阅读 → ' + esc(nextTitle) + '</button>',
+      onMount: (w) => {
+        w.querySelector('#ceStay').onclick = () => { Sfx.click(); closeModal(w); showScreen('map'); };
+        w.querySelector('#ceNext').onclick = () => {
+          Sfx.success(); closeModal(w);
+          setTimeout(() => {
+            if (next.isUser && next._c) playUserChapter(next._c);
+            else if (SCENES[next.entry]) playScene(next.entry);
+            else toast('下一章入口丢失', 'warn');
+          }, 150);
+        };
+      }
+    });
+  } else {
+    openModal({
+      title: '章 节 完 成',
+      body:
+        '<div style="text-align:center;padding:22px 8px;">' +
+          '<div style="font-size:34px;color:var(--gold);margin-bottom:16px;">☽</div>' +
+          '<div style="font-family:var(--f-deco);font-size:18px;letter-spacing:.28em;color:var(--gold-b);margin-bottom:12px;text-indent:.28em;">' + esc(chapterName || '本章') + '　完</div>' +
+          '<div style="font-size:12px;color:var(--text-d);line-height:2;font-style:italic;">后续章节尚未更新。<br>你可以用「剧情工坊」写新的章节，<br>或先回到地图探索其他内容。</div>' +
+        '</div>',
+      footHTML:
+        '<button class="btn primary" id="ceStay">留 在 原 地</button>',
+      onMount: (w) => {
+        w.querySelector('#ceStay').onclick = () => { Sfx.click(); closeModal(w); showScreen('map'); };
+      }
+    });
+  }
+}
+
+/* §K 档案 */
 const CODEX = {
   character: {
     '塔瓦娜·卡伊': { name:'塔瓦娜·卡伊', title:'圣梦目管理院 · 现任院长', desc:'接任时年仅十九岁。姐姐塔尔莎死在封印之战中。', tags:['卡伊家族','院长'] },
@@ -1309,7 +1310,6 @@ const CODEX = {
   }
 };
 
-/* 情报 5 条内置内容（供记录页情报 tab 使用） */
 const INTEL_LIST = [
   { name:'封印并不完全稳固', desc:'封印战场遗址的乌鸦烙印纹路清晰得像昨天才烙上去的。伸手去碰，指尖会感到一阵冰凉——像是碰到了什么还活着的东西。', done: s => s?.flags?.loc_archive },
   { name:'摩耳甫斯在等待时机', desc:'档案卷宗上只写了一行字：「他还会醒。」封印是暂时的。摩耳甫斯在梦域深处，他只是在等——等有人把他放出来。', done: s => s?.flags?.loc_archive },
@@ -1318,9 +1318,7 @@ const INTEL_LIST = [
   { name:'能看见日落的人，是幸福的', desc:'菲曼的奶奶给酒馆起了这个名字。因为只要你还看得见日落，就说明你又撑过了一天。', done: s => (s?.affection?.fiman || 0) >= 5 }
 ];
 
-/* ═══════════════════════════════════════════════════════════
-   §K ★ 地点数据（含映月镇、日往城）
-   ═══════════════════════════════════════════════════════════ */
+/* §L 地点 */
 const LOCATIONS = [
   {
     key:'tavern', name:'日不落酒馆', bg:'tavern', region:'索姆尼亚帝国 · 落日之都',
@@ -1408,80 +1406,56 @@ function getLocationIcon(key){
   return map[key] || '◆';
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §L ★ 乙游话题（内置 + 用户）
-   ═══════════════════════════════════════════════════════════ */
+/* §M 乙游话题 */
 const BOND_TOPICS_BUILTIN = [
-  { key:'fiman_chat', charId:'fiman', mode:'chat', title:'「今日份的闲聊」', need:0,
-    lines:[
-      { who:'fiman', en:"You're back. Sit. The usual?", cn:'「你又来了。坐。老样子？」' },
-      { who:'fiman', en:"Business is slow. Either a storm's coming, or everyone's already asleep.", cn:'「生意冷清。要么暴风雨来了，要么大家都睡着了。」' }
-    ]},
-  { key:'fiman_deep', charId:'fiman', mode:'deep', title:'「日落为什么这么重要」', need:15,
-    lines:[
-      { who:'me', cn:'（我把杯子推过去。）' },
-      { who:'fiman', en:"You know why my grandmother named this place the way she did?", cn:'「你知道我奶奶为什么给这店起这个名字吗？」' },
-      { who:'fiman', en:"Because if you can still see the sunset, you made it through the day.", cn:'「因为只要你还看得见日落，就说明你又撑过了一天。」' },
-      { who:'fiman', en:"Some nights I lock that door and wonder if I'll wake up. But I keep the lights on.", cn:'「有些晚上我锁上门，会想明天还能不能醒过来。但我还是让灯亮着。」' }
-    ]},
-  { key:'cash_chat', charId:'cash', mode:'chat', title:'「你最爱的机车」', need:0,
-    lines:[
-      { who:'cash', en:"Hey! Perfect timing. I was about to do something stupid.", cn:'「嘿！来得正好。我正要干点蠢事。」' },
-      { who:'cash', en:"You know what? I like you. You don't flinch.", cn:'「你知道吗？我喜欢你。你不躲。」' }
-    ]},
-  { key:'cash_deep', charId:'cash', mode:'deep', title:'「墨镜后面的秘密」', need:20,
-    lines:[
-      { who:'me', cn:'你为什么一直戴着墨镜？' },
-      { who:'cash', en:"Oh, you know. Style. Mystery.", cn:'「哦，你知道的。造型。神秘感。」' },
-      { who:'cash', en:"...Fine. Truth is, I can barely see past my own nose. The glasses are for me.", cn:'「……好吧。实话是，我连自己的鼻子都看不清。墨镜是为我自己。」' },
-      { who:'me', cn:'（他说这话时声音比平时低。）' },
-      { who:'cash', en:"Don't tell anyone, alright? I have a reputation to maintain.", cn:'「别告诉别人，好吗？我还要维持形象呢。」' }
-    ]},
-  { key:'tavana_chat', charId:'tavana', mode:'chat', title:'「办公室的咖啡」', need:0,
-    lines:[
-      { who:'tavana', en:"Ah, you're here. Please, sit.", cn:'「啊，你来了。请坐。」' },
-      { who:'tavana', en:"The coffee in this office is terrible. I keep drinking it anyway.", cn:'「这办公室的咖啡很糟。我还是照喝不误。」' }
-    ]},
-  { key:'tavana_deep', charId:'tavana', mode:'deep', title:'「姐姐的那句话」', need:20,
-    lines:[
-      { who:'tavana', en:"My sister used to say—the nightmare is not the enemy. The enemy is forgetting what morning looks like.", cn:'「我姐姐以前说——梦魇不是敌人。敌人是忘记早晨是什么样子。」' },
-      { who:'tavana', en:"I try to remember. Every day.", cn:'「我努力记着。每一天。」' }
-    ]},
-  { key:'movioa_chat', charId:'movioa', mode:'chat', title:'「副院长今天也很烦」', need:0,
-    lines:[
-      { who:'movioa', en:"You again. Did I not make myself clear the first time?", cn:'「又是你。我第一次没说清楚吗？」' },
-      { who:'movioa', en:"...Fine. What do you want?", cn:'「……行吧。你想要什么？」' }
-    ]},
-  { key:'movioa_deep', charId:'movioa', mode:'deep', title:'「哥哥不是怪物」', need:25,
-    lines:[
-      { who:'movioa', en:"My brother was not a monster. He was a fool. There is a difference.", cn:'「我哥哥不是怪物。他是个傻子。这有区别。」' },
-      { who:'movioa', en:"...Stop looking at me like that.", cn:'「……别那样看着我。」' }
-    ]},
-  { key:'lidia_chat', charId:'lidia', mode:'chat', title:'「莉迪亚的一百个问题」', need:0,
-    lines:[
-      { who:'lidia', en:"Oh! It's you! Hi! I have so many questions!", cn:'「哦！是你！嗨！我有一大堆问题！」' },
-      { who:'lidia', en:"What's the Wing like?", cn:'「王翼是什么样的？」' }
-    ]},
-  { key:'lidia_deep', charId:'lidia', mode:'deep', title:'「安静下来很可怕」', need:15,
-    lines:[
-      { who:'lidia', en:"If I stop talking, I start thinking. And thinking is scary here.", cn:'「如果我不说话，我就会开始想事情。而在这里想事情很可怕。」' }
-    ]},
-  { key:'elsia_chat', charId:'elsia', mode:'chat', title:'「限制区」', need:0,
-    lines:[
-      { who:'elsia', en:"You should not be here. This corridor is restricted.", cn:'「你不该在这里。这条走廊是限制区。」' }
-    ]},
-  { key:'elsia_deep', charId:'elsia', mode:'deep', title:'「背负着走」', need:20,
-    lines:[
-      { who:'elsia', en:"People think being an assassin means you stop feeling. It doesn't.", cn:'「人们以为做杀手就意味着不再有感觉。不是的。」' }
-    ]},
-  { key:'reifina_chat', charId:'reifina', mode:'chat', title:'「小队的规矩」', need:0,
-    lines:[
-      { who:'reifina', en:"When we go in, you stay behind me.", cn:'「我们进去的时候，你跟着我。」' }
-    ]},
-  { key:'reifina_deep', charId:'reifina', mode:'deep', title:'「记得每一个名字」', need:25,
-    lines:[
-      { who:'reifina', en:"I've lost three teams. I remember every name. That's why I don't smile much.", cn:'「我失去了三支队伍。我记得每一个名字。所以我不怎么笑。」' }
-    ]}
+  { key:'fiman_chat', charId:'fiman', mode:'chat', title:'「今日份的闲聊」', need:0, lines:[
+    { who:'fiman', en:"You're back. Sit. The usual?", cn:'「你又来了。坐。老样子？」' },
+    { who:'fiman', en:"Business is slow. Either a storm's coming, or everyone's already asleep.", cn:'「生意冷清。要么暴风雨来了，要么大家都睡着了。」' }
+  ]},
+  { key:'fiman_deep', charId:'fiman', mode:'deep', title:'「日落为什么这么重要」', need:15, lines:[
+    { who:'me', cn:'（我把杯子推过去。）' },
+    { who:'fiman', en:"You know why my grandmother named this place the way she did?", cn:'「你知道我奶奶为什么给这店起这个名字吗？」' },
+    { who:'fiman', en:"Because if you can still see the sunset, you made it through the day.", cn:'「因为只要你还看得见日落，就说明你又撑过了一天。」' }
+  ]},
+  { key:'cash_chat', charId:'cash', mode:'chat', title:'「你最爱的机车」', need:0, lines:[
+    { who:'cash', en:"Hey! Perfect timing. I was about to do something stupid.", cn:'「嘿！来得正好。我正要干点蠢事。」' },
+    { who:'cash', en:"You know what? I like you. You don't flinch.", cn:'「你知道吗？我喜欢你。你不躲。」' }
+  ]},
+  { key:'cash_deep', charId:'cash', mode:'deep', title:'「墨镜后面的秘密」', need:20, lines:[
+    { who:'me', cn:'你为什么一直戴着墨镜？' },
+    { who:'cash', en:"Oh, you know. Style. Mystery.", cn:'「哦，你知道的。造型。神秘感。」' },
+    { who:'cash', en:"...Fine. Truth is, I can barely see past my own nose. The glasses are for me.", cn:'「……好吧。实话是，我连自己的鼻子都看不清。墨镜是为我自己。」' }
+  ]},
+  { key:'tavana_chat', charId:'tavana', mode:'chat', title:'「办公室的咖啡」', need:0, lines:[
+    { who:'tavana', en:"Ah, you're here. Please, sit.", cn:'「啊，你来了。请坐。」' }
+  ]},
+  { key:'tavana_deep', charId:'tavana', mode:'deep', title:'「姐姐的那句话」', need:20, lines:[
+    { who:'tavana', en:"My sister used to say—the nightmare is not the enemy.", cn:'「我姐姐以前说——梦魇不是敌人。」' }
+  ]},
+  { key:'movioa_chat', charId:'movioa', mode:'chat', title:'「副院长今天也很烦」', need:0, lines:[
+    { who:'movioa', en:"You again.", cn:'「又是你。」' }
+  ]},
+  { key:'movioa_deep', charId:'movioa', mode:'deep', title:'「哥哥不是怪物」', need:25, lines:[
+    { who:'movioa', en:"My brother was not a monster. He was a fool.", cn:'「我哥哥不是怪物。他是个傻子。」' }
+  ]},
+  { key:'lidia_chat', charId:'lidia', mode:'chat', title:'「莉迪亚的一百个问题」', need:0, lines:[
+    { who:'lidia', en:"Oh! It's you! Hi!", cn:'「哦！是你！嗨！」' }
+  ]},
+  { key:'lidia_deep', charId:'lidia', mode:'deep', title:'「安静下来很可怕」', need:15, lines:[
+    { who:'lidia', en:"If I stop talking, I start thinking.", cn:'「如果我不说话，我就会开始想事情。」' }
+  ]},
+  { key:'elsia_chat', charId:'elsia', mode:'chat', title:'「限制区」', need:0, lines:[
+    { who:'elsia', en:"You should not be here.", cn:'「你不该在这里。」' }
+  ]},
+  { key:'elsia_deep', charId:'elsia', mode:'deep', title:'「背负着走」', need:20, lines:[
+    { who:'elsia', en:"People think being an assassin means you stop feeling. It doesn't.", cn:'「人们以为做杀手就意味着不再有感觉。不是的。」' }
+  ]},
+  { key:'reifina_chat', charId:'reifina', mode:'chat', title:'「小队的规矩」', need:0, lines:[
+    { who:'reifina', en:"When we go in, you stay behind me.", cn:'「我们进去的时候，你跟着我。」' }
+  ]},
+  { key:'reifina_deep', charId:'reifina', mode:'deep', title:'「记得每一个名字」', need:25, lines:[
+    { who:'reifina', en:"I've lost three teams. I remember every name.", cn:'「我失去了三支队伍。我记得每一个名字。」' }
+  ]}
 ];
 function getAllBondTopics(){
   return BOND_TOPICS_BUILTIN.concat(userContent.bondTopics.map(t => ({
@@ -1489,9 +1463,7 @@ function getAllBondTopics(){
   })));
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §M 礼物 + CG
-   ═══════════════════════════════════════════════════════════ */
+/* §N 礼物 + CG */
 const GIFTS_BUILTIN = [
   { key:'g_ginkgo',  name:'银杏叶书签', icon:'✦', cost:5,  aff:4,  likes:['tavana'], desc:'一片干燥的银杏叶。塔瓦娜会喜欢。' },
   { key:'g_vinyl',   name:'旧唱片',     icon:'♬', cost:10, aff:7,  likes:['fiman'],  desc:'不知道是谁留下的唱片。菲曼可能认得。' },
@@ -1507,17 +1479,13 @@ function getAllGifts(){
 }
 
 const CGS_BUILTIN = [
-  { key:'cg_cash_night', charId:'cash', title:'「深夜的阳台」', subtitle:'卡什 · 特殊剧情', need:40,
-    lines:[
-      { cn:'（深夜。你听见阳台上有动静。）' },
-      { cn:'推开门，卡什坐在那里，墨镜放在一边，手里转着一只打火机。' },
-      { s:'卡什', who:'cash', en:"Couldn't sleep?", cn:'「睡不着？」' },
-      { s:'卡什', who:'cash', en:"Me neither. Never could, in this city.", cn:'「我也一样。在这座城市里从来睡不着。」' },
-      { me:'……你在想什么？' },
-      { s:'卡什', who:'cash', en:"Home. Then I remember I don't really have one anymore.", cn:'「家。然后我想起来，我其实已经没有家了。」' },
-      { cn:'他把打火机转了一圈，没有点。' },
-      { s:'卡什', who:'cash', en:"You're still here. That's... something.", cn:'「你还在。这……也算点什么吧。」' }
-    ]}
+  { key:'cg_cash_night', charId:'cash', title:'「深夜的阳台」', subtitle:'卡什 · 特殊剧情', need:40, lines:[
+    { cn:'（深夜。你听见阳台上有动静。）' },
+    { s:'卡什', who:'cash', en:"Couldn't sleep?", cn:'「睡不着？」' },
+    { s:'卡什', who:'cash', en:"Me neither. Never could, in this city.", cn:'「我也一样。在这座城市里从来睡不着。」' },
+    { me:'……你在想什么？' },
+    { s:'卡什', who:'cash', en:"Home. Then I remember I don't really have one anymore.", cn:'「家。然后我想起来，我其实已经没有家了。」' }
+  ]}
 ];
 function getAllCGs(){
   return CGS_BUILTIN.concat(userContent.cgs.map(cg => ({
@@ -1525,9 +1493,7 @@ function getAllCGs(){
   })));
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §N 页面切换
-   ═══════════════════════════════════════════════════════════ */
+/* §O 页面切换 */
 function showScreen(name){
   const cur = document.querySelector('.screen.active');
   const nxt = document.getElementById('screen-' + name);
@@ -1554,9 +1520,7 @@ function showScreen(name){
 }
 function updateNav(name){ $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === name)); }
 
-/* ═══════════════════════════════════════════════════════════
-   §O 场景引擎（含称呼/性别/性格分支）
-   ═══════════════════════════════════════════════════════════ */
+/* §P 场景引擎 */
 let typingState = { active:false, timer:null, el:null, full:'' };
 function stopTyping(){ if (typingState.timer) clearTimeout(typingState.timer); typingState.active=false; if (typingState.el) typingState.el.textContent = typingState.full; }
 function typeInto(el, text, cb){
@@ -1601,7 +1565,6 @@ function playScene(sceneId){
   saveNow();
 }
 
-/* 处理性格/性别分支 */
 function resolveLine(line){
   const pers = state?.player?.personality || '冷静';
   const gender = state?.player?.gender || '不限';
@@ -1611,7 +1574,6 @@ function resolveLine(line){
     else cn = line.byPers[pers];
   }
   if (line.byGender && line.byGender[gender]) cn = line.byGender[gender];
-  /* 称呼替换 */
   const nick = state?.player?.nick || '记者';
   const name = state?.player?.name || '记者';
   const replace = txt => txt ? txt.replace(/\[nick\]/g, nick).replace(/\[name\]/g, name) : txt;
@@ -1792,11 +1754,8 @@ function playSceneFromSnapshot(){
   scrollToBottom(); saveNow();
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §P 地图 + 地点进入
-   ═══════════════════════════════════════════════════════════ */
+/* §Q 地图 */
 let currentLocation = null;
-
 function renderMap(){
   const main = $('#mapMain'); if (!main) return;
   if ($('#mapSilver')) $('#mapSilver').textContent = '银镑 ' + (state?.stats?.silver || 0);
@@ -1864,9 +1823,7 @@ function openMinigame(id){
   toast('小游戏模块加载中…', 'warn');
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §Q 乙游
-   ═══════════════════════════════════════════════════════════ */
+/* §R 乙游 */
 function renderBondGrid(){
   const grid = $('#bondGrid'); if (!grid) return;
   const ids = ['tavana','movioa','lidia','elsia','fiman','cash','reifina'];
@@ -2024,7 +1981,7 @@ function openGiftPanel(id){
       '</div>' +
     '</div>';
   });
-  const wrap = openModal({
+  openModal({
     title:'赠 礼 · ' + c.name,
     body: html,
     footHTML:'<button class="btn ghost" id="giftCancel">取消</button>',
@@ -2077,9 +2034,7 @@ function playCG(cg){
   playScene(sceneId);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §R 目录（4 tab）
-   ═══════════════════════════════════════════════════════════ */
+/* §S 目录（★ 主线 tab 用章节序列） */
 let tocTab = 'main';
 function renderTOC(){
   const tabs = $('#tocTabs'); if (!tabs) return;
@@ -2093,24 +2048,29 @@ function renderTOC(){
   group.innerHTML = '';
 
   if (tocTab === 'main') {
-    const builtin = [
-      { id:'prologue_1', title:'序章 · 落日之都', subtitle:'初到城门', chapterKey:'prologue' },
-      { id:'manor_1', title:'第一章 · 塔瓦娜', subtitle:'面见院长', chapterKey:'ch1' }
-    ];
-    const userCh = userContent.chapters.filter(c => (c.type||'main') === 'main').map(c => ({ id:'user_chapter_' + c.key, title:c.title, subtitle:c.subtitle || '', chapterKey:c.key, userMade:true, _c:c }));
-    const all = builtin.concat(userCh);
-    all.forEach(item => {
-      const done = !!globalData.completedChapters?.[item.chapterKey];
+    /* ★ 用统一章节序列 */
+    const chapters = getChapterList();
+    chapters.forEach(ch => {
+      const done = !!globalData.completedChapters?.[ch.chapterKey];
+      const isUser = !!ch.isUser;
       const el = document.createElement('div');
       el.className = 'toc-item';
-      el.innerHTML = '<div class="toc-item-ico">♕</div>' +
-        '<div class="toc-item-info"><div class="toc-item-title">' + esc(item.title) + '</div>' +
-        '<div class="toc-item-sub">' + esc(item.subtitle) + '</div></div>' +
+      el.innerHTML =
+        '<div class="toc-item-ico">' + (ch.num === 0 ? '☽' : '♕') + '</div>' +
+        '<div class="toc-item-info">' +
+          '<div class="toc-item-title">' + esc(ch.name) + (isUser ? ' <span style="font-size:10px;color:var(--gold-d);letter-spacing:.1em;">[自定]</span>' : '') + '</div>' +
+          '<div class="toc-item-sub">第 ' + (ch.num === 0 ? '序' : ch.num) + ' 章</div>' +
+        '</div>' +
         '<div class="toc-item-state ' + (done?'done':'') + '">' + (done?'已完成':'未开始') + '</div>';
-      el.onclick = () => { Sfx.click(); if (SCENES[item.id]) playScene(item.id); else if (item.userMade) playUserChapter(item._c); };
+      el.onclick = () => {
+        Sfx.click();
+        if (isUser && ch._c) playUserChapter(ch._c);
+        else if (SCENES[ch.entry]) playScene(ch.entry);
+        else toast('章节入口丢失','warn');
+      };
       group.appendChild(el);
     });
-    if ($('#tocSub')) $('#tocSub').textContent = '主线 ' + all.length + ' 章';
+    if ($('#tocSub')) $('#tocSub').textContent = '主线 ' + chapters.length + ' 章';
   } else if (tocTab === 'side') {
     const sides = userContent.chapters.filter(c => c.type === 'side' || c.type === 'dungeon');
     if (!sides.length) { group.innerHTML = '<div class="empty">还没有支线或副本。<br>去「剧情工坊」创建吧。</div>'; return; }
@@ -2177,18 +2137,27 @@ function playUserChapter(c){
       if (l.type === 'me') return { me: l.cn || '', en: l.en || '' };
       return { cn: l.cn || '' };
     });
+    /* ★ 用户章节结束也弹窗 */
+    const chapterNum = (c.chapterNum !== undefined && c.chapterNum !== null) ? c.chapterNum : parseChapterNum(c.title);
     SCENES[sceneId] = {
       bg: c.bg || 'city', loc: c.location || c.title, chapter: c.title,
       lines,
-      onEnd: () => { globalData.completedChapters[c.key] = true; saveGlobal(); toast('◈ 完成：' + c.title, 'ok'); saveNow(); setTimeout(()=>showScreen('map'), 600); }
+      onEnd: () => {
+        globalData.completedChapters[c.key] = true;
+        saveGlobal();
+        toast('◈ 完成：' + c.title, 'ok');
+        saveNow();
+        setTimeout(() => {
+          if (chapterNum !== null && chapterNum !== undefined) showChapterEndDialog(chapterNum, c.title);
+          else { showScreen('map'); }
+        }, 400);
+      }
     };
   }
   playScene(sceneId);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §S 记录（4 tab：人物 / 剧情 / 情报 / 结局）
-   ═══════════════════════════════════════════════════════════ */
+/* §T 记录 */
 let logTab = 'char';
 function renderLog(){
   const tabs = [
@@ -2252,9 +2221,7 @@ function renderLog(){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §T 设置（含性别/昵称/UID切换/登出）
-   ═══════════════════════════════════════════════════════════ */
+/* §U 设置 */
 function renderSettings(){
   if ($('#setUid')) $('#setUid').textContent = state?.uid || '——';
   const main = $('#setMain'); if (!main) return;
@@ -2448,9 +2415,6 @@ function importSave(){
   });
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §U 关于 + 档案馆 + 返回标题
-   ═══════════════════════════════════════════════════════════ */
 function openAbout(){
   openModal({
     title:'关 于 本 作',
@@ -2469,6 +2433,7 @@ function openAbout(){
         '<span style="color:var(--gold);">◆</span> 剧情工具条可回溯、记录、自动、跳过、改名、导出。<br>' +
         '<span style="color:var(--gold);">◆</span> 地图进入地点，触发剧情/小游戏/角色对话。<br>' +
         '<span style="color:var(--gold);">◆</span> 「剧情工坊」可创建章节、副本、地点、乙游话题、礼物、CG。<br>' +
+        '<span style="color:var(--gold);">◆</span> 章节结束会自动提示「继续下一章」，按章节序号自动排序。<br>' +
         '<span style="color:var(--gold);">◆</span> 所有内容自动保存到本机。' +
       '</p>',
     footHTML:'<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>'
@@ -2532,9 +2497,7 @@ function backToTitle(){
   const nav = $('#bottomNav'); if (nav) nav.style.display = 'none';
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §V 新游戏 / 继续
-   ═══════════════════════════════════════════════════════════ */
+/* §V 新游戏 / 继续 */
 function startNewGame(){
   openModal({
     title:'新 的 旅 程',
@@ -2591,11 +2554,8 @@ function continueGame(){
   } else { showScreen('map'); }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §W 事件绑定
-   ═══════════════════════════════════════════════════════════ */
+/* §W 事件 */
 function bindEvents(){
-  /* 标题页按钮 */
   $$('#screen-title [data-act]').forEach(btn => {
     btn.onclick = () => {
       try { Sfx.ensure(); Sfx.click(); } catch(e){}
@@ -2608,7 +2568,6 @@ function bindEvents(){
       else if (act === 'about') openAbout();
     };
   });
-  /* 底部导航 */
   $$('.nav-btn').forEach(btn => {
     btn.onclick = () => {
       Sfx.click();
@@ -2620,7 +2579,6 @@ function bindEvents(){
       } else showScreen(nav);
     };
   });
-  /* 顶栏全局 data-act 按钮 */
   document.addEventListener('click', (e) => {
     const tb = e.target.closest('[data-act]');
     if (!tb) return;
@@ -2631,7 +2589,6 @@ function bindEvents(){
     else if (act === 'workshop') { Sfx.click(); showScreen('workshop'); }
     else if (act === 'home') { Sfx.click(); backToTitle(); }
   });
-  /* 剧情工具条 */
   const br = $('#btnRewind'); if (br) br.onclick = () => { Sfx.click(); rewindToLastChoice(); };
   const bh = $('#btnHistory'); if (bh) bh.onclick = () => { Sfx.click(); openStoryLog(); };
   const ba = $('#btnAuto'); if (ba) ba.onclick = () => {
@@ -2669,7 +2626,6 @@ function bindEvents(){
   };
   const be = $('#btnExport'); if (be) be.onclick = () => { Sfx.click(); exportSave(); };
   const bH = $('#btnHome'); if (bH) bH.onclick = () => { Sfx.click(); if (confirm('返回标题？当前进度已自动保存。')) { saveNow(); backToTitle(); } };
-  /* 点击推进 */
   const stage = $('#stage');
   if (stage) stage.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
@@ -2677,7 +2633,6 @@ function bindEvents(){
     if (!state || state.screen !== 'game') return;
     advanceLine();
   });
-  /* 键盘 */
   document.addEventListener('keydown', (e) => {
     if (modalStack.length) { if (e.key === 'Escape') closeModal(); return; }
     if (state?.screen === 'game') {
@@ -2699,9 +2654,7 @@ function openStoryLog(){
   });
 }
 
-/* ═══════════════════════════════════════════════════════════
-   §X 暴露给外部模块
-   ═══════════════════════════════════════════════════════════ */
+/* §X 暴露接口 */
 window.NF = {
   state: () => state,
   settings: () => settings,
@@ -2713,12 +2666,12 @@ window.NF = {
   getAllLocations, isLocationUnlocked, getLocationIcon,
   getAllBondTopics, getAllGifts, getAllCGs,
   renderMap, renderBondGrid, renderTOC, renderLog, renderSettings, openArchiveModal,
-  startNewGame, continueGame
+  startNewGame, continueGame,
+  /* 章节序列 */
+  parseChapterNum, getChapterList, findNextChapterByNum, showChapterEndDialog
 };
 
-/* ═══════════════════════════════════════════════════════════
-   §Y 初始化
-   ═══════════════════════════════════════════════════════════ */
+/* §Y 初始化 */
 (function init(){
   try {
     const title = document.getElementById('screen-title');
@@ -2727,7 +2680,7 @@ window.NF = {
     bindEvents(); updateNav('game');
     console.log('%c入魇 · Nightfalling', 'color:#c9a961;font-size:18px;letter-spacing:6px;');
     console.log('%c「能看见日落的人，是幸福的。」', 'color:#8a8070;font-size:11px;font-style:italic;');
-    console.log('%cv1.0.0 · GSAP=' + (HAS_GSAP() ? 'loaded' : 'fallback') + ' · 符号库 ' + Object.keys(window.SYMBOLS).reduce((s,k)=>s+window.SYMBOLS[k].length,0) + ' 个', 'color:#7a6636;font-size:10px;');
+    console.log('%cv1.0.0 · GSAP=' + (HAS_GSAP() ? 'loaded' : 'fallback') + ' · 符号 ' + Object.keys(window.SYMBOLS).reduce((s,k)=>s+window.SYMBOLS[k].length,0) + ' 个', 'color:#7a6636;font-size:10px;');
     const initAudio = () => { try { Sfx.ensure(); } catch(e){}; document.removeEventListener('touchstart', initAudio); document.removeEventListener('click', initAudio); };
     document.addEventListener('touchstart', initAudio, { once: true });
     document.addEventListener('click', initAudio, { once: true });
