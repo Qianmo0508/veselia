@@ -592,7 +592,7 @@ select.inp{cursor:pointer;}
     <button id="btnRewind">↶ 回溯</button>
     <button id="btnHistory">☰ 记录</button>
     <button id="btnAuto">▷ 自动</button>
-    <button id="btnSkip">⏩ 跳过</button>
+    <button id="btnSkip">⥤ 跳过</button>
     <button id="btnRename">✎ 改名</button>
     <button id="btnExport">⇩ 导出</button>
     <button id="btnHome">⌂ 标题</button>
@@ -1141,9 +1141,131 @@ SCENES.manor_3 = {
   }
 };
 
+/* ★ 新增：你自定义的序章引擎，自动接管所有分支与效果 */
+SCENES.prologue_user = {
+  bg:'city', loc:'落日之都 · 城门', chapter:'序章 · 开端', chapterNum: 0,
+  branches: {
+    main: [
+      { type: 'env', loc: '落日之都 · 城门' },
+      { type: 'env', bg: 'city' },
+      { type: 'narration', cn: '你是邻国来调查「梦魇」事件的记者。' },
+      { type: 'narration', cn: '汽笛声渐远。火车站的人流将你推向出口，深灰色的云压在城市上方，像是要把落日之都整个吞下去。' },
+      { type: 'narration', cn: '暮色像一层薄薄的灰纱，覆在街角的煤气灯上。' },
+      { type: 'effect', effects: { unlock: ['loc_city'] } },
+      { type: 'narration', cn: '青石板路还留着午后雨水的痕迹，街上处处透着醇厚的英伦特色，维多利亚风格的铁艺阳台在一栋栋小楼上排布着。' },
+      { type: 'narration', cn: '你拎着手提箱，站在城门下。' },
+      { type: 'narration', cn: '翻开笔记本最后一页，那是临行前主编用特意留空后写下的四个字：「梦魇事件」。' },
+      { type: 'narration', cn: '你此行的身份，是自王翼国度而来，探明真相之人。' },
+      { type: 'monologue', cn: '（这就是维塞利亚大陆的最西端么。）' },
+      { type: 'narration', cn: '一个赶路的老人撞了你一下，连声道歉都没有，就消失在巷子里。' },
+      { type: 'monologue', cn: '（你王翼风格明显的装束让你在这条街上显得格外醒目；你决心等到了旅馆就将其换下来。）' },
+      { type: 'env', loc: '银杏林 · 小径' },
+      { type: 'env', bg: 'grove' },
+      { type: 'narration', cn: '沿着银杏林边的小路走，空气里有一种旧纸和红茶混在一起的味道。' },
+      { type: 'narration', cn: '金黄的叶子落了满地，踩上去沙沙作响。' },
+      { type: 'effect', effects: { unlock: ['loc_grove'] } },
+      { type: 'narration', cn: '路的尽头，一座木板搭成的小酒馆出现在眼前。' },
+      { type: 'narration', cn: '房顶的公鸡风向标来回转动，开合门被风吹得嘎吱作响。门外小院的月季和玫瑰修剪得整齐精巧。' },
+      { type: 'narration', cn: '二层露台的栅栏旁，几位女性客人正边看风景边谈笑。' },
+      { type: 'dialogue', who: 'fiman', en: 'Evening, stranger! You look like you just walked out of a storm.', cn: '「晚上好啊，陌生人！你看起来像刚从一场风暴里走出来。」' },
+      { type: 'narration', cn: '你这才发现门边站着一个带着笑意的女人。她将深色头发别在耳后，白衬衫袖口卷到小臂，外面套了一件深灰马甲。' },
+      { type: 'dialogue', who: 'fiman', en: "Fiman, pleasure! I'm the bartender here. Fancy a drink? Or are you here for... something else?", cn: '「菲曼，幸会！我是这儿的调酒师。来一杯？还是说……你是为了别的事来的？」' },
+      { type: 'choice', choices: [
+        { text: '「我是王翼来的记者，想调查『梦魇』。」', next: '记者线' },
+        { text: '「先来一杯吧，走了太久的路。」', next: '酒客线' },
+        { text: '「这里是不是…出过一些事？」', next: '直言线' }
+      ]}
+    ],
+    '记者线': [
+      { type: 'dialogue', who: 'me', cn: '我是王翼来的记者，想调查「梦魇」。' },
+      { type: 'narration', cn: '菲曼擦酒杯的手停了一下。' },
+      { type: 'dialogue', who: 'fiman', en: "A reporter. Huh. Well, you're either very brave or very stupid.", cn: '「记者，嗯。那你要么很勇敢，要么很蠢。」' },
+      { type: 'dialogue', who: 'fiman', en: "C'mon! First drink's on the house. Then we talk.", cn: '「进来吧！第一杯我请，然后我们再谈。」' },
+      { type: 'narration', cn: '她冲你昂了昂头，示意你跟进来。' },
+      { type: 'effect', effects: { aff: { fiman: 5 }, flags: { metFiman: true } } },
+      { type: 'jump', to: '酒馆内' }
+    ],
+    '酒客线': [
+      { type: 'dialogue', who: 'me', cn: '先来一杯吧，走了太久的路。' },
+      { type: 'dialogue', who: 'fiman', en: "A woman after my own heart. What'll it be?", cn: '「合我心意哦。喝点什么？」' },
+      { type: 'dialogue', who: 'me', cn: '威士忌，加冰。' },
+      { type: 'narration', cn: '她转身从胡桃木酒柜上取下一瓶，动作利落。' },
+      { type: 'dialogue', who: 'fiman', en: "Good choice.", cn: '「不错的选择。」' },
+      { type: 'effect', effects: { aff: { fiman: 3 }, flags: { metFiman: true } } },
+      { type: 'jump', to: '酒馆内' }
+    ],
+    '直言线': [
+      { type: 'dialogue', who: 'me', cn: '这里是不是…出过一些事？' },
+      { type: 'narration', cn: '只见菲曼的笑容停顿了一下，又好像瞬然料到了你的身份。' },
+      { type: 'dialogue', who: 'fiman', en: "You're direct. I'll give you that.", cn: '「你倒是直接啊，这点我认。」' },
+      { type: 'dialogue', who: 'fiman', en: "Everyone in this city has lost someone. But sure, nobody talk about it.", cn: '「这座城里嘛，每个人都失去过谁；但当然了，没人愿意谈起。」' },
+      { type: 'narration', cn: '她把酒杯推到你面前。' },
+      { type: 'effect', effects: { aff: { fiman: 2 }, flags: { metFiman: true } } },
+      { type: 'jump', to: '酒馆内' }
+    ],
+    '酒馆内': [
+      { type: 'env', loc: '日不落酒馆 · 吧台' },
+      { type: 'env', bg: 'tavern' },
+      { type: 'dialogue', who: 'fiman', en: "Tell you what — there’s someone you should meet. He’s right here.", cn: '「告诉你吧！有个人你应该见见。他就在这儿。」' },
+      { type: 'narration', cn: '她朝酒馆角落抬了抬下巴。' },
+      { type: 'effect', effects: { unlock: ['loc_tavern'] } },
+      { type: 'dialogue', who: 'fiman', en: "New face. Might be about your age?", cn: '「新调来的，也许和你差不多？」' },
+      { type: 'narration', cn: '那个卡座里坐着一个金发年轻男人，正单手撑着脸，同旁边一位女士调笑。' },
+      { type: 'narration', cn: '也不知是不是为了耍帅，他在室内仍戴着一副墨镜。' },
+      { type: 'dialogue', who: 'cash', en: "And then she said— oh, hello dear! Didn't see you there. Literally.", cn: '「然后她说——噢，你好啊亲爱的！没看见你真是抱歉，字面意义上的。」' },
+      { type: 'narration', cn: '他笑嘻嘻地把那副墨镜推到头顶，你终于看清那人的眼睛，那是一对湛蓝色的浅色眸子。' },
+      { type: 'monologue', cn: '（真倒也是字面意义上的金发碧眼啊。）' },
+      { type: 'dialogue', who: 'fiman', en: "Cash, that's Cash. Don't take anything he says seriously!", cn: '「卡什，这是卡什。他说什么都别当真！」' },
+      { type: 'effect', effects: { aff: { fiman: 2, cash: 2 }, flags: { metCash: true } } },
+      { type: 'jump', to: '卡什登场' }
+    ],
+    '卡什登场': [
+      { type: 'dialogue', who: 'cash', en: "You must be the new one. The reporter? Fiman told me about you.", cn: '「你就是新来的那个吧，记者？菲曼跟我提过来着。」' },
+      { type: 'dialogue', who: 'cash', en: "Stick with me—I'll show you how to actually enjoy this hellhole.", cn: '「跟着我吧——我教你怎么真正在这种鬼地方找乐子。」' },
+      { type: 'dialogue', who: 'fiman', en: "Don't follow him anywhere.", cn: '「别跟他去任何地方啊。」' },
+      { type: 'narration', cn: '卡什大笑起来，丝毫不以为意。' },
+      { type: 'monologue', cn: '（这个人……与其说是危险，不如说是让人头疼。）' },
+      { type: 'effect', effects: { aff: { cash: 5 } } },
+      { type: 'jump', to: '夜访' }
+    ],
+    '夜访': [
+      { type: 'narration', cn: '门忽然开了。夜风裹着一股冷意吹进来，酒馆里所有说话声都低了下去。' },
+      { type: 'narration', cn: '走进来的是一个黑发女人。她几乎一身黑，显得格外令人齿冷：' },
+      { type: 'narration', cn: '黑色齐肩短发，黑纱礼帽，肩上立着一只一动不动分不清真假的黑鸦。' },
+      { type: 'narration', cn: '她身后还跟着另一个成年女人，看上去便亲和得多——' },
+      { type: 'narration', cn: '一头浅咖色长发束成马尾，戴着一副单片金丝镜，身着利落的褐色呢绒风衣，整个人的气质严肃温和，优雅大方。' },
+      { type: 'narration', cn: '那黑发女人冲菲曼熟稔地丢下一句话。' },
+      { type: 'dialogue', who: 'movioa', en: "Fiman. Three glasses. The usual.", cn: '「菲曼。三杯，老样子。」' },
+      { type: 'dialogue', who: 'fiman', en: "Three? Who's the third for?", cn: '「三杯？第三杯给谁？」' },
+      { type: 'narration', cn: '莫维奥娅没有回答，只是把目光转向了你。' },
+      { type: 'narration', cn: '你这才意识到，她们也许就是你要等的人。事实上，你在看到那个衣冠楚楚、戴单片金丝镜的女人踏进这家小酒馆时，就已经略有怀疑。' },
+      { type: 'dialogue', who: 'tavana', en: "You must be the reporter from the Wing. I'm Tavana. Head of the Dream Bureau.", cn: '「你一定就是王翼来的记者了。我是塔瓦娜，梦目院院长。」' },
+      { type: 'dialogue', who: 'tavana', en: "Fiman told me you arrived this evening. I thought I'd come to greet you personally.", cn: '「菲曼说你今晚到了，我想亲自来迎接你。」' },
+      { type: 'effect', effects: { aff: { tavana: 4, movioa: 1 }, flags: { metTavana: true, metMovioa: true } } },
+      { type: 'jump', to: '次日之约' }
+    ],
+    '次日之约': [
+      { type: 'dialogue', who: 'movioa', en: "You're being polite. It's exhausting to watch.", cn: '「你这么客气，看着都累。」' },
+      { type: 'dialogue', who: 'tavana', en: "Movioa, please.", cn: '「莫维奥娅，拜托。」' },
+      { type: 'dialogue', who: 'movioa', en: "What? I'm just saying what everyone's thinking.", cn: '「怎么？我只是把大家心里想的说出来了而已。」' },
+      { type: 'narration', cn: '塔瓦娜轻轻叹了口气，转向你。' },
+      { type: 'dialogue', who: 'tavana', en: "Tomorrow morning, come to the Bureau. There is much to discuss.", cn: '「明早来梦目院，我想我们有很多事情要谈。」' },
+      { type: 'jump', to: '序章完' }
+    ],
+    '序章完': []
+  },
+  onEnd: () => {
+    globalData.completedChapters['prologue'] = true;
+    saveGlobal();
+    toast('◈ 序章完成 · 地图已解锁', 'ok');
+    saveNow();
+    setTimeout(() => showChapterEndDialog(0, '序章 · 开端'), 500);
+  }
+};
+
+
 const BUILTIN_CHAPTERS = [
-  { num: 0, name: '序章 · 落日之都', entry: 'prologue_1', end: 'prologue_8', chapterKey: 'prologue' },
-  { num: 1, name: '第一章 · 塔瓦娜', entry: 'manor_1', end: 'manor_3', chapterKey: 'ch1' }
+  { num: 0, name: '序章 · 开端', entry: 'prologue_user', end: '序章完', chapterKey: 'prologue' }
 ];
 
 function parseChapterNum(title) {
@@ -1680,7 +1802,12 @@ function renderBranchLine(){
 
     if (n.type === 'choice') {
       const valid = n.choices.filter(c => !c.condition || c.condition(state));
-      if (valid.length) { showBranchChoices(valid, n); return; }
+      if (valid.length) { 
+        pushSnapshot(); 
+        state.choiceMarkers.push(state.snapshots.length - 1);
+        showBranchChoices(valid, n); 
+        return; 
+      }
       idx++; state.branchIdx = idx;
       continue;
     }
@@ -1824,7 +1951,10 @@ function finishUserChapter(){
   if (!scene) { showScreen('map'); return; }
   const c = userContent.chapters.find(x => 'user_scene_' + x.key === state.sceneId);
   const chapterKey = c?.key || state.sceneId;
-  const chapterNum = c?.chapterNum;
+  let chapterNum = c?.chapterNum;
+  if (chapterNum === undefined && scene.chapterNum !== undefined) chapterNum = scene.chapterNum;
+  if (chapterNum === undefined && scene.chapter) chapterNum = parseChapterNum(scene.chapter);
+  
   globalData.completedChapters[chapterKey] = true;
   saveGlobal();
   Sfx.success();
@@ -1926,6 +2056,8 @@ function playSceneFromSnapshot(){
   if ($('#locLabel')) $('#locLabel').textContent = scene.loc || '未知之地';
   if ($('#gameTopLoc')) $('#gameTopLoc').textContent = scene.chapter || scene.loc || '——';
   if ($('#dialogInner')) $('#dialogInner').innerHTML = '';
+  if ($('#choices')) $('#choices').classList.remove('active');
+  if ($('#choicesInner')) $('#choicesInner').innerHTML = '';
 
   if (scene.branches) {
     const key = state.branchKey || 'main';
@@ -1937,6 +2069,8 @@ function playSceneFromSnapshot(){
     }
     scrollToBottom();
     saveNow();
+    state.awaitingChoice = false;
+    renderBranchLine(); // 关键修复：回溯恢复后，继续往下走，重新渲染选项
     return;
   }
 
@@ -1951,7 +2085,7 @@ function playSceneFromSnapshot(){
     $('#dialogInner').appendChild(div);
   }
   if (scene.choices && state.lineIdx >= lines.length - 1) {
-    pushSnapshot(); state.choiceMarkers.push(state.snapshots.length - 1);
+    state.awaitingChoice = false;
     showChoices(scene.choices);
   }
   scrollToBottom(); saveNow();
@@ -2753,7 +2887,23 @@ function startNewGame(){
         state.player.gender = gender;
         state.player.personality = pers;
         saveNow(); Sfx.success(); closeModal(w);
-        setTimeout(() => playScene('prologue_1'), 300);
+        
+        // ★ 修复：直接读取最新列表的第一章（即你写的序章）
+        setTimeout(() => {
+          const chapters = getChapterList();
+          if (chapters && chapters.length > 0) {
+            const firstCh = chapters[0];
+            if (firstCh.isUser && firstCh._c) {
+              playUserChapter(firstCh._c);
+            } else if (SCENES[firstCh.entry]) {
+              playScene(firstCh.entry);
+            } else {
+              playScene('prologue_user'); // 兜底
+            }
+          } else {
+            playScene('prologue_user'); // 兜底
+          }
+        }, 300);
       };
     }
   });
