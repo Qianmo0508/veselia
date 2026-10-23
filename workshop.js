@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   workshop.js · 剧情工坊全表单（全量恢复 + 内置章节反推）
+   workshop.js · 剧情工坊全表单（100%全量内置反推，绝不压缩版）
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -56,7 +56,9 @@
     return n;
   }
 
-  /* ═══ 批量导入解析器 ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     批量导入解析器
+     ═══════════════════════════════════════════════════════════ */
   function parseEffects(str) {
     const fx = {};
     if (!str) return fx;
@@ -355,48 +357,42 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     反推内置章节数据
+     反推所有内置数据
      ═══════════════════════════════════════════════════════════ */
-  function getBuiltinChapterData(chapterKey) {
-    let title = '', subtitle = '', location = '', bg = 'city', type = 'main', chapterNum = null;
-    let nodes = { main: [] };
-
-    if (chapterKey === 'prologue') {
-      title = '序章 · 落日之都'; subtitle = '初到城门'; location = '落日之都 · 城门'; bg = 'city'; chapterNum = 0;
-      const sceneKeys = ['prologue_1', 'prologue_2', 'prologue_3a', 'prologue_3b', 'prologue_3c', 'prologue_4', 'prologue_5', 'prologue_6', 'prologue_7', 'prologue_8'];
-      nodes.main = extractNodesFromScenes(sceneKeys);
-    } else if (chapterKey === 'ch1') {
-      title = '第一章 · 塔瓦娜'; subtitle = '面见院长'; location = '梦目院总部 · 大厅'; bg = 'manor'; chapterNum = 1;
-      const sceneKeys = ['manor_1', 'manor_2a', 'manor_2b', 'manor_2c', 'manor_3'];
-      nodes.main = extractNodesFromScenes(sceneKeys);
-    }
-    return { key: chapterKey, title, subtitle, location, bg, type, chapterNum, nodes };
+  function getBuiltinChapterData(key) {
+    const chData = window.Game.chapters[key];
+    if (!chData) return null;
+    return {
+      key: chData.id,
+      title: chData.title || chData.id,
+      subtitle: chData.subtitle || '',
+      location: chData.entry && chData.nodes[chData.entry] ? (chData.nodes[chData.entry].location || '') : '',
+      bg: 'city',
+      type: chData.type || 'main',
+      chapterNum: NF.parseChapterNum(chData.title),
+      nodes: extractNodesFromGameChapter(chData.nodes)
+    };
   }
 
-  function extractNodesFromScenes(sceneKeys) {
-    let nodes = [];
-    sceneKeys.forEach(k => {
-      const sc = NF.SCENES[k];
-      if (!sc) return;
-      if (sc.lines) {
-        sc.lines.forEach(l => {
-          if (l.s) nodes.push({ type:'dialogue', who: l.who || matchCharId(l.s), char: l.s, cn: l.cn, en: l.en || '' });
-          else if (l.me) nodes.push({ type:'me', cn: l.me, en: l.en || '' });
-          else nodes.push({ type:'narration', cn: l.cn || l.t || '' });
-        });
-      }
-      if (sc.choices) {
-        const choices = sc.choices.map(c => ({
-          text: c.cn || c.text,
-          next: c.next ? `分支_${c.next}` : null,
-          condition: null,
-          effects: c.set ? { aff: c.set.aff, flags: c.set } : null
-        }));
-        nodes.push({ type:'choice', choices });
-      }
-    });
-    if (nodes.length === 0) nodes.push({ type:'narration', cn: '' });
-    return nodes;
+  function extractNodesFromGameChapter(nodesObj) {
+    let mainNodes = [];
+    const startKey = nodesObj.start ? 'start' : Object.keys(nodesObj)[0];
+    if (!startKey) return { main: [] };
+    const node = nodesObj[startKey];
+    if (node.lines) {
+      node.lines.forEach(l => {
+        if (l.s) mainNodes.push({ type:'dialogue', who: l.who || matchCharId(l.s), char: l.s, cn: l.cn, en: l.en || '' });
+        else if (l.me) mainNodes.push({ type:'me', cn: l.me, en: l.en || '' });
+        else mainNodes.push({ type:'narration', cn: l.cn || l.t || '' });
+      });
+    }
+    if (node.choices) {
+      const choices = node.choices.map(c => ({
+        text: c.cn || c.text, next: c.next ? `分支_${c.next}` : null, condition: null, effects: c.set ? { aff: c.set.aff, flags: c.set } : null
+      }));
+      mainNodes.push({ type:'choice', choices });
+    }
+    return { main: mainNodes };
   }
 
   /* ═══ 主渲染 ═══ */
@@ -591,7 +587,7 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 地点表单（完整版，包含所有可交互入口） ─── */
+  /* ─── 地点表单（完整版） ─── */
   function renderLocationForm(box, main) {
     if (!wsFormData) wsFormData = blankLocation();
     box.innerHTML =
@@ -686,7 +682,7 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 乙游话题表单（完整版，包含多行对话） ─── */
+  /* ─── 乙游话题表单（完整版） ─── */
   function renderBondForm(box, main) {
     if (!wsFormData) wsFormData = blankBond();
     box.innerHTML =
@@ -757,7 +753,7 @@
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 礼物表单（完整版，包含多选） ─── */
+  /* ─── 礼物表单（完整版） ─── */
   function renderGiftForm(box, main) {
     if (!wsFormData) wsFormData = blankGift();
     box.innerHTML =
@@ -806,7 +802,7 @@
     renderList(document.querySelector('#wsMain'));
   }
 
-  /* ─── CG 表单（完整版，包含多行） ─── */
+  /* ─── CG 表单（完整版） ─── */
   function renderCGForm(box, main) {
     if (!wsFormData) wsFormData = blankCG();
     box.innerHTML =
@@ -865,27 +861,43 @@
     if (NF.renderBondGrid) NF.renderBondGrid();
   }
 
-  /* ─── 已导入列表（含内置反推） ─── */
+  /* ═══════════════════════════════════════════════════════════
+     已导入列表（全量显示用户与内置内容）
+     ═══════════════════════════════════════════════════════════ */
   function renderList(main) {
     const box = main.querySelector('#wsList'); if (!box) return;
     const u = NF.userContent();
+    
     const userChapters = (u.chapters || []).map(c => ({ ...c, _type:'chapter', _kind:c.type || 'main', _isUser: true }));
     const userLocations = (u.locations || []).map(l => ({ ...l, _type:'location', _isUser: true }));
     const userBonds = (u.bondTopics || []).map(t => ({ ...t, _type:'bond', _isUser: true }));
     const userGifts = (u.gifts || []).map(g => ({ ...g, _type:'gift', _isUser: true }));
     const userCgs = (u.cgs || []).map(c => ({ ...c, _type:'cg', _isUser: true }));
 
-    const builtinChapters = [];
-    const builtinKeys = ['prologue', 'ch1'];
-    builtinKeys.forEach(key => {
-      const covered = userChapters.some(uc => uc.chapterNum !== null && uc.chapterNum === (key === 'prologue' ? 0 : 1));
-      if (!covered) {
-        const chData = getBuiltinChapterData(key);
-        builtinChapters.push({ key: key, title: chData.title, _type: 'chapter', _kind: 'main', _isUser: false, chapterNum: chData.chapterNum, ts: 0 });
-      }
-    });
+    // 提取所有内置章节（排除被用户覆盖的）
+    let builtinChapters = [];
+    if (window.Game && window.Game.chapters) {
+        Object.values(window.Game.chapters).forEach(c => {
+            const num = NF.parseChapterNum(c.title);
+            const covered = userChapters.some(uc => uc.title === c.title || (num !== null && uc.chapterNum === num));
+            if (!covered) builtinChapters.push({ key: c.id, title: c.title || c.id, _type: 'chapter', _kind: c.type || 'main', _isUser: false, chapterNum: num, ts: 0 });
+        });
+    }
 
-    const all = [...builtinChapters, ...userChapters, ...userLocations, ...userBonds, ...userGifts, ...userCgs];
+    // 提取所有内置地点、乙游、礼物、CG（排除被用户覆盖的）
+    const builtinLocations = (NF.LOCATIONS || []).filter(l => !userLocations.some(ul => ul.name === l.name)).map(l => ({ key: l.name, name: l.name, title: l.name, _type:'location', _isUser: false }));
+    const builtinBonds = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !userBonds.some(ub => ub.title === t.title)).map(t => ({ key: t.title, title: t.title, _type:'bond', _isUser: false }));
+    const builtinGifts = (NF.GIFTS_BUILTIN || []).filter(g => !userGifts.some(ug => ug.name === g.name)).map(g => ({ key: g.name, name: g.name, title: g.name, _type:'gift', _isUser: false }));
+    const builtinCgs = (NF.CGS_BUILTIN || []).filter(c => !userCgs.some(ucg => ucg.title === c.title)).map(c => ({ key: c.title, title: c.title, _type:'cg', _isUser: false }));
+
+    const all = [
+        ...builtinChapters, ...userChapters,
+        ...builtinLocations, ...userLocations,
+        ...builtinBonds, ...userBonds,
+        ...builtinGifts, ...userGifts,
+        ...builtinCgs, ...userCgs
+    ];
+    
     all.sort((a, b) => {
       if (!a._isUser && b._isUser) return -1;
       if (a._isUser && !b._isUser) return 1;
@@ -897,12 +909,13 @@
     let html = '<div class="ws-pack-list">';
     all.forEach(item => {
       let time = item._isUser ? (() => { const t = new Date(item.ts); return t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate(); })() : '官方内置';
-      let typeLabel = { chapter:'章节', dungeon:'副本', location:'地点', bond:'乙游话题', gift:'礼物', cg:'CG' }[item._type] || item._type;
+      let typeLabel = { chapter:'章节', dungeon:'副本', side:'支线', location:'地点', bond:'乙游话题', gift:'礼物', cg:'CG' }[item._kind || item._type] || item._type;
       if (item._type === 'chapter') {
         const n = item.chapterNum;
         if (n !== null && n !== undefined) typeLabel = (n === 0 ? '序章' : '第 ' + n + ' 章');
       }
       const name = item.title || item.name || item.key;
+      
       html += '<div class="ws-pack" data-key="' + esc(item.key) + '" data-type="' + item._type + '" data-kind="' + (item._kind||'') + '" data-isuser="' + item._isUser + '">' +
         '<div class="ws-pack-head"><div class="ws-pack-title">' + esc(name) + '</div><div style="font-size:11px;color:var(--gold-d);">' + typeLabel + '</div></div>' +
         '<div class="ws-pack-meta">' + time + '</div>' +
@@ -914,10 +927,11 @@
 
     box.querySelectorAll('.ws-pack').forEach(el => {
       const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind, isUser = el.dataset.isuser === 'true';
+      
       el.querySelector('[data-a="edit"]').onclick = () => {
         NF.Sfx.click();
         wsEditKey = key; wsEditKind = kind || null;
-        wsType = type === 'chapter' ? (kind === 'dungeon' ? 'dungeon' : 'chapter') : type;
+        wsType = type === 'chapter' ? ((kind === 'dungeon' || kind === 'side') ? 'dungeon' : 'chapter') : type;
         const u = NF.userContent();
         
         if (type === 'chapter') {
@@ -925,6 +939,7 @@
             wsFormData = JSON.parse(JSON.stringify(u.chapters.find(x => x.key === key) || blankChapter(kind)));
           } else {
             const bData = getBuiltinChapterData(key);
+            if (!bData) { NF.toast('找不到内置章节数据', 'warn'); return; }
             wsFormData = {
               type: bData.type, title: bData.title, subtitle: bData.subtitle,
               location: bData.location, bg: bData.bg,
@@ -933,19 +948,35 @@
             wsEditKey = 'ch_' + bData.title; 
           }
         } else if (type === 'location') {
-          wsFormData = isUser ? JSON.parse(JSON.stringify(u.locations.find(x => x.key === key) || blankLocation())) : blankLocation();
+          if (isUser) wsFormData = JSON.parse(JSON.stringify(u.locations.find(x => x.key === key) || blankLocation()));
+          else {
+             const loc = NF.LOCATIONS.find(l => l.name === key);
+             wsFormData = loc ? JSON.parse(JSON.stringify({...loc, name: loc.name})) : blankLocation();
+          }
         } else if (type === 'bond') {
-          wsFormData = isUser ? JSON.parse(JSON.stringify(u.bondTopics.find(x => x.key === key) || blankBond())) : blankBond();
+          if (isUser) wsFormData = JSON.parse(JSON.stringify(u.bondTopics.find(x => x.key === key) || blankBond()));
+          else {
+             const bond = NF.BOND_TOPICS_BUILTIN.find(t => t.title === key);
+             wsFormData = bond ? JSON.parse(JSON.stringify({...bond, title: bond.title})) : blankBond();
+          }
         } else if (type === 'gift') {
-          wsFormData = isUser ? JSON.parse(JSON.stringify(u.gifts.find(x => x.key === key) || blankGift())) : blankGift();
+          if (isUser) wsFormData = JSON.parse(JSON.stringify(u.gifts.find(x => x.key === key) || blankGift()));
+          else {
+             const gift = NF.GIFTS_BUILTIN.find(g => g.name === key);
+             wsFormData = gift ? JSON.parse(JSON.stringify({...gift, name: gift.name})) : blankGift();
+          }
         } else if (type === 'cg') {
-          wsFormData = isUser ? JSON.parse(JSON.stringify(u.cgs.find(x => x.key === key) || blankCG())) : blankCG();
+          if (isUser) wsFormData = JSON.parse(JSON.stringify(u.cgs.find(x => x.key === key) || blankCG()));
+          else {
+             const cg = NF.CGS_BUILTIN.find(c => c.title === key);
+             wsFormData = cg ? JSON.parse(JSON.stringify({...cg, title: cg.title})) : blankCG();
+          }
         }
         render();
       };
       
       el.querySelector('[data-a="del"]').onclick = () => {
-        if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？')) return;
+        if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？\n(内置内容不可彻底删除，刷新后会恢复)')) return;
         NF.Sfx.fail();
         const u = NF.userContent();
         if (type === 'chapter') u.chapters = u.chapters.filter(x => x.key !== key);
