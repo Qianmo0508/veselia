@@ -1626,11 +1626,28 @@ function renderBranchLine(){
 
   let guard = 0;
   while (guard++ < 500) {
+    // 处理效果
     while (idx < node.length && node[idx].type === 'effect') {
       applyBranchEffects(node[idx].effects);
       idx++;
       state.branchIdx = idx;
     }
+    
+    // ★ 新增：处理地点与背景切换
+    while (idx < node.length && node[idx].type === 'env') {
+      const env = node[idx];
+      if (env.bg) {
+        const bg = $('#sceneBg');
+        if (bg) bg.className = 'scene-bg bg-' + env.bg;
+      }
+      if (env.loc) {
+        if ($('#locLabel')) $('#locLabel').textContent = env.loc;
+        if ($('#gameTopLoc')) $('#gameTopLoc').textContent = env.loc;
+      }
+      idx++;
+      state.branchIdx = idx;
+    }
+    
     if (idx >= node.length) { finishUserChapter(); return; }
     const n = node[idx];
 
@@ -1664,27 +1681,38 @@ function showBranchLineNode(n){
   if (!inner) return;
   const div = document.createElement('div');
   div.className = 'line';
+  
   if (n.type === 'narration') {
     div.classList.add('narration');
     div.innerHTML = '<div class="cn"></div>';
     inner.appendChild(div);
     typeInto(div.querySelector('.cn'), n.cn || '', onLineDone);
     pushLog('旁白', n.cn);
-  } else if (n.type === 'me') {
+  } else if (n.type === 'monologue') {
+    // ★ 内心独白：无对话框，斜体，紫色
     div.classList.add('monologue');
     div.innerHTML = (n.en ? '<div class="en">' + esc(n.en) + '</div>' : '') + '<div class="cn"></div>';
     inner.appendChild(div);
     typeInto(div.querySelector('.cn'), n.cn || '', onLineDone);
     pushLog('我', n.cn, n.en);
   } else if (n.type === 'dialogue') {
-    const ch = CHARS[n.who] || { name: n.char || n.who, en:'' };
-    const charEn = (CHARS[n.who] && CHARS[n.who].en) || '';
-    div.innerHTML = '<div class="speaker">' + esc(ch.name) + (charEn ? ' · ' + esc(charEn) : '') + '</div>' +
-                    (n.en ? '<div class="en">' + esc(n.en) + '</div>' : '') +
-                    '<div class="cn"></div>';
-    inner.appendChild(div);
-    typeInto(div.querySelector('.cn'), n.cn || '', onLineDone);
-    pushLog(ch.name, n.cn, n.en);
+    // ★ 主角说话：带对话框，正常格式
+    if (n.who === 'me') {
+      div.classList.add('player');
+      div.innerHTML = '<div class="speaker">' + esc((state && state.player && state.player.name) || '记者') + '</div>' + (n.en ? '<div class="en">' + esc(n.en) + '</div>' : '') + '<div class="cn"></div>';
+      inner.appendChild(div);
+      typeInto(div.querySelector('.cn'), n.cn || '', onLineDone);
+      pushLog((state && state.player && state.player.name) || '记者', n.cn, n.en);
+    } else {
+      const ch = CHARS[n.who] || { name: n.char || n.who, en:'' };
+      const charEn = (CHARS[n.who] && CHARS[n.who].en) || '';
+      div.innerHTML = '<div class="speaker">' + esc(ch.name) + (charEn ? ' · ' + esc(charEn) : '') + '</div>' +
+                      (n.en ? '<div class="en">' + esc(n.en) + '</div>' : '') +
+                      '<div class="cn"></div>';
+      inner.appendChild(div);
+      typeInto(div.querySelector('.cn'), n.cn || '', onLineDone);
+      pushLog(ch.name, n.cn, n.en);
+    }
   }
   if ($('#contHint')) $('#contHint').style.display = 'none';
   saveNow();
@@ -1695,15 +1723,21 @@ function renderBranchLineNodeInstant(n){
   if (!inner) return;
   const div = document.createElement('div');
   div.className = 'line';
+  
   if (n.type === 'narration') {
     div.classList.add('narration');
     div.innerHTML = '<div class="cn">' + esc(n.cn||'') + '</div>';
-  } else if (n.type === 'me') {
+  } else if (n.type === 'monologue') {
     div.classList.add('monologue');
     div.innerHTML = (n.en ? '<div class="en">'+esc(n.en)+'</div>' : '') + '<div class="cn">' + esc(n.cn||'') + '</div>';
   } else if (n.type === 'dialogue') {
-    const ch = CHARS[n.who] || { name: n.char || n.who };
-    div.innerHTML = '<div class="speaker">' + esc(ch.name) + '</div>' + (n.en?'<div class="en">'+esc(n.en)+'</div>':'') + '<div class="cn">' + esc(n.cn||'') + '</div>';
+    if (n.who === 'me') {
+      div.classList.add('player');
+      div.innerHTML = '<div class="speaker">' + esc((state && state.player && state.player.name) || '记者') + '</div>' + (n.en?'<div class="en">'+esc(n.en)+'</div>':'') + '<div class="cn">' + esc(n.cn||'') + '</div>';
+    } else {
+      const ch = CHARS[n.who] || { name: n.char || n.who };
+      div.innerHTML = '<div class="speaker">' + esc(ch.name) + '</div>' + (n.en?'<div class="en">'+esc(n.en)+'</div>':'') + '<div class="cn">' + esc(n.cn||'') + '</div>';
+    }
   } else return;
   inner.appendChild(div);
 }
@@ -1882,7 +1916,7 @@ function playSceneFromSnapshot(){
     const upto = state.branchIdx || 0;
     for (let i = 0; i < upto && i < node.length; i++) {
       const n = node[i];
-      if (n.type === 'narration' || n.type === 'me' || n.type === 'dialogue') renderBranchLineNodeInstant(n);
+      if (n.type === 'narration' || n.type === 'me' || n.type === 'dialogue' || n.type === 'monologue') renderBranchLineNodeInstant(n);
     }
     scrollToBottom();
     saveNow();
