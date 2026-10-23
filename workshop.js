@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   workshop.js · v2 · 支持选项的批量导入 + 全表单
-   依赖 index.html 暴露的 window.NF
+   workshop.js · 剧情工坊全表单（全量恢复 + 内置章节反推）
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -57,149 +56,84 @@
     return n;
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     扩展批量格式解析器
-     ═══════════════════════════════════════════════════════════
-     指令：
-       # 标题            → title
-       ## 副标题         → subtitle
-       @地点             → location
-       !背景             → bg
-       --- / ===         → 分隔（忽略）
-       ? 选项文字 -> 标签 [!条件] [效果]   → choice
-       :标签             → 分支开始
-       -> 标签           → 跳到某分支
-     条件：
-       !aff.cash>=20     → 卡什好感 ≥ 20
-       !flag.metCash     → flag
-       !silver>=50       → 银镑 ≥ 50
-       !vars.xxx==yyy    → 自定义变量
-     效果（行尾）：
-       {aff:cash+5}
-       {silver+20} {silver-5}
-       {flag:metCash}
-     ═══════════════════════════════════════════════════════════ */
+  /* ═══ 批量导入解析器 ═══ */
+  function parseEffects(str) {
+    const fx = {};
+    if (!str) return fx;
+    const affRe = /\{aff:([a-z]+)([+-])(\d+)\}/g;
+    let m;
+    while ((m = affRe.exec(str)) !== null) {
+      if (!fx.aff) fx.aff = {};
+      fx.aff[m[1]] = (fx.aff[m[1]] || 0) + (m[2] === '+' ? parseInt(m[3]) : -parseInt(m[3]));
+    }
+    const silverRe = /\{silver([+-])(\d+)\}/g;
+    while ((m = silverRe.exec(str)) !== null) {
+      fx.silver = (fx.silver || 0) + (m[1] === '+' ? parseInt(m[2]) : -parseInt(m[2]));
+    }
+    const flagRe = /\{flag:([a-zA-Z0-9_]+)\}/g;
+    while ((m = flagRe.exec(str)) !== null) {
+      if (!fx.flags) fx.flags = {};
+      fx.flags[m[1]] = true;
+    }
+    const unlockRe = /\{unlock:([a-zA-Z0-9_]+)\}/g;
+    while ((m = unlockRe.exec(str)) !== null) {
+      if (!fx.unlock) fx.unlock = [];
+      if (!fx.unlock.includes(m[1])) fx.unlock.push(m[1]);
+    }
+    return fx;
+  }
 
-  /* 解析效果串：{aff:cash+5} {silver+20} {flag:metCash} */
-function parseEffects(str) {
-  const fx = {};
-  if (!str) return fx;
-  const affRe = /\{aff:([a-z]+)([+-])(\d+)\}/g;
-  let m;
-  while ((m = affRe.exec(str)) !== null) {
-    if (!fx.aff) fx.aff = {};
-    fx.aff[m[1]] = (fx.aff[m[1]] || 0) + (m[2] === '+' ? parseInt(m[3]) : -parseInt(m[3]));
-  }
-  const silverRe = /\{silver([+-])(\d+)\}/g;
-  while ((m = silverRe.exec(str)) !== null) {
-    fx.silver = (fx.silver || 0) + (m[1] === '+' ? parseInt(m[2]) : -parseInt(m[2]));
-  }
-  const flagRe = /\{flag:([a-zA-Z0-9_]+)\}/g;
-  while ((m = flagRe.exec(str)) !== null) {
-    if (!fx.flags) fx.flags = {};
-    fx.flags[m[1]] = true;
-  }
-  const unlockRe = /\{unlock:([a-zA-Z0-9_]+)\}/g;
-  while ((m = unlockRe.exec(str)) !== null) {
-    if (!fx.unlock) fx.unlock = [];
-    if (!fx.unlock.includes(m[1])) fx.unlock.push(m[1]);
-  }
-  return fx;
-}
-
-  /* 解析条件串（!之后的部分）：
-     aff.cash>=20 | flag.metCash | silver>=50 | vars.xxx==yyy */
   function parseCondition(str) {
     if (!str) return null;
     const s = str.trim();
-    // aff.xxx>=n / aff.xxx<=n / aff.xxx>n / aff.xxx<n
     let m = s.match(/^aff\.([a-z]+)\s*(>=|<=|>|<|==)\s*(\d+)$/);
     if (m) {
       const charId = m[1], op = m[2], val = parseInt(m[3]);
       return (st) => {
         const v = (st?.affection?.[charId]) || 0;
         switch (op) {
-          case '>=': return v >= val;
-          case '<=': return v <= val;
-          case '>': return v > val;
-          case '<': return v < val;
+          case '>=': return v >= val; case '<=': return v <= val;
+          case '>': return v > val; case '<': return v < val;
           case '==': return v === val;
         }
         return true;
       };
     }
-    // flag.xxx
     m = s.match(/^flag\.([a-zA-Z0-9_]+)$/);
-    if (m) {
-      const key = m[1];
-      return (st) => !!st?.flags?.[key];
-    }
-    // silver>=n
+    if (m) { const key = m[1]; return (st) => !!st?.flags?.[key]; }
     m = s.match(/^silver\s*(>=|<=|>|<|==)\s*(\d+)$/);
     if (m) {
       const op = m[1], val = parseInt(m[2]);
       return (st) => {
         const v = (st?.stats?.silver) || 0;
         switch (op) {
-          case '>=': return v >= val;
-          case '<=': return v <= val;
-          case '>': return v > val;
-          case '<': return v < val;
+          case '>=': return v >= val; case '<=': return v <= val;
+          case '>': return v > val; case '<': return v < val;
           case '==': return v === val;
         }
         return true;
       };
     }
-    // vars.xxx==yyy
-    m = s.match(/^vars\.([a-zA-Z0-9_]+)\s*==\s*["']?([^"']*)["']?$/);
-    if (m) {
-      const key = m[1], val = m[2];
-      return (st) => String(st?.vars?.[key]) === String(val);
-    }
     return null;
   }
 
-  /* 拆分一行到 选项文本 / 目标标签 / 条件 / 效果 */
   function parseChoiceLine(line) {
-    // ? 选项文字 -> 标签 [!条件] [效果]
-    // 或 ? 选项文字 -> 标签 {aff:cash+5} !aff.cash>=20
     if (!line.startsWith('?')) return null;
     let rest = line.slice(1).trim();
     if (!rest) return null;
-    // 提取所有 {...} 效果
     const effects = (rest.match(/\{[^}]*\}/g) || []).join(' ');
     rest = rest.replace(/\{[^}]*\}/g, '').trim();
-    // 提取所有 !条件
     let condition = null;
-    const condMatch = rest.match(/\s+!([a-zA-Z0-9_.]+[<>=!]*\d*|flag\.[a-zA-Z0-9_]+|vars\.[a-zA-Z0-9_]+(==[^ ]+)?)$/);
-    // 简化：找最后一个 !xxx 作为条件
     const condRe = /\s+(![a-zA-Z0-9_.]+(?:[<>=]+\d+)?)\s*$/;
     const cm = rest.match(condRe);
-    if (cm) {
-      condition = cm[1].slice(1);
-      rest = rest.slice(0, cm.index).trim();
-    }
-    // 找 ->
+    if (cm) { condition = cm[1].slice(1); rest = rest.slice(0, cm.index).trim(); }
     const arrowIdx = rest.indexOf('->');
     if (arrowIdx < 0) return { text: rest, next: null, condition: parseCondition(condition), effects: parseEffects(effects) };
     const text = rest.slice(0, arrowIdx).trim();
     const next = rest.slice(arrowIdx + 2).trim();
-    return {
-      text,
-      next: next || null,
-      condition: parseCondition(condition),
-      effects: parseEffects(effects)
-    };
+    return { text, next: next || null, condition: parseCondition(condition), effects: parseEffects(effects) };
   }
 
-  /* 解析完整批量文本 → 结构：
-     {
-       title, subtitle, location, bg,
-       nodes: {
-         main: [{ type:'n'|'s'|'me', cn, en, who } | { type:'choice', choices:[{text, next, condition, effects}] }],
-         分支标签: [...]
-       }
-     } */
   function parseBulkText(text) {
     const result = { title:'', subtitle:'', location:'', bg:'city', nodes: { main: [] } };
     if (!text) return result;
@@ -210,15 +144,12 @@ function parseEffects(str) {
     for (let raw of rawLines) {
       const line = raw.trim();
       if (!line) continue;
-
-      /* 指令头 */
       if (line.startsWith('## ')) { result.subtitle = line.slice(3).trim(); continue; }
       if (line.startsWith('#')) { result.title = line.replace(/^#+\s*/, '').trim(); continue; }
       if (line.startsWith('@')) { result.location = line.slice(1).trim(); continue; }
       if (line.startsWith('!') && BGS.includes(line.slice(1).trim())) { result.bg = line.slice(1).trim(); continue; }
       if (/^[-=*]{3,}$/.test(line)) continue;
 
-      /* 分支开始 :标签 */
       if (line.startsWith(':')) {
         const key = line.slice(1).trim();
         if (!key) continue;
@@ -227,70 +158,48 @@ function parseEffects(str) {
         currentNode = result.nodes[currentKey];
         continue;
       }
-
-      /* 跳到某分支 -> 标签（或 -> 结束） */
       if (line.startsWith('->')) {
         const target = line.slice(2).trim();
         currentNode.push({ type: 'jump', to: target || 'end' });
         continue;
       }
-
-      /* 选项 ? */
       if (line.startsWith('?')) {
         const choice = parseChoiceLine(line);
         if (!choice) continue;
-        // 找最后一条是不是 choice，如果是就合并
         const last = currentNode[currentNode.length - 1];
-        if (last && last.type === 'choice') {
-          last.choices.push(choice);
-        } else {
-          currentNode.push({ type: 'choice', choices: [choice] });
-        }
+        if (last && last.type === 'choice') last.choices.push(choice);
+        else currentNode.push({ type: 'choice', choices: [choice] });
         continue;
       }
-
-      /* 单独的效果行 {aff:cash+5} */
       if (/^\{[^}]+\}$/.test(line)) {
         currentNode.push({ type: 'effect', effects: parseEffects(line) });
         continue;
       }
-
-      /* 主角内心独白（括号） */
       if (/^[（(].+[）)]$/.test(line)) {
         currentNode.push({ type: 'me', cn: line.slice(1, -1).trim(), en: '' });
         continue;
       }
-
-      /* 冒号分隔 */
       const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
       if (colonMatch) {
         const who = colonMatch[1].trim();
         let body = colonMatch[2].trim();
         if (!body) continue;
-        // 行尾效果
         const effects = (body.match(/\{[^}]*\}/g) || []).join(' ');
         body = body.replace(/\{[^}]*\}/g, '').trim();
         let en = '', cn = body;
         const pipeIdx = body.indexOf('|');
         if (pipeIdx >= 0) { en = body.slice(0, pipeIdx).trim(); cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim(); }
         const isMe = ['我','主角','你','我(主角)','主人公'].includes(who);
-        if (isMe) {
-          currentNode.push({ type: 'me', cn, en });
-        } else {
-          currentNode.push({ type: 'dialogue', who: matchCharId(who), char: who, cn, en });
-        }
+        if (isMe) currentNode.push({ type: 'me', cn, en });
+        else currentNode.push({ type: 'dialogue', who: matchCharId(who), char: who, cn, en });
         if (effects) currentNode.push({ type: 'effect', effects: parseEffects(effects) });
         continue;
       }
-
-      /* 其他 → 旁白 */
       currentNode.push({ type: 'narration', cn: line });
     }
-
     return result;
   }
 
-  /* ═══ 预览渲染 ═══ */
   function renderBulkPreview(box, result) {
     if (!result) { box.innerHTML = ''; return; }
     let html = '';
@@ -304,54 +213,37 @@ function parseEffects(str) {
     const nodeKeys = Object.keys(result.nodes);
     let totalLines = 0, totalChoices = 0;
     nodeKeys.forEach(k => {
-      const node = result.nodes[k];
-      totalLines += node.length;
-      node.forEach(n => { if (n.type === 'choice') totalChoices += n.choices.length; });
+      totalLines += result.nodes[k].length;
+      result.nodes[k].forEach(n => { if (n.type === 'choice') totalChoices += n.choices.length; });
     });
 
     if (!totalLines) {
       html += '<p style="color:var(--text-d);font-style:italic;font-size:12px;">尚未输入任何内容。</p>';
     } else {
       nodeKeys.forEach(k => {
-        const isMain = k === 'main';
-        if (!isMain) {
-          html += '<div style="margin-top:16px;padding:6px 10px;background:rgba(201,169,97,.08);border-left:2px solid var(--gold);font-size:11px;color:var(--gold-b);letter-spacing:.12em;">分支 · ' + esc(k) + '</div>';
-        }
+        if (k !== 'main') html += '<div style="margin-top:16px;padding:6px 10px;background:rgba(201,169,97,.08);border-left:2px solid var(--gold);font-size:11px;color:var(--gold-b);letter-spacing:.12em;">分支 · ' + esc(k) + '</div>';
         result.nodes[k].forEach((n, i) => {
           if (n.type === 'choice') {
-            html += '<div style="padding:8px 0;border-top:1px dashed rgba(201,169,97,.1);">' +
-              '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:4px;">◇ 选项' + (n.choices.some(c=>c.condition) ? '（含条件）' : '') + '</div>';
+            html += '<div style="padding:8px 0;border-top:1px dashed rgba(201,169,97,.1);"><div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:4px;">◇ 选项</div>';
             n.choices.forEach((c, j) => {
-              html += '<div style="font-size:12.5px;color:var(--text);line-height:1.7;padding:3px 0 3px 12px;border-left:2px solid rgba(201,169,97,.3);margin-bottom:4px;">' +
-                '<span style="color:var(--gold);font-family:var(--f-sym);">' + '①②③④⑤⑥⑦⑧⑨'.charAt(j) + '</span> ' +
-                esc(c.text) +
-                (c.next ? ' <span style="color:var(--gold-d);font-size:10.5px;">→ ' + esc(c.next) + '</span>' : '') +
-                (c.condition ? ' <span style="color:#d08a9c;font-size:10px;">[条件]</span>' : '') +
-                (c.effects && Object.keys(c.effects).length ? ' <span style="color:#9dd0a0;font-size:10px;">[效果]</span>' : '') +
-              '</div>';
+              html += '<div style="font-size:12.5px;color:var(--text);line-height:1.7;padding:3px 0 3px 12px;border-left:2px solid rgba(201,169,97,.3);margin-bottom:4px;"><span style="color:var(--gold);font-family:var(--f-sym);">' + '①②③④⑤⑥⑦⑧⑨'.charAt(j) + '</span> ' + esc(c.text) + (c.next ? ' <span style="color:var(--gold-d);font-size:10.5px;">→ ' + esc(c.next) + '</span>' : '') + '</div>';
             });
             html += '</div>';
           } else if (n.type === 'jump') {
-            html += '<div style="padding:8px 0;border-top:1px dashed rgba(201,169,97,.1);">' +
-              '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:4px;">→ 跳转</div>' +
-              '<div style="font-size:12px;color:var(--gold-b);">→ ' + esc(n.to) + '</div>' +
-            '</div>';
+            html += '<div style="padding:8px 0;border-top:1px dashed rgba(201,169,97,.1);"><div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:4px;">→ 跳转</div><div style="font-size:12px;color:var(--gold-b);">→ ' + esc(n.to) + '</div></div>';
           } else if (n.type === 'effect') {
             const parts = [];
             if (n.effects.aff) for (const k2 in n.effects.aff) parts.push('好感 ' + k2 + ' ' + (n.effects.aff[k2] >= 0 ? '+' : '') + n.effects.aff[k2]);
             if (n.effects.silver) parts.push('银镑 ' + (n.effects.silver >= 0 ? '+' : '') + n.effects.silver);
-            if (n.effects.flags) for (const k2 in n.effects.flags) parts.push('flag ' + k2);
-            html += '<div style="padding:6px 0;color:#9dd0a0;font-size:11px;letter-spacing:.06em;">◇ 效果：' + esc(parts.join('　')) + '</div>';
+            if (n.effects.unlock) for (const k2 of n.effects.unlock) parts.push('解锁 ' + k2);
+            html += '<div style="padding:6px 0;color:#9dd0a0;font-size:11px;">◇ 效果：' + esc(parts.join('　')) + '</div>';
           } else {
             const isNarr = n.type === 'narration';
             const isMe = n.type === 'me';
             let speaker = '';
-            if (n.type === 'dialogue') {
-              const ch = NF.CHARS[n.who];
-              speaker = ch ? ch.name : (n.char || n.who || '？？？');
-            } else if (isMe) speaker = NF.state()?.player?.name || '记者';
-            html += '<div style="padding:8px 0;' + (i>0?'border-top:1px dashed rgba(201,169,97,.1);':'') + '">' +
-              '<div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:3px;">' + (isNarr ? '旁白' : (isMe ? '主角 · ' + esc(speaker) : '角色 · ' + esc(speaker))) + '</div>';
+            if (n.type === 'dialogue') speaker = NF.CHARS[n.who]?.name || n.char || n.who || '？？？';
+            else if (isMe) speaker = NF.state()?.player?.name || '记者';
+            html += '<div style="padding:8px 0;' + (i>0?'border-top:1px dashed rgba(201,169,97,.1);':'') + '"><div style="font-size:10.5px;letter-spacing:.14em;color:var(--gold-d);margin-bottom:3px;">' + (isNarr ? '旁白' : (isMe ? '主角 · ' + esc(speaker) : '角色 · ' + esc(speaker))) + '</div>';
             if (n.en) html += '<div style="font-family:var(--f-en);font-style:italic;font-size:13px;color:var(--gold-b);line-height:1.6;">' + esc(n.en) + '</div>';
             if (n.cn) html += '<div style="font-size:12.5px;color:' + (isNarr?'var(--text-d)':'var(--text)') + ';line-height:1.75;' + (isNarr?'font-style:italic;':'') + '">' + esc(n.cn) + '</div>';
             html += '</div>';
@@ -369,48 +261,25 @@ function parseEffects(str) {
 @梦目院总部 · 大厅
 !manor
 
-梦目院的大厅比想象中安静。高耸的石柱，冷白色的穹顶。
+梦目院的大厅比想象中安静。
 
-塔瓦娜：Welcome. Please, sit. Coffee? | 「欢迎。请坐。咖啡？」
-塔瓦娜：I'll be direct. You want to investigate the nightmare. I want to know why. | 「我直说了。你想调查魇。我想知道为什么。」
+塔瓦娜：Welcome. Please, sit. Coffee? | 「欢迎，请坐，咖啡？」
 
 ? 「我是记者。这是我的职责。」 -> 职责线
 ? 「我在王翼见过不该看见的东西。」 -> 王翼线
-? 「我听说……这里有人能让人再也醒不过来。」 -> 未归线
 
 :职责线
-我：我是记者。这是我的职责。
-塔瓦娜：A duty. Good. Duty is more reliable than curiosity. | 「职责。很好。职责比好奇心可靠。」
+塔瓦娜：A duty. Good. | 「职责。很好。」
 {aff:tavana+3}
 -> 收束
 
 :王翼线
-我：我在王翼见过不该看见的东西。
-塔瓦娜：In the Wing... What did you see? | 「在王翼……你看见了什么？」
-我：一座城市。所有人都在睡觉。但没有人做梦。
-塔瓦娜：That is worse than a nightmare. Much worse. | 「那比噩梦更糟。糟得多。」
+塔瓦娜：That is worse than a nightmare. | 「那比噩梦更糟。」
 {aff:tavana+5}
-{flag:seenWing}
--> 收束
-
-:未归线
-我：我听说……这里有人能让人再也醒不过来。
-塔瓦娜：Yes. Those are called the Unreturned. | 「是的。那些人叫未归之人。」
-{aff:tavana+1}
 -> 收束
 
 :收束
-塔瓦娜：One more thing. Stay away from the church. | 「还有一件事。远离教堂。」
-
-她笑了一下，露出一点疲惫。
-
-【条件与效果示例】
-? 「问问卡什的墨镜。」 -> 墨镜线 !aff.cash>=20
-? 「送他一片银杏叶。」 -> 送礼线 !silver>=5 {silver-5}{aff:cash+4}
-
-:墨镜线
-卡什：Oh, you know. Style. | 「哦，你知道的。造型。」
--> 收束`;
+她笑了一下，露出一点疲惫。`;
 
   function openBulkImport(formBox, main) {
     NF.openModal({
@@ -424,7 +293,7 @@ function parseEffects(str) {
           '<b style="color:var(--gold-b);">? 选项文字 -> 标签</b>　选项（连续多行 = 同一组选项）<br>' +
           '<b style="color:var(--gold-b);">:标签</b>　分支开始　　<b style="color:var(--gold-b);">-> 标签</b>　跳到某分支<br>' +
           '<b style="color:var(--gold-b);">!条件</b>（行尾）：!aff.cash>=20　!flag.metCash　!silver>=50<br>' +
-          '<b style="color:var(--gold-b);">效果</b>（行尾）：{aff:cash+5}　{silver+20}　{flag:metCash}' +
+          '<b style="color:var(--gold-b);">效果</b>（行尾）：{aff:cash+5}　{silver+20}　{flag:metCash}　{unlock:loc_archive}' +
         '</div>' +
         '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">' +
           '<button class="mini-btn" id="biInsertTpl">插入示例模板</button>' +
@@ -454,7 +323,6 @@ function parseEffects(str) {
           const result = parseBulkText(text);
           const totalLines = Object.keys(result.nodes).reduce((s,k)=>s+result.nodes[k].length, 0);
           if (!totalLines) { NF.toast('没有解析出任何对话','warn'); return; }
-          // 转换成 wsFormData.lines + wsFormData.branches
           wsFormData.lines = convertNodesToFlatLines(result.nodes);
           wsFormData.branches = result.nodes;
           if (result.title && !wsFormData.title) wsFormData.title = result.title;
@@ -462,7 +330,7 @@ function parseEffects(str) {
           if (result.location && !wsFormData.location) wsFormData.location = result.location;
           if (result.bg && result.bg !== 'city') wsFormData.bg = result.bg;
           NF.Sfx.success();
-          NF.toast('◈ 已导入 ' + totalLines + ' 个节点（含分支）','ok');
+          NF.toast('◈ 已导入 ' + totalLines + ' 个节点','ok');
           NF.closeModal(w);
           renderForm(main);
         };
@@ -471,7 +339,6 @@ function parseEffects(str) {
     });
   }
 
-  /* 把解析出来的节点转成表单可显示的"扁平行"（用于预览/无分支情况） */
   function convertNodesToFlatLines(nodes) {
     const lines = [];
     Object.keys(nodes).forEach(key => {
@@ -487,19 +354,60 @@ function parseEffects(str) {
     return lines.length ? lines : [{ type:'n', cn:'' }];
   }
 
+  /* ═══════════════════════════════════════════════════════════
+     反推内置章节数据
+     ═══════════════════════════════════════════════════════════ */
+  function getBuiltinChapterData(chapterKey) {
+    let title = '', subtitle = '', location = '', bg = 'city', type = 'main', chapterNum = null;
+    let nodes = { main: [] };
+
+    if (chapterKey === 'prologue') {
+      title = '序章 · 落日之都'; subtitle = '初到城门'; location = '落日之都 · 城门'; bg = 'city'; chapterNum = 0;
+      const sceneKeys = ['prologue_1', 'prologue_2', 'prologue_3a', 'prologue_3b', 'prologue_3c', 'prologue_4', 'prologue_5', 'prologue_6', 'prologue_7', 'prologue_8'];
+      nodes.main = extractNodesFromScenes(sceneKeys);
+    } else if (chapterKey === 'ch1') {
+      title = '第一章 · 塔瓦娜'; subtitle = '面见院长'; location = '梦目院总部 · 大厅'; bg = 'manor'; chapterNum = 1;
+      const sceneKeys = ['manor_1', 'manor_2a', 'manor_2b', 'manor_2c', 'manor_3'];
+      nodes.main = extractNodesFromScenes(sceneKeys);
+    }
+    return { key: chapterKey, title, subtitle, location, bg, type, chapterNum, nodes };
+  }
+
+  function extractNodesFromScenes(sceneKeys) {
+    let nodes = [];
+    sceneKeys.forEach(k => {
+      const sc = NF.SCENES[k];
+      if (!sc) return;
+      if (sc.lines) {
+        sc.lines.forEach(l => {
+          if (l.s) nodes.push({ type:'dialogue', who: l.who || matchCharId(l.s), char: l.s, cn: l.cn, en: l.en || '' });
+          else if (l.me) nodes.push({ type:'me', cn: l.me, en: l.en || '' });
+          else nodes.push({ type:'narration', cn: l.cn || l.t || '' });
+        });
+      }
+      if (sc.choices) {
+        const choices = sc.choices.map(c => ({
+          text: c.cn || c.text,
+          next: c.next ? `分支_${c.next}` : null,
+          condition: null,
+          effects: c.set ? { aff: c.set.aff, flags: c.set } : null
+        }));
+        nodes.push({ type:'choice', choices });
+      }
+    });
+    if (nodes.length === 0) nodes.push({ type:'narration', cn: '' });
+    return nodes;
+  }
+
   /* ═══ 主渲染 ═══ */
   function render() {
     const main = $('#wsMain'); if (!main) return;
     const types = [
-      { id:'chapter',  label:'章节' },
-      { id:'dungeon',  label:'副本' },
-      { id:'location', label:'地点' },
-      { id:'bond',     label:'乙游话题' },
-      { id:'gift',     label:'礼物' },
-      { id:'cg',       label:'特殊CG' }
+      { id:'chapter',  label:'章节' }, { id:'dungeon',  label:'副本' }, { id:'location', label:'地点' },
+      { id:'bond',     label:'乙游话题' }, { id:'gift', label:'礼物' }, { id:'cg', label:'特殊CG' }
     ];
     main.innerHTML =
-      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同 key 会覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字，<b>支持选项分支</b>。<br><b>章节标题里带「第一章 / 第二章 / 第1章 / Chapter 2」会被自动排序</b>，与内置章节同序号时<b>自动覆盖内置</b>。</div>' +
+      '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同标题的章节会自动覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字，<b>支持选项分支</b>。<br><b>章节标题里带「第一章 / 第二章 / 第1章 / Chapter 2」会被自动排序</b>。</div>' +
       '<div class="ws-type-tabs">' + types.map(t => '<button class="ws-type-btn ' + (wsType===t.id?'on':'') + '" data-type="' + t.id + '">' + t.label + '</button>').join('') + '</div>' +
       '<div id="wsForm"></div>' +
       '<div class="divider" style="margin:26px 0 16px;"><span>已 导 入 的 内 容</span></div>' +
@@ -536,9 +444,8 @@ function parseEffects(str) {
       return '';
     })();
 
-    // 分支提示
     const hasBranches = wsFormData.branches && Object.keys(wsFormData.branches).filter(k => k !== 'main').length > 0;
-    const branchInfo = hasBranches ? '<div style="font-size:11px;color:#9dd0a0;margin:-12px 0 14px;letter-spacing:.06em;">◈ 已包含 ' + (Object.keys(wsFormData.branches).length - 1) + ' 个选项分支（用「编辑对话」可查看/修改）</div>' : '';
+    const branchInfo = hasBranches ? '<div style="font-size:11px;color:#9dd0a0;margin:-12px 0 14px;letter-spacing:.06em;">◈ 已包含 ' + (Object.keys(wsFormData.branches).length - 1) + ' 个选项分支</div>' : '';
 
     box.innerHTML =
       '<div class="ws-field"><label>标 题 <b>（必填）</b></label><input class="inp" id="wsTitle" value="' + esc(wsFormData.title) + '" placeholder="例如：第二章 · 夜与晨 / 第1章 / 序章"></div>' +
@@ -569,7 +476,7 @@ function parseEffects(str) {
     box.querySelector('#wsTitle').oninput = (e) => {
       wsFormData.title = e.target.value;
       const num = NF.parseChapterNum(wsFormData.title);
-      const label = (num !== null) ? ('第 ' + (num === 0 ? '序' : num) + ' 章') : '未识别（标题里带「第一章 / 第1章 / Chapter 2」即可）';
+      const label = (num !== null) ? ('第 ' + (num === 0 ? '序' : num) + ' 章') : '未识别';
       const conflictEl = box.querySelector('.ws-field label').nextElementSibling;
       if (conflictEl) {
         const conflict = (num !== null) ? NF.getChapterList().find(c => c.num === num && !c.isUser) : null;
@@ -593,27 +500,22 @@ function parseEffects(str) {
   }
 
   function appendChapterLine(box, line, i, formBox, main) {
-    // 处理特殊类型（从批量导入来的占位）
     if (line.type === 'choice_placeholder' || line.type === 'jump_placeholder') {
       const card = document.createElement('div');
       card.className = 'ws-line-card';
       card.style.borderColor = 'rgba(201,169,97,.5)';
       card.style.background = 'rgba(201,169,97,.06)';
-      card.innerHTML =
-        '<div style="font-size:11.5px;color:var(--gold-b);letter-spacing:.08em;line-height:1.7;">' +
-          (line.type === 'choice_placeholder' ? '◇ ' + esc(line.cn) + '<div style="font-size:10.5px;color:var(--gold-d);margin-top:4px;">（选项逻辑已保存。切到「📋 批量导入」可查看/修改）</div>' : '→ ' + esc(line.cn)) +
-        '</div>';
+      card.innerHTML = '<div style="font-size:11.5px;color:var(--gold-b);letter-spacing:.08em;line-height:1.7;">' +
+          (line.type === 'choice_placeholder' ? '◇ ' + esc(line.cn) + '<div style="font-size:10.5px;color:var(--gold-d);margin-top:4px;">（选项逻辑已保存。可点上方「批量导入」查看/修改）</div>' : '→ ' + esc(line.cn)) + '</div>';
       box.appendChild(card);
       return;
     }
     const card = document.createElement('div');
     card.className = 'ws-line-card';
     card.innerHTML =
-      '<div class="ws-line-head">' +
-        '<span class="ws-line-num">行 ' + (i+1) + '</span>' +
+      '<div class="ws-line-head"><span class="ws-line-num">行 ' + (i+1) + '</span>' +
         '<select class="ws-line-type"><option value="n" ' + (line.type==='n'?'selected':'') + '>旁白</option><option value="s" ' + (line.type==='s'?'selected':'') + '>角色台词</option><option value="me" ' + (line.type==='me'?'selected':'') + '>主角</option></select>' +
-        '<button class="ws-line-del">×</button>' +
-      '</div>' +
+        '<button class="ws-line-del">×</button></div>' +
       '<div class="ws-line-body">' +
         '<select class="inp ws-char" style="display:' + (line.type==='s'?'block':'none') + ';margin-bottom:8px;">' +
           CHAR_IDS.map(id => '<option value="' + id + '" ' + (line.who===id?'selected':'') + '>' + NF.CHARS[id].name + '</option>').join('') +
@@ -653,7 +555,6 @@ function parseEffects(str) {
   function saveChapter(formBox) {
     const title = formBox.querySelector('#wsTitle').value.trim();
     if (!title) { NF.toast('请填标题','warn'); return; }
-    // 如果有分支，从 branches 生成 lines（供无分支场景用）；否则用表单 lines
     let lines;
     if (wsFormData.branches && Object.keys(wsFormData.branches).length > 1) {
       lines = convertNodesToFlatLines(wsFormData.branches);
@@ -664,15 +565,11 @@ function parseEffects(str) {
     const chapterNum = NF.parseChapterNum(title);
     const key = wsEditKey || ('ch_' + Date.now());
     const data = {
-      key, title,
-      subtitle: formBox.querySelector('#wsSubtitle').value.trim(),
+      key, title, subtitle: formBox.querySelector('#wsSubtitle').value.trim(),
       location: formBox.querySelector('#wsLoc').value.trim(),
       bg: formBox.querySelector('#wsBg').value,
       type: wsFormData.type === 'dungeon' ? 'dungeon' : 'main',
-      chapterNum: chapterNum,
-      lines,
-      branches: wsFormData.branches || null,
-      ts: Date.now()
+      chapterNum: chapterNum, lines, branches: wsFormData.branches || null, ts: Date.now()
     };
     if (chapterNum !== null && (data.type === 'main')) {
       const conflict = NF.getChapterList().find(c => c.num === chapterNum && !c.isUser);
@@ -687,14 +584,14 @@ function parseEffects(str) {
     NF.saveUser();
     delete NF.SCENES['user_scene_' + key];
     NF.Sfx.success();
-    NF.toast('◈ 已保存：' + title + (chapterNum !== null ? '（' + (chapterNum === 0 ? '序章' : '第 ' + chapterNum + ' 章') + '）' : ''), 'ok');
+    NF.toast('◈ 已保存：' + title, 'ok');
     wsFormData = null; wsEditKey = null; wsEditKind = null;
     renderForm(document.querySelector('#wsMain'));
     renderList(document.querySelector('#wsMain'));
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 地点表单 ─── */
+  /* ─── 地点表单（完整版，包含所有可交互入口） ─── */
   function renderLocationForm(box, main) {
     if (!wsFormData) wsFormData = blankLocation();
     box.innerHTML =
@@ -709,6 +606,7 @@ function parseEffects(str) {
         '<button class="ws-add-line" id="wsLocAddEntry" style="margin-top:10px;">＋ 添 加 一 个 入 口</button>' +
       '</div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">' + (wsEditKey?'覆盖保存':'保存地点') + '</button></div>';
+
     const entriesBox = box.querySelector('#wsLocEntries');
     wsFormData.entries.forEach((e, i) => appendLocEntry(entriesBox, e, i, box, main));
     box.querySelector('#wsLocName').oninput = (e) => wsFormData.name = e.target.value;
@@ -788,7 +686,7 @@ function parseEffects(str) {
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 乙游话题表单 ─── */
+  /* ─── 乙游话题表单（完整版，包含多行对话） ─── */
   function renderBondForm(box, main) {
     if (!wsFormData) wsFormData = blankBond();
     box.innerHTML =
@@ -859,7 +757,7 @@ function parseEffects(str) {
     if (NF.renderTOC) NF.renderTOC();
   }
 
-  /* ─── 礼物表单 ─── */
+  /* ─── 礼物表单（完整版，包含多选） ─── */
   function renderGiftForm(box, main) {
     if (!wsFormData) wsFormData = blankGift();
     box.innerHTML =
@@ -891,13 +789,10 @@ function parseEffects(str) {
     if (!name) { NF.toast('请填礼物名','warn'); return; }
     const key = wsEditKey || ('gift_' + Date.now());
     const data = {
-      key, name,
-      icon: box.querySelector('#wsGiftIcon').value || '✦',
+      key, name, icon: box.querySelector('#wsGiftIcon').value || '✦',
       cost: parseInt(box.querySelector('#wsGiftCost').value) || 0,
       aff: parseInt(box.querySelector('#wsGiftAff').value) || 0,
-      likes: wsFormData.likes,
-      desc: box.querySelector('#wsGiftDesc').value.trim(),
-      ts: Date.now()
+      likes: wsFormData.likes, desc: box.querySelector('#wsGiftDesc').value.trim(), ts: Date.now()
     };
     const list = NF.userContent().gifts;
     const idx = list.findIndex(x => x.key === key);
@@ -911,7 +806,7 @@ function parseEffects(str) {
     renderList(document.querySelector('#wsMain'));
   }
 
-  /* ─── CG 表单 ─── */
+  /* ─── CG 表单（完整版，包含多行） ─── */
   function renderCGForm(box, main) {
     if (!wsFormData) wsFormData = blankCG();
     box.innerHTML =
@@ -956,12 +851,7 @@ function parseEffects(str) {
     const lines = wsFormData.lines.filter(l => l.cn && l.cn.trim());
     if (!lines.length) { NF.toast('至少一行','warn'); return; }
     const key = wsEditKey || ('cg_' + Date.now());
-    const data = {
-      key, charId: box.querySelector('#wsCgChar').value,
-      title, subtitle: box.querySelector('#wsCgSub').value.trim(),
-      need: parseInt(box.querySelector('#wsCgNeed').value) || 0,
-      lines, ts: Date.now()
-    };
+    const data = { key, charId: box.querySelector('#wsCgChar').value, title, subtitle: box.querySelector('#wsCgSub').value.trim(), need: parseInt(box.querySelector('#wsCgNeed').value) || 0, lines, ts: Date.now() };
     const list = NF.userContent().cgs;
     const idx = list.findIndex(x => x.key === key);
     if (idx >= 0) list[idx] = data;
@@ -975,32 +865,45 @@ function parseEffects(str) {
     if (NF.renderBondGrid) NF.renderBondGrid();
   }
 
-  /* ─── 列表 ─── */
+  /* ─── 已导入列表（含内置反推） ─── */
   function renderList(main) {
     const box = main.querySelector('#wsList'); if (!box) return;
     const u = NF.userContent();
-    const all = [
-      ...(u.chapters || []).map(c => ({ ...c, _type:'chapter', _kind:c.type || 'main' })),
-      ...(u.locations || []).map(l => ({ ...l, _type:'location' })),
-      ...(u.bondTopics || []).map(t => ({ ...t, _type:'bond' })),
-      ...(u.gifts || []).map(g => ({ ...g, _type:'gift' })),
-      ...(u.cgs || []).map(c => ({ ...c, _type:'cg' }))
-    ].sort((a, b) => (b.ts||0) - (a.ts||0));
+    const userChapters = (u.chapters || []).map(c => ({ ...c, _type:'chapter', _kind:c.type || 'main', _isUser: true }));
+    const userLocations = (u.locations || []).map(l => ({ ...l, _type:'location', _isUser: true }));
+    const userBonds = (u.bondTopics || []).map(t => ({ ...t, _type:'bond', _isUser: true }));
+    const userGifts = (u.gifts || []).map(g => ({ ...g, _type:'gift', _isUser: true }));
+    const userCgs = (u.cgs || []).map(c => ({ ...c, _type:'cg', _isUser: true }));
 
-    if (!all.length) { box.innerHTML = '<div class="empty">还没有任何导入内容。<br>选一个类型开始写吧。</div>'; return; }
+    const builtinChapters = [];
+    const builtinKeys = ['prologue', 'ch1'];
+    builtinKeys.forEach(key => {
+      const covered = userChapters.some(uc => uc.chapterNum !== null && uc.chapterNum === (key === 'prologue' ? 0 : 1));
+      if (!covered) {
+        const chData = getBuiltinChapterData(key);
+        builtinChapters.push({ key: key, title: chData.title, _type: 'chapter', _kind: 'main', _isUser: false, chapterNum: chData.chapterNum, ts: 0 });
+      }
+    });
+
+    const all = [...builtinChapters, ...userChapters, ...userLocations, ...userBonds, ...userGifts, ...userCgs];
+    all.sort((a, b) => {
+      if (!a._isUser && b._isUser) return -1;
+      if (a._isUser && !b._isUser) return 1;
+      return (b.ts||0) - (a.ts||0);
+    });
+
+    if (!all.length) { box.innerHTML = '<div class="empty">还没有任何内容。</div>'; return; }
 
     let html = '<div class="ws-pack-list">';
     all.forEach(item => {
-      const t = new Date(item.ts || Date.now());
-      const time = t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      let time = item._isUser ? (() => { const t = new Date(item.ts); return t.getFullYear()+'/'+(t.getMonth()+1)+'/'+t.getDate(); })() : '官方内置';
       let typeLabel = { chapter:'章节', dungeon:'副本', location:'地点', bond:'乙游话题', gift:'礼物', cg:'CG' }[item._type] || item._type;
       if (item._type === 'chapter') {
         const n = item.chapterNum;
         if (n !== null && n !== undefined) typeLabel = (n === 0 ? '序章' : '第 ' + n + ' 章');
-        if (item.branches) typeLabel += ' · 分支';
       }
       const name = item.title || item.name || item.key;
-      html += '<div class="ws-pack" data-key="' + esc(item.key) + '" data-type="' + item._type + '" data-kind="' + (item._kind||'') + '">' +
+      html += '<div class="ws-pack" data-key="' + esc(item.key) + '" data-type="' + item._type + '" data-kind="' + (item._kind||'') + '" data-isuser="' + item._isUser + '">' +
         '<div class="ws-pack-head"><div class="ws-pack-title">' + esc(name) + '</div><div style="font-size:11px;color:var(--gold-d);">' + typeLabel + '</div></div>' +
         '<div class="ws-pack-meta">' + time + '</div>' +
         '<div class="ws-pack-actions"><button class="mini-btn" data-a="edit">编辑</button><button class="mini-btn danger" data-a="del">删除</button></div>' +
@@ -1010,19 +913,37 @@ function parseEffects(str) {
     box.innerHTML = html;
 
     box.querySelectorAll('.ws-pack').forEach(el => {
-      const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind;
+      const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind, isUser = el.dataset.isuser === 'true';
       el.querySelector('[data-a="edit"]').onclick = () => {
         NF.Sfx.click();
         wsEditKey = key; wsEditKind = kind || null;
         wsType = type === 'chapter' ? (kind === 'dungeon' ? 'dungeon' : 'chapter') : type;
         const u = NF.userContent();
-        if (type === 'chapter') wsFormData = JSON.parse(JSON.stringify(u.chapters.find(x => x.key === key) || blankChapter(kind)));
-        else if (type === 'location') wsFormData = JSON.parse(JSON.stringify(u.locations.find(x => x.key === key) || blankLocation()));
-        else if (type === 'bond') wsFormData = JSON.parse(JSON.stringify(u.bondTopics.find(x => x.key === key) || blankBond()));
-        else if (type === 'gift') wsFormData = JSON.parse(JSON.stringify(u.gifts.find(x => x.key === key) || blankGift()));
-        else if (type === 'cg') wsFormData = JSON.parse(JSON.stringify(u.cgs.find(x => x.key === key) || blankCG()));
+        
+        if (type === 'chapter') {
+          if (isUser) {
+            wsFormData = JSON.parse(JSON.stringify(u.chapters.find(x => x.key === key) || blankChapter(kind)));
+          } else {
+            const bData = getBuiltinChapterData(key);
+            wsFormData = {
+              type: bData.type, title: bData.title, subtitle: bData.subtitle,
+              location: bData.location, bg: bData.bg,
+              lines: convertNodesToFlatLines(bData.nodes), branches: bData.nodes
+            };
+            wsEditKey = 'ch_' + bData.title; 
+          }
+        } else if (type === 'location') {
+          wsFormData = isUser ? JSON.parse(JSON.stringify(u.locations.find(x => x.key === key) || blankLocation())) : blankLocation();
+        } else if (type === 'bond') {
+          wsFormData = isUser ? JSON.parse(JSON.stringify(u.bondTopics.find(x => x.key === key) || blankBond())) : blankBond();
+        } else if (type === 'gift') {
+          wsFormData = isUser ? JSON.parse(JSON.stringify(u.gifts.find(x => x.key === key) || blankGift())) : blankGift();
+        } else if (type === 'cg') {
+          wsFormData = isUser ? JSON.parse(JSON.stringify(u.cgs.find(x => x.key === key) || blankCG())) : blankCG();
+        }
         render();
       };
+      
       el.querySelector('[data-a="del"]').onclick = () => {
         if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？')) return;
         NF.Sfx.fail();
