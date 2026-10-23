@@ -139,6 +139,11 @@
   function parseBulkText(text) {
     const result = { title:'', subtitle:'', location:'', bg:'city', nodes: { main: [] } };
     if (!text) return result;
+    
+    // ★ 终极防断行修复：把大括号里不小心按出来的换行强行合并
+    text = text.replace(/\{\s*unlock\s*:\s*\n\s*([a-zA-Z0-9_]+)\s*\}/gi, '{unlock:$1}');
+    text = text.replace(/\{\s*\n\s*unlock\s*:\s*([a-zA-Z0-9_]+)\s*\}/gi, '{unlock:$1}');
+
     const rawLines = text.split(/\r?\n/);
     let currentKey = 'main';
     let currentNode = result.nodes.main;
@@ -582,7 +587,8 @@
     const title = formBox.querySelector('#wsTitle').value.trim();
     if (!title) { NF.toast('请填标题','warn'); return; }
     let lines;
-    if (wsFormData.branches && Object.keys(wsFormData.branches).length > 1) {
+    // ★ 修复：单分支章节也必须保留 branches 数据，否则 effect 会丢失
+    if (wsFormData.branches && Object.keys(wsFormData.branches).length >= 1) {
       lines = convertNodesToFlatLines(wsFormData.branches);
     } else {
       lines = (wsFormData.lines || []).filter(l => l.cn && l.cn.trim() && l.type !== 'choice_placeholder' && l.type !== 'jump_placeholder');
