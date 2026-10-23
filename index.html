@@ -130,7 +130,7 @@ select.inp{cursor:pointer;}
 
 #screen-game{display:none;flex-direction:column;}
 #screen-game.active{display:flex;}
-.stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;padding-bottom:var(--nav-h);}
+.stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;padding-bottom:calc(var(--nav-h) + var(--safe-b) + 48px);}
 .scene-bg{position:absolute;inset:0;transition:background 1s var(--ease);z-index:0;}
 .bg-city{background:linear-gradient(180deg,#0e0a16 0%,#1a1224 40%,#2a1c30 100%);}
 .bg-city::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 80%,rgba(201,169,97,.18),transparent 40%),radial-gradient(circle at 80% 70%,rgba(201,169,97,.14),transparent 40%);}
@@ -193,7 +193,7 @@ select.inp{cursor:pointer;}
 .line.monologue .cn{color:#b8a8c8;font-style:italic;}
 [data-theme="day"] .line.monologue .cn{color:#6a4a8c;}
 
-.cont-hint{position:absolute;right:26px;bottom:calc(var(--nav-h) + 22px);color:var(--gold);font-size:14px;opacity:.8;animation:bounce 1.6s infinite;pointer-events:none;z-index:5;font-family:var(--f-sym);}
+.cont-hint{position:absolute;right:26px;bottom:calc(var(--nav-h) + var(--safe-b) + 58px);color:var(--gold);font-size:14px;opacity:.8;animation:bounce 1.6s infinite;pointer-events:none;z-index:5;font-family:var(--f-sym);}
 @keyframes bounce{0%,100%{transform:translateY(0);opacity:.35;}50%{transform:translateY(6px);opacity:.9;}}
 
 .choices{position:relative;z-index:3;padding:0 20px 14px;max-height:44vh;overflow-y:auto;display:none;}
@@ -208,7 +208,24 @@ select.inp{cursor:pointer;}
 .choice-btn:hover::after{transform:scaleY(1);}
 .choice-idx{color:var(--gold);font-size:13px;flex-shrink:0;margin-top:1px;font-family:var(--f-sym);}
 
-.story-tools{flex:0 0 auto;padding:8px 10px;border-top:1px solid var(--line);background:var(--panel);display:flex;gap:4px;position:relative;z-index:3;overflow-x:auto;}
+.story-tools{
+  position:absolute;
+  bottom:calc(var(--nav-h) + var(--safe-b));
+  left:0;
+  right:0;
+  z-index:80;
+  padding:8px 10px;
+  background:rgba(22,18,31,.92);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  display:flex;
+  gap:4px;
+  overflow-x:auto;
+}
+[data-theme="day"] .story-tools{
+  background:rgba(255,252,242,.94);
+}
 .story-tools::-webkit-scrollbar{display:none;}
 .story-tools button{flex:1;min-width:52px;padding:8px 4px;font-family:var(--f-cn);font-size:10px;letter-spacing:.06em;background:transparent;border:1px solid var(--line-s);color:var(--text-d);cursor:pointer;transition:all .28s var(--ease);white-space:nowrap;}
 .story-tools button:hover{color:var(--gold-b);border-color:var(--gold);background:rgba(201,169,97,.08);}
@@ -2327,7 +2344,7 @@ function renderTOC(){
 function playUserChapter(c){
   const sceneId = 'user_scene_' + c.key;
   if (!SCENES[sceneId]) {
-    const hasBranches = c.branches && Object.keys(c.branches).length > 1;
+    const hasBranches = c.branches && Object.keys(c.branches).length >= 1;
     if (hasBranches) {
       SCENES[sceneId] = {
         bg: c.bg || 'city',
@@ -2335,7 +2352,7 @@ function playUserChapter(c){
         chapter: c.title,
         chapterNum: c.chapterNum,
         branches: c.branches,
-        lines: []
+        lines: c.lines || []
       };
     } else {
       const lines = (c.lines || []).map(l => {
