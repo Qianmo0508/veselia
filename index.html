@@ -2088,13 +2088,27 @@ function playTopic(id, topic){
     chapter: CHARS[id].name + ' · 对话',
     lines,
     onEnd: () => {
-      const gain = topic.mode === 'deep' ? 10 : 5;
+      const topicKey = topic.key || ('tmp_' + Date.now());
+      const d = new Date();
+      const todayK = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+      if (!state.flags) state.flags = {};
+      const topicFlagKey = '__topic_done_' + todayK + '_' + topicKey;
+      if (state.flags[topicFlagKey]) {
+        /* 今天已经聊过这个话题 —— 不给好感 */
+        Sfx.click();
+        toast('今天已经聊过这个话题了。改日再来吧。', 'warn');
+        saveNow();
+        setTimeout(()=>showScreen('bond'), 600);
+        return;
+      }
+      state.flags[topicFlagKey] = true;
+      const gain = topic.mode === 'deep' ? 5 : 3;
       const oldAff = state.affection[id] || 0;
       state.affection[id] = oldAff + gain;
       const oldLv = getLevel(oldAff), newLv = getLevel(state.affection[id]);
       if (newLv.name !== oldLv.name) showLevelUp(newLv, state.affection[id], CHARS[id].name);
       Sfx.unlock();
-      toast('◈ 与 ' + CHARS[id].name + ' 的亲密 +' + gain, 'ok');
+      toast('◈ 与 ' + CHARS[id].name + ' 的亲密 +' + gain + '（今日首谈）', 'ok');
       saveNow();
       setTimeout(()=>showScreen('bond'), 600);
     }
@@ -2848,5 +2862,7 @@ window.NF = {
 
 <script src="workshop.js"></script>
 <script src="minigames.js"></script>
+<script src="minigames-extra.js"></script>
+<script src="locations-extra.js"></script>
 </body>
 </html>
