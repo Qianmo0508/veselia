@@ -9,6 +9,36 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  // ═══ 修复：接管底层读取，实现内置数据完美覆盖与删除 ═══
+  NF.getAllLocations = function() {
+    const u = NF.userContent();
+    const deleted = u.deletedBuiltins || [];
+    const userLocs = (u.locations || []).filter(l => !l.deleted);
+    const builtin = (NF.LOCATIONS || []).filter(l => !deleted.includes(l.key) && !userLocs.some(ul => ul.key === l.key));
+    return builtin.concat(userLocs);
+  };
+  NF.getAllBondTopics = function() {
+    const u = NF.userContent();
+    const deleted = u.deletedBuiltins || [];
+    const userBonds = (u.bondTopics || []).filter(t => !t.deleted);
+    const builtin = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !deleted.includes(t.key) && !userBonds.some(ub => ub.key === t.key));
+    return builtin.concat(userBonds);
+  };
+  NF.getAllGifts = function() {
+    const u = NF.userContent();
+    const deleted = u.deletedBuiltins || [];
+    const userGifts = (u.gifts || []).filter(g => !g.deleted);
+    const builtin = (NF.GIFTS_BUILTIN || []).filter(g => !deleted.includes(g.key) && !userGifts.some(ug => ug.key === g.key));
+    return builtin.concat(userGifts);
+  };
+  NF.getAllCGs = function() {
+    const u = NF.userContent();
+    const deleted = u.deletedBuiltins || [];
+    const userCgs = (u.cgs || []).filter(c => !c.deleted);
+    const builtin = (NF.CGS_BUILTIN || []).filter(c => !deleted.includes(c.key) && !userCgs.some(uc => uc.key === c.key));
+    return builtin.concat(userCgs);
+  };
+
   let wsType = 'chapter';
   let wsEditKey = null;
   let wsFormData = null;
@@ -202,8 +232,17 @@
         continue;
       }
       
-      const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
-      if (colonMatch && !colonMatch[1].includes('{')) {
+      // ★ 修复：智能防误判冒号。只有前面是1-10个字，且没有任何标点，才被认作角色名
+      const colonMatch = line.match(/^([^:：]{1,10})[:：](.+)$/);
+      let isValidChar = false;
+      if (colonMatch) {
+        const rawWho = colonMatch[1].trim();
+        if (!/[，。？！；,.?!;{}（）()“”"]/.test(rawWho) && rawWho.length > 0) {
+          isValidChar = true;
+        }
+      }
+
+      if (isValidChar) {
         const who = colonMatch[1].trim();
         let body = colonMatch[2].trim();
         if (!body) continue;
@@ -214,14 +253,13 @@
         if (pipeIdx >= 0) { en = body.slice(0, pipeIdx).trim(); cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim(); }
         
         const isMe = ['我','主角','你','我(主角)','主人公'].includes(who);
-        // ★ 修复：区分“主角说话”和“内心独白”
         if (isMe) currentNode.push({ type: 'dialogue', who: 'me', cn, en });
         else currentNode.push({ type: 'dialogue', who: matchCharId(who), char: who, cn, en });
         
         if (effects) currentNode.push({ type: 'effect', effects: parseEffects(effects) });
         continue;
       }
-      // ★ 修复：旁白行末尾的效果也要提取（否则 {unlock:xxx} 会当普通文字漏过去）
+      // ★ 修复：旁白行末尾的效果也要提取
       const narrEffects = (line.match(/\{[^}]*\}/g) || []).join(' ');
       const cleanLine = line.replace(/\{[^}]*\}/g, '').trim();
       if (cleanLine) {
@@ -587,7 +625,6 @@
     const title = formBox.querySelector('#wsTitle').value.trim();
     if (!title) { NF.toast('请填标题','warn'); return; }
     let lines;
-    // ★ 修复：单分支章节也必须保留 branches 数据，否则 effect 会丢失
     if (wsFormData.branches && Object.keys(wsFormData.branches).length >= 1) {
       lines = convertNodesToFlatLines(wsFormData.branches);
     } else {
@@ -905,10 +942,12 @@
     const u = NF.userContent();
     
     const userChapters = (u.chapters || []).map(c => ({ ...c, _type:'chapter', _kind:c.type || 'main', _isUser: true }));
-    const userLocations = (u.locations || []).map(l => ({ ...l, _type:'location', _isUser: true }));
-    const userBonds = (u.bondTopics || []).map(t => ({ ...t, _type:'bond', _isUser: true }));
-    const userGifts = (u.gifts || []).map(g => ({ ...g, _type:'gift', _isUser: true }));
-    const userCgs = (u.cgs || []).map(c => ({ ...c, _type:'cg', _isUser: true }));
+    const userLocations = (u.locations || []).filter(x => !x.deleted).map(l => ({ ...l, _type:'location', _isUser: true }));
+    const userBonds = (u.bondTopics || []).filter(x => !x.deleted).map(t => ({ ...t, _type:'bond', _isUser: true }));
+    const userGifts = (u.gifts || []).filter(x => !x.deleted).map(g => ({ ...g, _type:'gift', _isUser: true }));
+    const userCgs = (u.cgs || []).filter(x => !x.deleted).map(c => ({ ...c, _type:'cg', _isUser: true }));
+
+    const deletedBuiltins = u.deletedBuiltins || [];
 
     // 提取所有内置章节（排除被用户覆盖的）
     let builtinChapters = [];
@@ -920,11 +959,11 @@
         });
     }
 
-    // 提取所有内置地点、乙游、礼物、CG（排除被用户覆盖的）
-    const builtinLocations = (NF.LOCATIONS || []).filter(l => !userLocations.some(ul => ul.name === l.name)).map(l => ({ key: l.name, name: l.name, title: l.name, _type:'location', _isUser: false }));
-    const builtinBonds = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !userBonds.some(ub => ub.title === t.title)).map(t => ({ key: t.title, title: t.title, _type:'bond', _isUser: false }));
-    const builtinGifts = (NF.GIFTS_BUILTIN || []).filter(g => !userGifts.some(ug => ug.name === g.name)).map(g => ({ key: g.name, name: g.name, title: g.name, _type:'gift', _isUser: false }));
-    const builtinCgs = (NF.CGS_BUILTIN || []).filter(c => !userCgs.some(ucg => ucg.title === c.title)).map(c => ({ key: c.title, title: c.title, _type:'cg', _isUser: false }));
+    // ★ 修复：提取内置数据时使用真实的 key，并且过滤掉被删除的
+    const builtinLocations = (NF.LOCATIONS || []).filter(l => !userLocations.some(ul => ul.key === l.key) && !deletedBuiltins.includes(l.key)).map(l => ({ key: l.key, name: l.name, title: l.name, _type:'location', _isUser: false }));
+    const builtinBonds = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !userBonds.some(ub => ub.key === t.key) && !deletedBuiltins.includes(t.key)).map(t => ({ key: t.key, title: t.title, _type:'bond', _isUser: false }));
+    const builtinGifts = (NF.GIFTS_BUILTIN || []).filter(g => !userGifts.some(ug => ug.key === g.key) && !deletedBuiltins.includes(g.key)).map(g => ({ key: g.key, name: g.name, title: g.name, _type:'gift', _isUser: false }));
+    const builtinCgs = (NF.CGS_BUILTIN || []).filter(c => !userCgs.some(ucg => ucg.key === c.key) && !deletedBuiltins.includes(c.key)).map(c => ({ key: c.key, title: c.title, _type:'cg', _isUser: false }));
 
     const all = [
         ...builtinChapters, ...userChapters,
@@ -964,6 +1003,7 @@
     box.querySelectorAll('.ws-pack').forEach(el => {
       const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind, isUser = el.dataset.isuser === 'true';
       
+      // ★ 修复：编辑内置数据时，把内容完整拷贝出来
       el.querySelector('[data-a="edit"]').onclick = () => {
         NF.Sfx.click();
         wsEditKey = key; wsEditKind = kind || null;
@@ -986,40 +1026,53 @@
         } else if (type === 'location') {
           if (isUser) wsFormData = JSON.parse(JSON.stringify(u.locations.find(x => x.key === key) || blankLocation()));
           else {
-             const loc = NF.LOCATIONS.find(l => l.name === key);
-             wsFormData = loc ? JSON.parse(JSON.stringify({...loc, name: loc.name})) : blankLocation();
+             const loc = NF.LOCATIONS.find(l => l.key === key);
+             wsFormData = loc ? JSON.parse(JSON.stringify({ key: loc.key, name: loc.name, region: loc.region, desc: loc.desc, entries: loc.entries, bg: loc.bg })) : blankLocation();
           }
         } else if (type === 'bond') {
           if (isUser) wsFormData = JSON.parse(JSON.stringify(u.bondTopics.find(x => x.key === key) || blankBond()));
           else {
-             const bond = NF.BOND_TOPICS_BUILTIN.find(t => t.title === key);
-             wsFormData = bond ? JSON.parse(JSON.stringify({...bond, title: bond.title})) : blankBond();
+             const bond = NF.BOND_TOPICS_BUILTIN.find(t => t.key === key);
+             wsFormData = bond ? JSON.parse(JSON.stringify({ key: bond.key, charId: bond.charId, mode: bond.mode, title: bond.title, need: bond.need, lines: bond.lines })) : blankBond();
           }
         } else if (type === 'gift') {
           if (isUser) wsFormData = JSON.parse(JSON.stringify(u.gifts.find(x => x.key === key) || blankGift()));
           else {
-             const gift = NF.GIFTS_BUILTIN.find(g => g.name === key);
-             wsFormData = gift ? JSON.parse(JSON.stringify({...gift, name: gift.name})) : blankGift();
+             const gift = NF.GIFTS_BUILTIN.find(g => g.key === key);
+             wsFormData = gift ? JSON.parse(JSON.stringify({ key: gift.key, name: gift.name, icon: gift.icon, cost: gift.cost, aff: gift.aff, likes: gift.likes, desc: gift.desc })) : blankGift();
           }
         } else if (type === 'cg') {
           if (isUser) wsFormData = JSON.parse(JSON.stringify(u.cgs.find(x => x.key === key) || blankCG()));
           else {
-             const cg = NF.CGS_BUILTIN.find(c => c.title === key);
-             wsFormData = cg ? JSON.parse(JSON.stringify({...cg, title: cg.title})) : blankCG();
+             const cg = NF.CGS_BUILTIN.find(c => c.key === key);
+             wsFormData = cg ? JSON.parse(JSON.stringify({ key: cg.key, charId: cg.charId, title: cg.title, subtitle: cg.subtitle, need: cg.need, lines: cg.lines })) : blankCG();
           }
         }
         render();
       };
       
+      // ★ 修复：删除内置数据时，加入黑名单
       el.querySelector('[data-a="del"]').onclick = () => {
-        if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？\n(内置内容不可彻底删除，刷新后会恢复)')) return;
+        if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？\n(内置内容将不再显示，可在设置中重置恢复)')) return;
         NF.Sfx.fail();
         const u = NF.userContent();
-        if (type === 'chapter') u.chapters = u.chapters.filter(x => x.key !== key);
-        else if (type === 'location') u.locations = u.locations.filter(x => x.key !== key);
-        else if (type === 'bond') u.bondTopics = u.bondTopics.filter(x => x.key !== key);
-        else if (type === 'gift') u.gifts = u.gifts.filter(x => x.key !== key);
-        else if (type === 'cg') u.cgs = u.cgs.filter(x => x.key !== key);
+        if (type === 'chapter') {
+          u.chapters = u.chapters.filter(x => x.key !== key);
+        } else if (type === 'location') {
+          u.locations = u.locations.filter(x => x.key !== key);
+        } else if (type === 'bond') {
+          u.bondTopics = u.bondTopics.filter(x => x.key !== key);
+        } else if (type === 'gift') {
+          u.gifts = u.gifts.filter(x => x.key !== key);
+        } else if (type === 'cg') {
+          u.cgs = u.cgs.filter(x => x.key !== key);
+        }
+        
+        if (!isUser) {
+          if (!u.deletedBuiltins) u.deletedBuiltins = [];
+          if (!u.deletedBuiltins.includes(key)) u.deletedBuiltins.push(key);
+        }
+
         NF.saveUser();
         delete NF.SCENES['user_scene_' + key];
         NF.toast('◈ 已删除','ok');
