@@ -9,7 +9,55 @@
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const clamp = (v,a,b) => Math.max(a, Math.min(b,v));
 
-  const origOpen = (window.Minigames && window.Minigames.open) ? window.Minigames.open : function (id) {
+  /* 修复棋盘格被拉长 + 强制覆盖棋子符号 */
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `
+    .chess-board {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      grid-template-rows: repeat(4, 1fr) !important;
+      gap: 0 !important; /* 去掉间隙引起的错位 */
+      aspect-ratio: 1 / 1 !important;
+      padding: 8px !important;
+    }
+    .chess-cell {
+      aspect-ratio: 1 / 1 !important; /* 保证每个格子都是完美的正方形 */
+      margin: 1px; /* 用 margin 代替 gap 留白，防错位 */
+    }
+    /* 清除默认的符号，防止冲突 */
+    .chess-cell::after {
+      content: none !important;
+      display: none !important;
+    }
+    /* 重新定义各棋子的图标和样式 */
+    .chess-cell.death::after {
+      content: '☠' !important;
+      display: block !important;
+      font-family: var(--f-sym) !important;
+      font-size: 16px !important;
+      color: #d08a9c !important;
+      position: absolute !important;
+    }
+    .chess-cell.goal::after {
+      content: '♔' !important;
+      display: block !important;
+      font-family: var(--f-sym) !important;
+      font-size: 18px !important;
+      color: #9dd0a0 !important;
+      position: absolute !important;
+    }
+    .chess-cell.valid::after {
+      content: '◦' !important;
+      display: block !important;
+      font-family: var(--f-sym) !important;
+      color: var(--gold) !important;
+      font-size: 20px !important;
+      position: absolute !important;
+    }
+  `;
+  document.head.appendChild(styleEl);
+   
+   const origOpen = (window.Minigames && window.Minigames.open) ? window.Minigames.open : function (id) {
     NF.toast('小游戏模块未加载：' + id, 'warn');
   };
 
