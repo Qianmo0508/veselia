@@ -203,7 +203,7 @@
       }
       
       const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
-      if (colonMatch) {
+      if (colonMatch && !colonMatch[1].includes('{')) {
         const who = colonMatch[1].trim();
         let body = colonMatch[2].trim();
         if (!body) continue;
