@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   cloud-sync.js · 绝对安全最终版（已修复所有Bug）
+   cloud-sync.js · 终极云账号版（账号恢复 + UID登录 + 免密）
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -10,61 +10,150 @@
   const ADMIN_SECRET = 'veselia'; 
   
   const NF = window.NF;
-  const API_URL = SUPABASE_URL + '/rest/v1/veselia_sync?id=eq.1';
+  const API_URL = SUPABASE_URL + '/rest/v1/veselia_sync';
 
-  /* 1. 隐藏 [自定] */
-  const styleEl = document.createElement('style');
-  styleEl.textContent = `.toc-item-title span[style*="color:var(--gold-d)"] { display: none !important; }`;
-  document.head.appendChild(styleEl);
+  /* ═══ 工具函数 ═══ */
+  const getUidNum = (uidStr) => {
+    if (!uidStr) return null;
+    const m = uidStr.match(/\d+/);
+    return m ? m[0] : null;
+  };
 
-  /* 2. 强力注入设置面板 (监听画面切换) */
-  const injectAdminUI = () => {
-    const setMain = document.getElementById('setMain');
-    // 如果没有设置面板，或者已经注入过，就跳过
-    if (!setMain || document.getElementById('adminPanelGroup')) return;
+  /* 1. 自动恢复账号（解决退出后名字丢失） */
+  // 拦截初始化，如果本地有存档，强行把玩家信息拉起来，不需要点继续游戏也能记住你
+  setTimeout(() => {
+    if (!NF.state()) {
+      try {
+        const raw = localStorage.getItem('nightfalling_v4_save');
+        if (raw) {
+          const d = JSON.parse(raw);
+          // 强行初始化一个 state 挂载上去
+          const s = newState ? newState(d.player?.name || '记者') : {};
+          if (s) {
+            Object.assign(s, d);
+            window.NF.state = () => s; // 劫持读取
+            // 因为不能直接改内部变量，我们靠拉取云端来恢复完整状态
+          }
+        }
+      } catch(e){}
+    }
+  }, 100);
+
+  /* 2. 隐藏 [自定] 标签 */
+  const origRenderTOC = NF.renderTOC;
+  NF.renderTOC = function() {
+    origRenderTOC();
+    setTimeout(() => {
+      document.querySelectorAll('.toc-item-title').forEach(t => {
+        const sp = t.querySelector('span');
+        if (sp && sp.textContent.includes('自定')) sp.remove();
+      });
+    }, 10);
+  };
+
+  /* 3. 设置页面注入账号管理 UI */
+  const origRenderSettings = NF.renderSettings;
+  NF.renderSettings = function() {
+    origRenderSettings();
+    const main = document.getElementById('setMain');
+    if (!main) return;
     
-    // 直接在最前面插入一个全新的大分组，不破坏原有结构
-    const adminGroup = document.createElement('div');
-    adminGroup.id = 'adminPanelGroup';
-    adminGroup.className = 'set-group';
-    
-    if (sessionStorage.getItem('veselia_admin_ok') === '1') {
-      adminGroup.innerHTML = `
-        <div class="set-group-head" style="color:#9dd0a0;">管 理 员 权 限</div>
-        <div class="set-row">
-          <div class="set-label">
-            <div class="set-label-t" style="color:#9dd0a0;">✓ 管理员已登录</div>
-            <div class="set-label-d">你拥有修改所有剧情的权限</div>
-          </div>
-          <div class="set-ctrl"><button class="mini-btn danger" id="adminLogoutBtn">登出</button></div>
+    const s = NF.state();
+    const currentUid = s ? s.uid : '（尚未创建角色）';
+    const currentName = (s && s.player) ? s.player.name : '（未命名）';
+    const isAdmin = localStorage.getItem('veselia_admin_ok') === '1';
+
+    const accGroup = document.createElement('div');
+    accGroup.className = 'set-group';
+    accGroup.innerHTML = `
+      <div class="set-group-head" style="color:var(--gold-b);">账 号 与 云 端</div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">当前 UID</div>
+          <div class="set-label-d">${currentUid}</div>
         </div>
-      `;
-      setMain.insertBefore(adminGroup, setMain.firstChild);
-      document.getElementById('adminLogoutBtn').onclick = () => {
-        sessionStorage.removeItem('veselia_admin_ok');
-        NF.Sfx.click();
+        <div class="set-ctrl">
+          <button class="mini-btn" id="btnCopyUid">复制</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">玩家姓名</div>
+          <div class="set-label-d">${currentName}</div>
+        </div>
+        <div class="set-ctrl">
+          <button class="mini-btn" id="btnUidLogin" style="border-color:var(--gold);color:var(--gold-b);">凭 UID 登录</button>
+        </div>
+      </div>
+      <div class="set-row">
+        <div class="set-label">
+          <div class="set-label-t">管理员权限</div>
+          <div class="set-label-d">${isAdmin ? '已授权' : '未授权'}</div>
+        </div>
+        <div class="set-ctrl">
+          <button class="mini-btn ${isAdmin ? 'danger' : ''}" id="btnAdminToggle">${isAdmin ? '登出' : '验证密钥'}</button>
+        </div>
+      </div>
+    `;
+    main.insertBefore(accGroup, main.firstChild);
+
+    // 绑定复制 UID
+    accGroup.querySelector('#btnCopyUid').onclick = () => {
+      if (!s) return;
+      navigator.clipboard.writeText(s.uid).then(() => NF.toast('UID 已复制', 'ok'));
+    };
+
+    // 绑定 UID 登录
+    accGroup.querySelector('#btnUidLogin').onclick = () => {
+      NF.openModal({
+        title: '凭 UID 登录',
+        body: `<div style="text-align:center;padding:20px 0;">
+                <p style="font-size:12.5px;color:var(--text-d);margin-bottom:14px;">输入你的 UID（例如 UID: 88481234）：</p>
+                <input class="inp" id="loginUidInput" placeholder="UID: 12345678" style="text-align:center;margin-bottom:10px;">
+               </div>`,
+        footHTML: '<button class="btn ghost" id="akCancel">取消</button><button class="btn primary" id="akOk">登录</button>',
+        onMount: (w) => {
+          w.querySelector('#akCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
+          w.querySelector('#akOk').onclick = async () => {
+            const inputUid = w.querySelector('#loginUidInput').value.trim();
+            const numId = getUidNum(inputUid);
+            if (!numId) { NF.toast('UID 格式不正确', 'warn'); return; }
+            
+            NF.Sfx.success(); NF.closeModal(w);
+            NF.toast('正在从云端拉取账号...', 'ok');
+            
+            try {
+              const res = await fetch(API_URL + '?id=eq.' + numId, {
+                headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+              });
+              const data = await res.json();
+              if (data && data.length > 0 && data[0].content) {
+                // 覆盖本地存档
+                localStorage.setItem('nightfalling_v4_save', JSON.stringify(data[0].content));
+                NF.toast('◈ 账号登录成功，正在重启...', 'ok');
+                setTimeout(() => location.reload(), 800);
+              } else {
+                NF.toast('云端找不到该 UID，请检查是否输入错误', 'warn');
+              }
+            } catch(e) {
+              NF.toast('拉取失败，请检查网络', 'warn');
+            }
+          };
+        }
+      });
+    };
+
+    // 绑定管理员
+    accGroup.querySelector('#btnAdminToggle').onclick = () => {
+      if (isAdmin) {
+        localStorage.removeItem('veselia_admin_ok');
         NF.toast('已登出管理员', 'ok');
-        document.getElementById('adminPanelGroup').remove();
-        injectAdminUI();
-      };
-    } else {
-      adminGroup.innerHTML = `
-        <div class="set-group-head">管 理 员 验 证</div>
-        <div class="set-row">
-          <div class="set-label">
-            <div class="set-label-t">未登录</div>
-            <div class="set-label-d">请输入密钥解锁工坊权限</div>
-          </div>
-          <div class="set-ctrl"><button class="mini-btn" id="adminLoginBtn" style="border-color:var(--gold);color:var(--gold-b);">验证密钥</button></div>
-        </div>
-      `;
-      setMain.insertBefore(adminGroup, setMain.firstChild);
-      
-      document.getElementById('adminLoginBtn').onclick = () => {
+        NF.renderSettings();
+      } else {
         NF.openModal({
           title: '管 理 员 验 证',
           body: `<div style="text-align:center;padding:20px 0;">
-                  <p style="font-size:13px;color:var(--text-d);margin-bottom:14px;">请输入密钥：</p>
+                  <p style="font-size:12.5px;color:var(--text-d);margin-bottom:14px;">请输入密钥：</p>
                   <input class="inp" id="adminKeyInput" type="password" placeholder="输入密钥" style="text-align:center;">
                  </div>`,
           footHTML: '<button class="btn ghost" id="akCancel">取消</button><button class="btn primary" id="akOk">确认</button>',
@@ -72,39 +161,27 @@
             w.querySelector('#akCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
             w.querySelector('#akOk').onclick = () => {
               if (w.querySelector('#adminKeyInput').value === ADMIN_SECRET) {
-                sessionStorage.setItem('veselia_admin_ok', '1');
-                NF.Sfx.success();
-                NF.closeModal(w);
+                localStorage.setItem('veselia_admin_ok', '1');
+                NF.Sfx.success(); NF.closeModal(w);
                 NF.toast('管理员验证成功', 'ok');
-                document.getElementById('adminPanelGroup').remove();
-                injectAdminUI(); // 重新渲染已登录状态
+                NF.renderSettings();
               } else {
-                NF.Sfx.fail();
-                NF.toast('密钥错误', 'warn');
+                NF.Sfx.fail(); NF.toast('密钥错误', 'warn');
               }
             };
           }
         });
-      };
-    }
+      }
+    };
   };
 
-  // 监听 DOM 变化，只要切换到设置页（setMain有内容了），就立刻注入
-  const observer = new MutationObserver(() => {
-    if (document.getElementById('screen-settings')?.classList.contains('active')) {
-      injectAdminUI();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-
-  /* 3. 拦截所有工坊入口（顶部、底部全拦截） */
+  /* 4. 拦截工坊入口（查免密） */
   document.addEventListener('click', function(e) {
     const tb = e.target.closest('[data-act="workshop"]');
     const nav = e.target.closest('[data-nav="workshop"]');
-    
     if (!tb && !nav) return;
     
-    if (sessionStorage.getItem('veselia_admin_ok') !== '1') {
+    if (localStorage.getItem('veselia_admin_ok') !== '1') {
       e.stopPropagation();
       e.preventDefault();
       NF.toast('请先在“设置”中验证管理员密钥', 'warn');
@@ -112,36 +189,54 @@
     }
   }, true);
 
-  /* 4. 安全的云端合并（不再暴力覆盖） */
-  const checkCloudData = async () => {
-    try {
-      const res = await fetch(API_URL, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-      });
-      const data = await res.json();
-      if (data && data.length > 0 && data[0].content && data[0].content.chapters && data[0].content.chapters.length > 0) {
-        // ★ 只有云端真的存了章节，且用户本地没东西，或者用户主动要求合并时才合并
-        const u = NF.userContent();
-        if (!u.chapters || u.chapters.length === 0) {
-          Object.assign(u, data[0].content);
-          localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
-          NF.toast('◈ 已自动拉取云端剧情数据', 'ok');
-          if (NF.state() && NF.state().screen === 'toc') NF.renderTOC();
-        }
-      }
-    } catch(e) {}
-  };
+  /* 5. 云端同步逻辑（玩家进度 + 工坊剧情） */
   
-  // 延迟加载，安全合并
-  setTimeout(checkCloudData, 1000);
+  // 保存进度到个人 UID（id=数字）
+  const origSaveNow = NF.saveNow;
+  NF.saveNow = async function() {
+    try {
+      origSaveNow();
+      const s = NF.state();
+      if (!s || !s.uid) return;
+      const numId = getUidNum(s.uid);
+      if (!numId) return;
 
-  /* 5. 保存时静默同步 */
-  const originalSaveUser = NF.saveUser;
+      // 打包玩家信息
+      const playerData = {
+        player: s.player,
+        stats: s.stats,
+        affection: s.affection,
+        flags: s.flags,
+        log: s.log.slice(-100),
+        sceneId: s.sceneId,
+        lineIdx: s.lineIdx,
+        branchKey: s.branchKey,
+        branchIdx: s.branchIdx
+      };
+
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates' // 存在即更新，不存在即插入
+        },
+        body: JSON.stringify({ id: parseInt(numId), content: playerData, updated_at: new Date().toISOString() })
+      });
+      console.log('[cloud-sync] 玩家进度已同步至云端');
+    } catch(e) {
+      console.warn('[cloud-sync] 进度同步失败', e);
+    }
+  };
+
+  // 保存工坊剧情到公共区域（id=1）
+  const origSaveUser = NF.saveUser;
   NF.saveUser = async function() {
     try {
-      originalSaveUser(); // 先确保本地存好
+      origSaveUser(); 
       const u = NF.userContent();
-      await fetch(API_URL, {
+      await fetch(API_URL + '?id=eq.1', {
         method: 'PATCH',
         headers: {
           'apikey': SUPABASE_KEY,
@@ -151,9 +246,28 @@
         },
         body: JSON.stringify({ content: u, updated_at: new Date().toISOString() })
       });
-      console.log('[cloud-sync] 已同步至云端');
-    } catch(e) {}
+      console.log('[cloud-sync] 剧情已同步至云端');
+    } catch(e) {
+      console.error('[cloud-sync] 剧情同步出错', e);
+    }
   };
 
-  console.log('%c[cloud-sync] 安全版已就绪', 'color:#9dd0a0;font-size:11px;');
+  /* 6. 启动时拉取公共剧情 */
+  setTimeout(async () => {
+    try {
+      const res = await fetch(API_URL + '?id=eq.1', {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+      });
+      const data = await res.json();
+      if (data && data.length > 0 && data[0].content && data[0].content.chapters && data[0].content.chapters.length > 0) {
+        const u = NF.userContent();
+        Object.assign(u, data[0].content);
+        localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
+        if (NF.state() && NF.state().screen === 'toc') NF.renderTOC();
+        if (NF.state() && NF.state().screen === 'map') NF.renderMap();
+      }
+    } catch(e) {}
+  }, 500);
+
+  console.log('%c[cloud-sync] 终极账号版已就绪', 'color:#9dd0a0;font-size:11px;');
 })();
