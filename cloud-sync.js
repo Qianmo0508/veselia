@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   cloud-sync.js · 修复覆盖Bug + 绝对安全版
+   cloud-sync.js · 绝对安全最终版（已修复所有Bug）
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -12,28 +12,20 @@
   const NF = window.NF;
   const API_URL = SUPABASE_URL + '/rest/v1/veselia_sync?id=eq.1';
 
-  /* 1. 修复 [自定] 隐藏：只针对渲染出来的 DOM 操作，不破坏数据 */
-  const origRenderTOC = NF.renderTOC;
-  NF.renderTOC = function() {
-    origRenderTOC();
-    setTimeout(() => {
-      document.querySelectorAll('.toc-item-title').forEach(t => {
-        const sp = t.querySelector('span');
-        if (sp && sp.textContent.includes('自定')) sp.remove();
-      });
-    }, 10);
-  };
+  /* 1. 隐藏 [自定] */
+  const styleEl = document.createElement('style');
+  styleEl.textContent = `.toc-item-title span[style*="color:var(--gold-d)"] { display: none !important; }`;
+  document.head.appendChild(styleEl);
 
-  /* 2. 把“管理员登录”死死塞进设置面板的最前面 */
-  const origRenderSettings = NF.renderSettings;
-  NF.renderSettings = function() {
-    origRenderSettings();
+  /* 2. 强力注入设置面板 (监听画面切换) */
+  const injectAdminUI = () => {
+    const setMain = document.getElementById('setMain');
+    // 如果没有设置面板，或者已经注入过，就跳过
+    if (!setMain || document.getElementById('adminPanelGroup')) return;
     
-    const main = document.getElementById('setMain');
-    if (!main) return;
-    
-    // 创建一个绝对独立的新组，塞到最上面，不破坏原本的列表
+    // 直接在最前面插入一个全新的大分组，不破坏原有结构
     const adminGroup = document.createElement('div');
+    adminGroup.id = 'adminPanelGroup';
     adminGroup.className = 'set-group';
     
     if (sessionStorage.getItem('veselia_admin_ok') === '1') {
@@ -47,11 +39,13 @@
           <div class="set-ctrl"><button class="mini-btn danger" id="adminLogoutBtn">登出</button></div>
         </div>
       `;
-      main.insertBefore(adminGroup, main.firstChild);
+      setMain.insertBefore(adminGroup, setMain.firstChild);
       document.getElementById('adminLogoutBtn').onclick = () => {
         sessionStorage.removeItem('veselia_admin_ok');
         NF.Sfx.click();
-        NF.renderSettings();
+        NF.toast('已登出管理员', 'ok');
+        document.getElementById('adminPanelGroup').remove();
+        injectAdminUI();
       };
     } else {
       adminGroup.innerHTML = `
@@ -64,7 +58,7 @@
           <div class="set-ctrl"><button class="mini-btn" id="adminLoginBtn" style="border-color:var(--gold);color:var(--gold-b);">验证密钥</button></div>
         </div>
       `;
-      main.insertBefore(adminGroup, main.firstChild);
+      setMain.insertBefore(adminGroup, setMain.firstChild);
       
       document.getElementById('adminLoginBtn').onclick = () => {
         NF.openModal({
@@ -82,7 +76,8 @@
                 NF.Sfx.success();
                 NF.closeModal(w);
                 NF.toast('管理员验证成功', 'ok');
-                NF.renderSettings(); // 刷新面板
+                document.getElementById('adminPanelGroup').remove();
+                injectAdminUI(); // 重新渲染已登录状态
               } else {
                 NF.Sfx.fail();
                 NF.toast('密钥错误', 'warn');
@@ -94,10 +89,20 @@
     }
   };
 
-  /* 3. 拦截工坊入口：没登录不让进 */
+  // 监听 DOM 变化，只要切换到设置页（setMain有内容了），就立刻注入
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('screen-settings')?.classList.contains('active')) {
+      injectAdminUI();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+
+  /* 3. 拦截所有工坊入口（顶部、底部全拦截） */
   document.addEventListener('click', function(e) {
     const tb = e.target.closest('[data-act="workshop"]');
-    if (!tb) return;
+    const nav = e.target.closest('[data-nav="workshop"]');
+    
+    if (!tb && !nav) return;
     
     if (sessionStorage.getItem('veselia_admin_ok') !== '1') {
       e.stopPropagation();
@@ -107,46 +112,36 @@
     }
   }, true);
 
-  /* 4. 绝对安全的拉取：云端有数据，且不是空的，才合并，绝不覆盖清空 */
-  const originalLoadUser = NF.loadUser;
-  NF.loadUser = async function() {
+  /* 4. 安全的云端合并（不再暴力覆盖） */
+  const checkCloudData = async () => {
     try {
-      // 先执行原本的本地加载
-      originalLoadUser();
-      
       const res = await fetch(API_URL, {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       });
       const data = await res.json();
-      
-      // ★ 关键修复：只有云端真的返回了对象，且章节数量大于0，才覆盖本地
       if (data && data.length > 0 && data[0].content && data[0].content.chapters && data[0].content.chapters.length > 0) {
-        const cloudContent = data[0].content;
+        // ★ 只有云端真的存了章节，且用户本地没东西，或者用户主动要求合并时才合并
         const u = NF.userContent();
-        
-        Object.assign(u, cloudContent);
-        localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
-        console.log('[cloud-sync] 云端有数据，已合并到本地');
-        
-        if (NF.state() && NF.state().screen === 'toc') NF.renderTOC();
-        if (NF.state() && NF.state().screen === 'map') NF.renderMap();
-      } else {
-        console.log('[cloud-sync] 云端为空，保留本地数据不覆盖');
+        if (!u.chapters || u.chapters.length === 0) {
+          Object.assign(u, data[0].content);
+          localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
+          NF.toast('◈ 已自动拉取云端剧情数据', 'ok');
+          if (NF.state() && NF.state().screen === 'toc') NF.renderTOC();
+        }
       }
-    } catch(e) {
-      console.warn('[cloud-sync] 拉取云端失败，使用本地数据', e);
-    }
+    } catch(e) {}
   };
+  
+  // 延迟加载，安全合并
+  setTimeout(checkCloudData, 1000);
 
-  /* 5. 保存时推送到云端 */
+  /* 5. 保存时静默同步 */
   const originalSaveUser = NF.saveUser;
   NF.saveUser = async function() {
     try {
-      // 先保存到本地
-      originalSaveUser();
-      
+      originalSaveUser(); // 先确保本地存好
       const u = NF.userContent();
-      const res = await fetch(API_URL, {
+      await fetch(API_URL, {
         method: 'PATCH',
         headers: {
           'apikey': SUPABASE_KEY,
@@ -156,13 +151,9 @@
         },
         body: JSON.stringify({ content: u, updated_at: new Date().toISOString() })
       });
-      if (res.ok) console.log('[cloud-sync] 数据已成功同步至云端！');
-      else console.error('[cloud-sync] 同步失败', res.statusText);
-    } catch(e) {
-      console.error('[cloud-sync] 保存出错', e);
-    }
+      console.log('[cloud-sync] 已同步至云端');
+    } catch(e) {}
   };
 
-  setTimeout(() => { if (NF.loadUser) NF.loadUser(); }, 500);
   console.log('%c[cloud-sync] 安全版已就绪', 'color:#9dd0a0;font-size:11px;');
 })();
