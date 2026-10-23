@@ -216,7 +216,18 @@
         if (effects) currentNode.push({ type: 'effect', effects: parseEffects(effects) });
         continue;
       }
-      currentNode.push({ type: 'narration', cn: line });
+      // ★ 修复：旁白行末尾的效果也要提取（否则 {unlock:xxx} 会当普通文字漏过去）
+      const narrEffects = (line.match(/\{[^}]*\}/g) || []).join(' ');
+      const cleanLine = line.replace(/\{[^}]*\}/g, '').trim();
+      if (cleanLine) {
+        currentNode.push({ type: 'narration', cn: cleanLine });
+      }
+      if (narrEffects) {
+        const fx = parseEffects(narrEffects);
+        if (fx && Object.keys(fx).length) {
+          currentNode.push({ type: 'effect', effects: fx });
+        }
+      }
     }
     return result;
   }
