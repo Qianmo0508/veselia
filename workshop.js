@@ -148,8 +148,21 @@
       if (!line) continue;
       if (line.startsWith('## ')) { result.subtitle = line.slice(3).trim(); continue; }
       if (line.startsWith('#')) { result.title = line.replace(/^#+\s*/, '').trim(); continue; }
-      if (line.startsWith('@')) { result.location = line.slice(1).trim(); continue; }
-      if (line.startsWith('!') && BGS.includes(line.slice(1).trim())) { result.bg = line.slice(1).trim(); continue; }
+      
+      // ★ 修复：中间遇到地点和背景，不丢弃，而是作为指令节点插入
+      if (line.startsWith('@')) { 
+        const loc = line.slice(1).trim();
+        if (!result.location) result.location = loc;
+        currentNode.push({ type: 'env', loc });
+        continue; 
+      }
+      if (line.startsWith('!') && BGS.includes(line.slice(1).trim())) { 
+        const bg = line.slice(1).trim();
+        if (result.bg === 'city') result.bg = bg;
+        currentNode.push({ type: 'env', bg });
+        continue; 
+      }
+      
       if (/^[-=*]{3,}$/.test(line)) continue;
 
       if (line.startsWith(':')) {
@@ -177,10 +190,13 @@
         currentNode.push({ type: 'effect', effects: parseEffects(line) });
         continue;
       }
+      
+      // ★ 修复：括号包起来的是内心独白（无对话框）
       if (/^[（(].+[）)]$/.test(line)) {
-        currentNode.push({ type: 'me', cn: line.slice(1, -1).trim(), en: '' });
+        currentNode.push({ type: 'monologue', cn: line.slice(1, -1).trim(), en: '' });
         continue;
       }
+      
       const colonMatch = line.match(/^([^:：]{1,30})[:：](.+)$/);
       if (colonMatch) {
         const who = colonMatch[1].trim();
@@ -191,9 +207,12 @@
         let en = '', cn = body;
         const pipeIdx = body.indexOf('|');
         if (pipeIdx >= 0) { en = body.slice(0, pipeIdx).trim(); cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim(); }
+        
         const isMe = ['我','主角','你','我(主角)','主人公'].includes(who);
-        if (isMe) currentNode.push({ type: 'me', cn, en });
+        // ★ 修复：区分“主角说话”和“内心独白”
+        if (isMe) currentNode.push({ type: 'dialogue', who: 'me', cn, en });
         else currentNode.push({ type: 'dialogue', who: matchCharId(who), char: who, cn, en });
+        
         if (effects) currentNode.push({ type: 'effect', effects: parseEffects(effects) });
         continue;
       }
