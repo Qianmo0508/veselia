@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   cloud-sync.js · 云端同步 + 完美隐藏[自定] + UI管理员验证
+   cloud-sync.js · 修复覆盖Bug + 绝对安全版
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -11,98 +11,90 @@
   
   const NF = window.NF;
   const API_URL = SUPABASE_URL + '/rest/v1/veselia_sync?id=eq.1';
-  
-  /* 1. ★ 完美隐藏目录里的[自定]标签 ★ */
-  const styleEl = document.createElement('style');
-  styleEl.textContent = `
-    /* 精准命中那个带内联样式的小字，直接隐藏 */
-    .toc-item-title span[style*="color:var(--gold-d)"] { display: none !important; }
-    /* 顺便把文字里的 [自定] 也藏了，双保险 */
-    .toc-item-title { font-size: 0; }
-    .toc-item-title * { font-size: 13px; }
-  `;
-  document.head.appendChild(styleEl);
 
-  /* 2. 在设置面板动态注入“管理员登录” */
-  const originalRenderSettings = NF.renderSettings;
+  /* 1. 修复 [自定] 隐藏：只针对渲染出来的 DOM 操作，不破坏数据 */
+  const origRenderTOC = NF.renderTOC;
+  NF.renderTOC = function() {
+    origRenderTOC();
+    setTimeout(() => {
+      document.querySelectorAll('.toc-item-title').forEach(t => {
+        const sp = t.querySelector('span');
+        if (sp && sp.textContent.includes('自定')) sp.remove();
+      });
+    }, 10);
+  };
+
+  /* 2. 把“管理员登录”死死塞进设置面板的最前面 */
+  const origRenderSettings = NF.renderSettings;
   NF.renderSettings = function() {
-    originalRenderSettings(); 
+    origRenderSettings();
     
-    const main = document.querySelector('#setMain');
+    const main = document.getElementById('setMain');
     if (!main) return;
     
-    if (sessionStorage.getItem('veselia_admin_ok') !== '1') {
-      const groups = main.querySelectorAll('.set-group');
-      if (groups.length > 0) {
-        const accountGroup = groups[0];
-        const row = document.createElement('div');
-        row.className = 'set-row';
-        row.innerHTML = `
-          <div class="set-label">
-            <div class="set-label-t">管理员登录</div>
-            <div class="set-label-d">验证身份以开启工坊更新权限</div>
-          </div>
-          <div class="set-ctrl">
-            <button class="mini-btn" id="adminLoginBtn" style="border-color:var(--gold);color:var(--gold-b);">验证密钥</button>
-          </div>
-        `;
-        accountGroup.appendChild(row);
-        
-        row.querySelector('#adminLoginBtn').onclick = () => {
-          NF.openModal({
-            title: '管 理 员 验 证',
-            body: `
-              <div style="text-align:center;">
-                <p style="font-size:12.5px;color:var(--text-d);margin-bottom:14px;">请输入密钥：</p>
-                <input class="inp" id="adminKeyInput" type="password" placeholder="输入密钥" style="text-align:center;">
-              </div>
-            `,
-            footHTML: '<button class="btn ghost" id="akCancel">取消</button><button class="btn primary" id="akOk">确认</button>',
-            onMount: (w) => {
-              w.querySelector('#akCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
-              w.querySelector('#akOk').onclick = () => {
-                if (w.querySelector('#adminKeyInput').value === ADMIN_SECRET) {
-                  sessionStorage.setItem('veselia_admin_ok', '1');
-                  NF.Sfx.success();
-                  NF.closeModal(w);
-                  NF.toast('管理员验证成功', 'ok');
-                  NF.renderSettings(); 
-                } else {
-                  NF.Sfx.fail();
-                  NF.toast('密钥错误', 'warn');
-                }
-              };
-            }
-          });
-        };
-      }
-    } else {
-      const groups = main.querySelectorAll('.set-group');
-      if (groups.length > 0) {
-        const accountGroup = groups[0];
-        const row = document.createElement('div');
-        row.className = 'set-row';
-        row.innerHTML = `
+    // 创建一个绝对独立的新组，塞到最上面，不破坏原本的列表
+    const adminGroup = document.createElement('div');
+    adminGroup.className = 'set-group';
+    
+    if (sessionStorage.getItem('veselia_admin_ok') === '1') {
+      adminGroup.innerHTML = `
+        <div class="set-group-head" style="color:#9dd0a0;">管 理 员 权 限</div>
+        <div class="set-row">
           <div class="set-label">
             <div class="set-label-t" style="color:#9dd0a0;">✓ 管理员已登录</div>
             <div class="set-label-d">你拥有修改所有剧情的权限</div>
           </div>
-          <div class="set-ctrl">
-            <button class="mini-btn danger" id="adminLogoutBtn">登出</button>
+          <div class="set-ctrl"><button class="mini-btn danger" id="adminLogoutBtn">登出</button></div>
+        </div>
+      `;
+      main.insertBefore(adminGroup, main.firstChild);
+      document.getElementById('adminLogoutBtn').onclick = () => {
+        sessionStorage.removeItem('veselia_admin_ok');
+        NF.Sfx.click();
+        NF.renderSettings();
+      };
+    } else {
+      adminGroup.innerHTML = `
+        <div class="set-group-head">管 理 员 验 证</div>
+        <div class="set-row">
+          <div class="set-label">
+            <div class="set-label-t">未登录</div>
+            <div class="set-label-d">请输入密钥解锁工坊权限</div>
           </div>
-        `;
-        accountGroup.appendChild(row);
-        
-        row.querySelector('#adminLogoutBtn').onclick = () => {
-          sessionStorage.removeItem('veselia_admin_ok');
-          NF.Sfx.click();
-          NF.renderSettings();
-        };
-      }
+          <div class="set-ctrl"><button class="mini-btn" id="adminLoginBtn" style="border-color:var(--gold);color:var(--gold-b);">验证密钥</button></div>
+        </div>
+      `;
+      main.insertBefore(adminGroup, main.firstChild);
+      
+      document.getElementById('adminLoginBtn').onclick = () => {
+        NF.openModal({
+          title: '管 理 员 验 证',
+          body: `<div style="text-align:center;padding:20px 0;">
+                  <p style="font-size:13px;color:var(--text-d);margin-bottom:14px;">请输入密钥：</p>
+                  <input class="inp" id="adminKeyInput" type="password" placeholder="输入密钥" style="text-align:center;">
+                 </div>`,
+          footHTML: '<button class="btn ghost" id="akCancel">取消</button><button class="btn primary" id="akOk">确认</button>',
+          onMount: (w) => {
+            w.querySelector('#akCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
+            w.querySelector('#akOk').onclick = () => {
+              if (w.querySelector('#adminKeyInput').value === ADMIN_SECRET) {
+                sessionStorage.setItem('veselia_admin_ok', '1');
+                NF.Sfx.success();
+                NF.closeModal(w);
+                NF.toast('管理员验证成功', 'ok');
+                NF.renderSettings(); // 刷新面板
+              } else {
+                NF.Sfx.fail();
+                NF.toast('密钥错误', 'warn');
+              }
+            };
+          }
+        });
+      };
     }
   };
 
-  /* 3. 彻底拦截工坊入口 */
+  /* 3. 拦截工坊入口：没登录不让进 */
   document.addEventListener('click', function(e) {
     const tb = e.target.closest('[data-act="workshop"]');
     if (!tb) return;
@@ -115,31 +107,45 @@
     }
   }, true);
 
-  /* 4. 云端同步逻辑 */
+  /* 4. 绝对安全的拉取：云端有数据，且不是空的，才合并，绝不覆盖清空 */
+  const originalLoadUser = NF.loadUser;
   NF.loadUser = async function() {
     try {
+      // 先执行原本的本地加载
+      originalLoadUser();
+      
       const res = await fetch(API_URL, {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
       });
       const data = await res.json();
-      if (data && data.length > 0 && data[0].content) {
+      
+      // ★ 关键修复：只有云端真的返回了对象，且章节数量大于0，才覆盖本地
+      if (data && data.length > 0 && data[0].content && data[0].content.chapters && data[0].content.chapters.length > 0) {
         const cloudContent = data[0].content;
         const u = NF.userContent();
+        
         Object.assign(u, cloudContent);
         localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
-        console.log('[cloud-sync] 云端数据已成功同步到本地');
+        console.log('[cloud-sync] 云端有数据，已合并到本地');
+        
         if (NF.state() && NF.state().screen === 'toc') NF.renderTOC();
         if (NF.state() && NF.state().screen === 'map') NF.renderMap();
+      } else {
+        console.log('[cloud-sync] 云端为空，保留本地数据不覆盖');
       }
     } catch(e) {
-      console.warn('[cloud-sync] 拉取云端失败', e);
+      console.warn('[cloud-sync] 拉取云端失败，使用本地数据', e);
     }
   };
 
+  /* 5. 保存时推送到云端 */
+  const originalSaveUser = NF.saveUser;
   NF.saveUser = async function() {
     try {
+      // 先保存到本地
+      originalSaveUser();
+      
       const u = NF.userContent();
-      localStorage.setItem('nightfalling_v4_user', JSON.stringify(u));
       const res = await fetch(API_URL, {
         method: 'PATCH',
         headers: {
@@ -157,6 +163,6 @@
     }
   };
 
-  setTimeout(() => { if (NF.loadUser) NF.loadUser(); }, 300);
-  console.log('%c[cloud-sync] 最终版已就绪', 'color:#9dd0a0;font-size:11px;');
+  setTimeout(() => { if (NF.loadUser) NF.loadUser(); }, 500);
+  console.log('%c[cloud-sync] 安全版已就绪', 'color:#9dd0a0;font-size:11px;');
 })();
