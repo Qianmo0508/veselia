@@ -492,11 +492,31 @@
       '<div class="ws-intro">在表单里填写内容，<b>保存后立刻能玩</b>。相同标题的章节会自动覆盖旧版本。<br>「地点」创建后，你还能往里面加剧情入口、小游戏入口、角色对话入口。<br>不想一条条填？用<b>章节/副本</b>里的「📋 批量导入」一次性贴整段文字，<b>支持选项分支</b>。<br><b>章节标题里带「第一章 / 第二章 / 第1章 / Chapter 2」会被自动排序</b>。</div>' +
       '<div class="ws-type-tabs">' + types.map(t => '<button class="ws-type-btn ' + (wsType===t.id?'on':'') + '" data-type="' + t.id + '">' + t.label + '</button>').join('') + '</div>' +
       '<div id="wsForm"></div>' +
-      '<div class="divider" style="margin:26px 0 16px;"><span>已 导 入 的 内 容</span></div>' +
+      '<div style="display:flex; justify-content:space-between; align-items:flex-end; margin:26px 0 16px;">' +
+        '<div class="divider" style="margin:0; flex:1;"><span>已 导 入 的 内 容</span></div>' +
+        '<button class="mini-btn" id="wsRestoreBuiltin" style="margin-left:10px; margin-bottom:-5px; border-color:var(--gold); color:var(--gold-b);">↺ 恢复全部内置</button>' +
+      '</div>' +
       '<div id="wsList"></div>';
     main.querySelectorAll('.ws-type-btn').forEach(b => {
       b.onclick = () => { NF.Sfx.click(); wsType = b.dataset.type; wsFormData = null; wsEditKey = null; wsEditKind = null; render(); };
     });
+
+    // 绑定一键恢复按钮
+    const restoreBtn = main.querySelector('#wsRestoreBuiltin');
+    if (restoreBtn) {
+      restoreBtn.onclick = () => {
+        if (!confirm('确定恢复所有被删除的内置内容吗？')) return;
+        const u = NF.userContent();
+        u.deletedBuiltins = [];
+        NF.saveUser();
+        NF.toast('◈ 已恢复所有内置内容', 'ok');
+        render();
+        if (NF.renderMap) NF.renderMap();
+        if (NF.renderBondGrid) NF.renderBondGrid();
+        if (NF.renderTOC) NF.renderTOC();
+      };
+    }
+
     renderForm(main);
     renderList(main);
   }
@@ -1107,6 +1127,45 @@
         if (NF.renderTOC) NF.renderTOC();
       };
     });
+
+    // ★ 新增：可视化单独恢复误删的内置
+    const deletedBuiltins = u.deletedBuiltins || [];
+    if (deletedBuiltins.length > 0) {
+      let delHtml = '<div style="margin-top:30px; border-top:1px dashed var(--line); padding-top:20px;">' +
+        '<div style="font-family:var(--f-deco); font-size:11px; letter-spacing:.2em; color:var(--gold-d); margin-bottom:12px;">◈ 已 屏 蔽 的 内 置</div>' +
+        '<div style="display:flex; flex-wrap:wrap; gap:8px;">';
+      
+      deletedBuiltins.forEach(k => {
+        let name = k;
+        if (NF.LOCATIONS && NF.LOCATIONS.find(x => x.key === k)) name = NF.LOCATIONS.find(x => x.key === k).name;
+        else if (NF.BOND_TOPICS_BUILTIN && NF.BOND_TOPICS_BUILTIN.find(x => x.key === k)) name = NF.BOND_TOPICS_BUILTIN.find(x => x.key === k).title;
+        else if (NF.GIFTS_BUILTIN && NF.GIFTS_BUILTIN.find(x => x.key === k)) name = NF.GIFTS_BUILTIN.find(x => x.key === k).name;
+        else if (NF.CGS_BUILTIN && NF.CGS_BUILTIN.find(x => x.key === k)) name = NF.CGS_BUILTIN.find(x => x.key === k).title;
+        else if (window.Game && window.Game.chapters && window.Game.chapters[k]) name = window.Game.chapters[k].title;
+        
+        delHtml += '<div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,.2); border:1px solid var(--line); padding:6px 12px; font-size:12px; color:var(--text-d);">' +
+          '<span>' + esc(name) + '</span>' +
+          '<button class="mini-btn" data-restore-key="' + k + '" style="padding:2px 8px; font-size:10px; border-color:rgba(120,180,120,.6); color:#9dd0a0;">恢复</button>' +
+        '</div>';
+      });
+      delHtml += '</div></div>';
+      box.innerHTML += delHtml;
+
+      // 绑定单独恢复事件
+      box.querySelectorAll('[data-restore-key]').forEach(btn => {
+        btn.onclick = () => {
+          const restoreKey = btn.dataset.restoreKey;
+          const u2 = NF.userContent();
+          u2.deletedBuiltins = (u2.deletedBuiltins || []).filter(x => x !== restoreKey);
+          NF.saveUser();
+          NF.toast('◈ 已恢复该内置内容', 'ok');
+          render(); 
+          if (NF.renderMap) NF.renderMap();
+          if (NF.renderBondGrid) NF.renderBondGrid();
+          if (NF.renderTOC) NF.renderTOC();
+        };
+      });
+    }
   }
 
   window.Workshop = { render };
