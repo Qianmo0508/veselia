@@ -1253,8 +1253,12 @@ function isLocationUnlocked(loc){
   if (loc.unlock.chapter) return !!globalData.completedChapters?.[loc.unlock.chapter];
   return true;
 }
+// ★ 修复：过滤掉被用户删除的内置地点，并优先展示用户覆盖的数据
 function getAllLocations(){
-  return LOCATIONS.concat(userContent.locations.map(l => ({
+  const deleted = userContent.deletedBuiltins || [];
+  const userLocs = (userContent.locations || []).filter(x => !x.deleted);
+  const builtin = LOCATIONS.filter(l => !deleted.includes(l.key) && !userLocs.some(ul => ul.key === l.key));
+  return builtin.concat(userLocs.map(l => ({
     key:l.key, name:l.name, bg:l.bg||'city', region:l.region||'其他',
     desc:l.desc, unlock:l.unlock, entries:l.entries||[], userMade:true
   })));
@@ -1314,8 +1318,12 @@ const BOND_TOPICS_BUILTIN = [
     { who:'reifina', en:"I've lost three teams. I remember every name.", cn:'「我失去了三支队伍。我记得每一个名字。」' }
   ]}
 ];
+// ★ 修复：过滤掉被用户删除的内置话题，并优先展示用户覆盖的数据
 function getAllBondTopics(){
-  return BOND_TOPICS_BUILTIN.concat(userContent.bondTopics.map(t => ({
+  const deleted = userContent.deletedBuiltins || [];
+  const userBonds = (userContent.bondTopics || []).filter(x => !x.deleted);
+  const builtin = BOND_TOPICS_BUILTIN.filter(t => !deleted.includes(t.key) && !userBonds.some(ub => ub.key === t.key));
+  return builtin.concat(userBonds.map(t => ({
     key:t.key, charId:t.charId, mode:t.mode||'chat', title:t.title, need:t.need||0, lines:t.lines||[]
   })));
 }
@@ -1328,8 +1336,12 @@ const GIFTS_BUILTIN = [
   { key:'g_sunglass',name:'复古墨镜',   icon:'◐', cost:18, aff:12, likes:['cash'],   desc:'新的墨镜。款式和现在戴的那副很像。' },
   { key:'g_letter',  name:'未寄出的信', icon:'✉', cost:12, aff:8,  likes:['movioa'], desc:'信封上没有地址。' }
 ];
+// ★ 修复：过滤掉被用户删除的内置礼物，并优先展示用户覆盖的数据
 function getAllGifts(){
-  return GIFTS_BUILTIN.concat(userContent.gifts.map(g => ({
+  const deleted = userContent.deletedBuiltins || [];
+  const userGifts = (userContent.gifts || []).filter(x => !x.deleted);
+  const builtin = GIFTS_BUILTIN.filter(g => !deleted.includes(g.key) && !userGifts.some(ug => ug.key === g.key));
+  return builtin.concat(userGifts.map(g => ({
     key:g.key, name:g.name, icon:g.icon||'✦', cost:g.cost||10, aff:g.aff||5, likes:g.likes||[], desc:g.desc||''
   })));
 }
@@ -1343,8 +1355,12 @@ const CGS_BUILTIN = [
     { s:'卡什', who:'cash', en:"Home. Then I remember I don't really have one anymore.", cn:'「家。然后我想起来，我其实已经没有家了。」' }
   ]}
 ];
+// ★ 修复：过滤掉被用户删除的内置CG，并优先展示用户覆盖的数据
 function getAllCGs(){
-  return CGS_BUILTIN.concat(userContent.cgs.map(cg => ({
+  const deleted = userContent.deletedBuiltins || [];
+  const userCgs = (userContent.cgs || []).filter(x => !x.deleted);
+  const builtin = CGS_BUILTIN.filter(c => !deleted.includes(c.key) && !userCgs.some(uc => uc.key === c.key));
+  return builtin.concat(userCgs.map(cg => ({
     key:cg.key, charId:cg.charId, title:cg.title, subtitle:cg.subtitle, need:cg.need||30, lines:cg.lines||[]
   })));
 }
@@ -2665,7 +2681,6 @@ function startNewGame(){
         state.player.personality = pers;
         saveNow(); Sfx.success(); closeModal(w);
         
-        // ★ 修复：直接读取最新列表的第一章
         setTimeout(() => {
           const chapters = getChapterList();
           if (chapters && chapters.length > 0) {
