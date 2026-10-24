@@ -9,36 +9,6 @@
   const $$ = s => Array.from(document.querySelectorAll(s));
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  // ═══ 修复：接管底层读取，实现内置数据完美覆盖与删除 ═══
-  NF.getAllLocations = function() {
-    const u = NF.userContent();
-    const deleted = u.deletedBuiltins || [];
-    const userLocs = (u.locations || []).filter(l => !l.deleted);
-    const builtin = (NF.LOCATIONS || []).filter(l => !deleted.includes(l.key) && !userLocs.some(ul => ul.key === l.key));
-    return builtin.concat(userLocs);
-  };
-  NF.getAllBondTopics = function() {
-    const u = NF.userContent();
-    const deleted = u.deletedBuiltins || [];
-    const userBonds = (u.bondTopics || []).filter(t => !t.deleted);
-    const builtin = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !deleted.includes(t.key) && !userBonds.some(ub => ub.key === t.key));
-    return builtin.concat(userBonds);
-  };
-  NF.getAllGifts = function() {
-    const u = NF.userContent();
-    const deleted = u.deletedBuiltins || [];
-    const userGifts = (u.gifts || []).filter(g => !g.deleted);
-    const builtin = (NF.GIFTS_BUILTIN || []).filter(g => !deleted.includes(g.key) && !userGifts.some(ug => ug.key === g.key));
-    return builtin.concat(userGifts);
-  };
-  NF.getAllCGs = function() {
-    const u = NF.userContent();
-    const deleted = u.deletedBuiltins || [];
-    const userCgs = (u.cgs || []).filter(c => !c.deleted);
-    const builtin = (NF.CGS_BUILTIN || []).filter(c => !deleted.includes(c.key) && !userCgs.some(uc => uc.key === c.key));
-    return builtin.concat(userCgs);
-  };
-
   let wsType = 'chapter';
   let wsEditKey = null;
   let wsFormData = null;
@@ -184,7 +154,6 @@
       if (line.startsWith('## ')) { result.subtitle = line.slice(3).trim(); continue; }
       if (line.startsWith('#')) { result.title = line.replace(/^#+\s*/, '').trim(); continue; }
       
-      // ★ 修复：中间遇到地点和背景，不丢弃，而是作为指令节点插入
       if (line.startsWith('@')) { 
         const loc = line.slice(1).trim();
         if (!result.location) result.location = loc;
@@ -226,13 +195,11 @@
         continue;
       }
       
-      // ★ 修复：括号包起来的是内心独白（无对话框）
       if (/^[（(].+[）)]$/.test(line)) {
         currentNode.push({ type: 'monologue', cn: line.slice(1, -1).trim(), en: '' });
         continue;
       }
       
-      // ★ 修复：智能防误判冒号。只有前面是1-10个字，且没有任何标点，才被认作角色名
       const colonMatch = line.match(/^([^:：]{1,10})[:：](.+)$/);
       let isValidChar = false;
       if (colonMatch) {
@@ -259,7 +226,7 @@
         if (effects) currentNode.push({ type: 'effect', effects: parseEffects(effects) });
         continue;
       }
-      // ★ 修复：旁白行末尾的效果也要提取
+      
       const narrEffects = (line.match(/\{[^}]*\}/g) || []).join(' ');
       const cleanLine = line.replace(/\{[^}]*\}/g, '').trim();
       if (cleanLine) {
@@ -414,6 +381,55 @@
     });
   }
 
+  // ★ 新增：闲聊/深谈的批量导入
+  function openBondBulkImport(formBox, main) {
+    NF.openModal({
+      title: '📋 批 量 导 入',
+      wide: true,
+      body: '<div class="ws-hint" style="margin-bottom:14px;">支持格式：<br><b>角色名：英文 | 中文</b> （例如：卡什：Hey! | 嘿！）<br><b>我：台词</b>　或　<b>旁白：内容</b><br>如果直接写文字且没有冒号，会自动被识别为旁白。</div>' +
+            '<textarea class="inp" id="bbText" placeholder="在此粘贴文字…" style="min-height:200px;font-family:ui-monospace,\'Courier New\',monospace;font-size:12.5px;line-height:1.75;resize:vertical;"></textarea>',
+      footHTML: '<button class="btn ghost" id="bbCancel">取消</button><button class="btn primary" id="bbOk">解 析 并 导 入</button>',
+      onMount: (w) => {
+        const ta = w.querySelector('#bbText');
+        w.querySelector('#bbCancel').onclick = () => { NF.Sfx.click(); NF.closeModal(w); };
+        w.querySelector('#bbOk').onclick = () => {
+          const text = ta.value.trim();
+          if (!text) { NF.toast('请先粘贴文字', 'warn'); return; }
+          const lines = [];
+          text.split(/\r?\n/).forEach(raw => {
+            const line = raw.trim();
+            if (!line) return;
+            const colonMatch = line.match(/^([^:：]{1,10})[:：](.+)$/);
+            let isValidChar = false;
+            if (colonMatch) {
+              const rawWho = colonMatch[1].trim();
+              if (!/[，。？！；,.?!;{}（）()“”"]/.test(rawWho) && rawWho.length > 0) isValidChar = true;
+            }
+            if (isValidChar) {
+              const whoStr = colonMatch[1].trim();
+              let body = colonMatch[2].trim();
+              let en = '', cn = body;
+              const pipeIdx = body.indexOf('|');
+              if (pipeIdx >= 0) { en = body.slice(0, pipeIdx).trim(); cn = body.slice(pipeIdx + 1).replace(/^\|/, '').trim(); }
+              if (['旁白', '画外音'].includes(whoStr)) lines.push({ who: 'narrator', en, cn });
+              else if (['我', '主角', '你'].includes(whoStr)) lines.push({ who: 'me', en, cn });
+              else lines.push({ who: matchCharId(whoStr), en, cn });
+            } else {
+              lines.push({ who: 'narrator', en: '', cn: line });
+            }
+          });
+          if (!lines.length) { NF.toast('没有解析到有效内容', 'warn'); return; }
+          wsFormData.lines = lines;
+          NF.Sfx.success();
+          NF.closeModal(w);
+          renderForm(main);
+          NF.toast('◈ 已导入 ' + lines.length + ' 行', 'ok');
+        };
+        setTimeout(() => ta.focus(), 100);
+      }
+    });
+  }
+
   function convertNodesToFlatLines(nodes) {
     const lines = [];
     Object.keys(nodes).forEach(key => {
@@ -429,9 +445,6 @@
     return lines.length ? lines : [{ type:'n', cn:'' }];
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     反推所有内置数据
-     ═══════════════════════════════════════════════════════════ */
   function getBuiltinChapterData(key) {
     const chData = window.Game.chapters[key];
     if (!chData) return null;
@@ -766,7 +779,14 @@
       '</select></div>' +
       '<div class="ws-field"><label>话 题 标 题 <b>（必填）</b></label><input class="inp" id="wsBondTitle" value="' + esc(wsFormData.title) + '" placeholder="例如：「今日份的闲聊」"></div>' +
       '<div class="ws-field"><label>好 感 门 槛（0-100）</label><input class="inp" id="wsBondNeed" type="number" min="0" max="100" value="' + wsFormData.need + '"></div>' +
-      '<div class="ws-field"><label>对 话</label><div class="ws-lines" id="wsBondLines"></div><button class="ws-add-line" id="wsBondAddLine">＋ 添加一行</button></div>' +
+      '<div class="ws-field">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<label style="margin:0;">对 话</label>' +
+          '<button class="mini-btn" id="wsBondBulk" style="background:rgba(201,169,97,.12);border-color:var(--gold);color:var(--gold-b);">📋 批量导入</button>' +
+        '</div>' +
+        '<div class="ws-lines" id="wsBondLines"></div>' +
+        '<button class="ws-add-line" id="wsBondAddLine">＋ 添加一行</button>' +
+      '</div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">保存</button></div>';
     const linesBox = box.querySelector('#wsBondLines');
     wsFormData.lines.forEach((l, i) => appendBondLine(linesBox, l, i, box, main));
@@ -775,6 +795,7 @@
     box.querySelector('#wsBondTitle').oninput = (e) => wsFormData.title = e.target.value;
     box.querySelector('#wsBondNeed').oninput = (e) => wsFormData.need = parseInt(e.target.value) || 0;
     box.querySelector('#wsBondAddLine').onclick = () => { NF.Sfx.click(); wsFormData.lines.push({ who: wsFormData.charId, en:'', cn:'' }); renderForm(main); };
+    box.querySelector('#wsBondBulk').onclick = () => { NF.Sfx.click(); openBondBulkImport(box, main); };
     box.querySelector('#wsCancel').onclick = () => { NF.Sfx.click(); wsFormData=null; wsEditKey=null; wsEditKind=null; renderForm(main); };
     box.querySelector('#wsSave').onclick = () => saveBond(box);
   }
@@ -883,7 +904,14 @@
       '<div class="ws-field"><label>标 题 <b>（必填）</b></label><input class="inp" id="wsCgTitle" value="' + esc(wsFormData.title) + '"></div>' +
       '<div class="ws-field"><label>副 标 题</label><input class="inp" id="wsCgSub" value="' + esc(wsFormData.subtitle) + '"></div>' +
       '<div class="ws-field"><label>好 感 门 槛</label><input class="inp" id="wsCgNeed" type="number" value="' + wsFormData.need + '"></div>' +
-      '<div class="ws-field"><label>对 话</label><div class="ws-lines" id="wsCgLines"></div><button class="ws-add-line" id="wsCgAddLine">＋ 添加一行</button></div>' +
+      '<div class="ws-field">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<label style="margin:0;">对 话</label>' +
+          '<button class="mini-btn" id="wsCgBulk" style="background:rgba(201,169,97,.12);border-color:var(--gold);color:var(--gold-b);">📋 批量导入</button>' +
+        '</div>' +
+        '<div class="ws-lines" id="wsCgLines"></div>' +
+        '<button class="ws-add-line" id="wsCgAddLine">＋ 添加一行</button>' +
+      '</div>' +
       '<div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn ghost" id="wsCancel">取消</button><button class="btn primary" id="wsSave">保存</button></div>';
     const linesBox = box.querySelector('#wsCgLines');
     wsFormData.lines.forEach((l, i) => appendCGLine(linesBox, l, i, box, main));
@@ -892,6 +920,7 @@
     box.querySelector('#wsCgSub').oninput = (e) => wsFormData.subtitle = e.target.value;
     box.querySelector('#wsCgNeed').oninput = (e) => wsFormData.need = parseInt(e.target.value) || 0;
     box.querySelector('#wsCgAddLine').onclick = () => { NF.Sfx.click(); wsFormData.lines.push({ cn:'' }); renderForm(main); };
+    box.querySelector('#wsCgBulk').onclick = () => { NF.Sfx.click(); openBondBulkImport(box, main); };
     box.querySelector('#wsCancel').onclick = () => { NF.Sfx.click(); wsFormData=null; wsEditKey=null; wsEditKind=null; renderForm(main); };
     box.querySelector('#wsSave').onclick = () => saveCG(box);
   }
@@ -949,7 +978,6 @@
 
     const deletedBuiltins = u.deletedBuiltins || [];
 
-    // 提取所有内置章节（排除被用户覆盖的）
     let builtinChapters = [];
     if (window.Game && window.Game.chapters) {
         Object.values(window.Game.chapters).forEach(c => {
@@ -959,7 +987,6 @@
         });
     }
 
-    // ★ 修复：提取内置数据时使用真实的 key，并且过滤掉被删除的
     const builtinLocations = (NF.LOCATIONS || []).filter(l => !userLocations.some(ul => ul.key === l.key) && !deletedBuiltins.includes(l.key)).map(l => ({ key: l.key, name: l.name, title: l.name, _type:'location', _isUser: false }));
     const builtinBonds = (NF.BOND_TOPICS_BUILTIN || []).filter(t => !userBonds.some(ub => ub.key === t.key) && !deletedBuiltins.includes(t.key)).map(t => ({ key: t.key, title: t.title, _type:'bond', _isUser: false }));
     const builtinGifts = (NF.GIFTS_BUILTIN || []).filter(g => !userGifts.some(ug => ug.key === g.key) && !deletedBuiltins.includes(g.key)).map(g => ({ key: g.key, name: g.name, title: g.name, _type:'gift', _isUser: false }));
@@ -1003,7 +1030,6 @@
     box.querySelectorAll('.ws-pack').forEach(el => {
       const key = el.dataset.key, type = el.dataset.type, kind = el.dataset.kind, isUser = el.dataset.isuser === 'true';
       
-      // ★ 修复：编辑内置数据时，把内容完整拷贝出来
       el.querySelector('[data-a="edit"]').onclick = () => {
         NF.Sfx.click();
         wsEditKey = key; wsEditKind = kind || null;
@@ -1051,7 +1077,6 @@
         render();
       };
       
-      // ★ 修复：删除内置数据时，加入黑名单
       el.querySelector('[data-a="del"]').onclick = () => {
         if (!confirm('确定删除「' + el.querySelector('.ws-pack-title').textContent + '」？\n(内置内容将不再显示，可在设置中重置恢复)')) return;
         NF.Sfx.fail();
