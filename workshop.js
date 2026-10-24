@@ -731,7 +731,14 @@
     } else if (type === 'character') {
       idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') + '</select>';
     } else if (type === 'minigame') {
-      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') + '</select>';
+      // ★ 新增：检测当前 ID 是否属于内置，如果不是则视为自定义
+      const isCustom = !MGS.some(m => m.id === entry.id) && entry.id;
+      idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + 
+        '<option value="">（选择内置小游戏）</option>' + 
+        MGS.map(m => '<option value="' + m.id + '" ' + (entry.id===m.id?'selected':'') + '>' + m.name + '</option>').join('') + 
+        '<option value="__custom__" ' + (isCustom ? 'selected' : '') + '>── 自定义小游戏 ID ──</option>' +
+        '</select>' +
+        '<input class="inp ws-entry-id-input" placeholder="输入自定义小游戏ID（如 my_puzzle）" value="' + (isCustom ? esc(entry.id) : '') + '" style="margin-bottom:8px; display:' + (isCustom ? 'block' : 'none') + ';">';
     }
     card.innerHTML =
       '<div class="ws-line-head"><span class="ws-line-num">入口 ' + (i+1) + '</span>' +
@@ -754,8 +761,24 @@
       else entry.id = '';
       renderForm(main);
     };
+
     const idSel = card.querySelector('.ws-entry-id');
-    if (idSel) idSel.onchange = (e) => entry.id = e.target.value;
+    const customInput = card.querySelector('.ws-entry-id-input');
+    if (idSel) {
+      idSel.onchange = (e) => {
+        if (e.target.value === '__custom__') {
+          if (customInput) { customInput.style.display = 'block'; customInput.focus(); }
+          entry.id = customInput ? customInput.value : '';
+        } else {
+          if (customInput) customInput.style.display = 'none';
+          entry.id = e.target.value;
+        }
+      };
+    }
+    if (customInput) {
+      customInput.oninput = (e) => { entry.id = e.target.value; };
+    }
+
     card.querySelector('.ws-entry-name').oninput = (e) => entry.name = e.target.value;
     card.querySelector('.ws-entry-icon').oninput = (e) => entry.icon = e.target.value;
     card.querySelector('.ws-entry-desc').oninput = (e) => entry.desc = e.target.value;
