@@ -1129,7 +1129,6 @@
     });
 
     // ★ 新增：可视化单独恢复误删的内置
-    const deletedBuiltins = u.deletedBuiltins || [];
     if (deletedBuiltins.length > 0) {
       let delHtml = '<div style="margin-top:30px; border-top:1px dashed var(--line); padding-top:20px;">' +
         '<div style="font-family:var(--f-deco); font-size:11px; letter-spacing:.2em; color:var(--gold-d); margin-bottom:12px;">◈ 已 屏 蔽 的 内 置</div>' +
