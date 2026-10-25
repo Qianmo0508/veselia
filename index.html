@@ -1942,10 +1942,29 @@ function enterLocation(loc){
       if (entry.type === 'scene') playScene(entry.id);
       else if (entry.type === 'minigame') openMinigame(entry.id);
       else if (entry.type === 'character') openCharacterMenu(entry.id);
+      else if (entry.type === 'code') {
+        // ★ 新增：直接在弹窗中运行粘贴的代码
+        NF.openModal({
+          title: entry.name || '自定义交互',
+          body: '<div id="custom-code-container">' + entry.id + '</div>',
+          footHTML: '<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>',
+          onMount: (w) => {
+            // 强行让弹窗里的 <script> 标签执行
+            setTimeout(() => {
+              const container = w.querySelector('#custom-code-container');
+              if (container) {
+                container.querySelectorAll('script').forEach(oldScript => {
+                  const newScript = document.createElement('script');
+                  Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                  newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                  oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+              }
+            }, 50);
+          }
+        });
+      }
     };
-    box.appendChild(el);
-  });
-}
 
 function openMinigame(id){
   if (window.Minigames && window.Minigames.open) { window.Minigames.open(id); return; }
