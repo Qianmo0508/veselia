@@ -703,7 +703,7 @@
       '<div class="ws-field"><label>描 述</label><textarea class="inp" id="wsLocDesc" style="min-height:80px;">' + esc(wsFormData.desc) + '</textarea></div>' +
       '<div class="ws-field">' +
         '<label>可 交 互 入 口 <b>（可留空）</b></label>' +
-        '<p class="ws-hint">进入这个地点后能点什么。可以加多个入口：剧情 / 小游戏 / 角色对话。</p>' +
+        '<p class="ws-hint">进入这个地点后能点什么。可以加多个入口：剧情 / 小游戏 / 角色对话 / 自定义代码。</p>' +
         '<div id="wsLocEntries" style="display:flex;flex-direction:column;gap:10px;"></div>' +
         '<button class="ws-add-line" id="wsLocAddEntry" style="margin-top:10px;">＋ 添 加 一 个 入 口</button>' +
       '</div>' +
@@ -731,7 +731,7 @@
     } else if (type === 'character') {
       idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + CHAR_IDS.map(cid => '<option value="' + cid + '" ' + (entry.id===cid?'selected':'') + '>' + NF.CHARS[cid].name + '</option>').join('') + '</select>';
     } else if (type === 'minigame') {
-      // ★ 新增：检测当前 ID 是否属于内置，如果不是则视为自定义
+      // ★ 检测当前 ID 是否属于内置，如果不是则视为自定义
       const isCustom = !MGS.some(m => m.id === entry.id) && entry.id;
       idSelector = '<select class="inp ws-entry-id" style="margin-bottom:8px;">' + 
         '<option value="">（选择内置小游戏）</option>' + 
@@ -739,13 +739,18 @@
         '<option value="__custom__" ' + (isCustom ? 'selected' : '') + '>── 自定义小游戏 ID ──</option>' +
         '</select>' +
         '<input class="inp ws-entry-id-input" placeholder="输入自定义小游戏ID（如 my_puzzle）" value="' + (isCustom ? esc(entry.id) : '') + '" style="margin-bottom:8px; display:' + (isCustom ? 'block' : 'none') + ';">';
+    } else if (type === 'code') {
+      // ★ 新增：自定义代码输入框
+      idSelector = '<textarea class="inp ws-entry-id" placeholder="在此粘贴 HTML / JS / CSS 代码..." style="min-height:120px; font-family:monospace; font-size:12px; margin-bottom:8px;">' + esc(entry.id || '') + '</textarea>';
     }
+    
     card.innerHTML =
       '<div class="ws-line-head"><span class="ws-line-num">入口 ' + (i+1) + '</span>' +
         '<select class="ws-line-type ws-entry-type">' +
           '<option value="scene" ' + (type==='scene'?'selected':'') + '>剧情</option>' +
           '<option value="minigame" ' + (type==='minigame'?'selected':'') + '>小游戏</option>' +
           '<option value="character" ' + (type==='character'?'selected':'') + '>角色对话</option>' +
+          '<option value="code" ' + (type==='code'?'selected':'') + '>自定义代码/HTML</option>' +
         '</select>' +
         '<button class="ws-line-del">×</button></div>' +
       '<div class="ws-line-body">' + idSelector +
@@ -761,24 +766,26 @@
       else entry.id = '';
       renderForm(main);
     };
-
     const idSel = card.querySelector('.ws-entry-id');
     const customInput = card.querySelector('.ws-entry-id-input');
     if (idSel) {
-      idSel.onchange = (e) => {
-        if (e.target.value === '__custom__') {
-          if (customInput) { customInput.style.display = 'block'; customInput.focus(); }
-          entry.id = customInput ? customInput.value : '';
-        } else {
-          if (customInput) customInput.style.display = 'none';
-          entry.id = e.target.value;
-        }
-      };
+      if (idSel.tagName === 'TEXTAREA') {
+        idSel.oninput = (e) => entry.id = e.target.value;
+      } else {
+        idSel.onchange = (e) => {
+          if (e.target.value === '__custom__') {
+            if (customInput) { customInput.style.display = 'block'; customInput.focus(); }
+            entry.id = customInput ? customInput.value : '';
+          } else {
+            if (customInput) customInput.style.display = 'none';
+            entry.id = e.target.value;
+          }
+        };
+      }
     }
     if (customInput) {
       customInput.oninput = (e) => { entry.id = e.target.value; };
     }
-
     card.querySelector('.ws-entry-name').oninput = (e) => entry.name = e.target.value;
     card.querySelector('.ws-entry-icon').oninput = (e) => entry.icon = e.target.value;
     card.querySelector('.ws-entry-desc').oninput = (e) => entry.desc = e.target.value;
