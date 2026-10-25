@@ -1937,19 +1937,21 @@ function enterLocation(loc){
     el.className = 'loc-entry';
     el.innerHTML = '<div class="loc-entry-ico">' + (entry.icon || '◆') + '</div>' +
       '<div class="loc-entry-info"><div class="loc-entry-name">' + esc(entry.name) + '</div><div class="loc-entry-desc">' + esc(entry.desc || '') + '</div></div>';
+      
     el.onclick = () => {
       Sfx.click();
-      if (entry.type === 'scene') playScene(entry.id);
-      else if (entry.type === 'minigame') openMinigame(entry.id);
-      else if (entry.type === 'character') openCharacterMenu(entry.id);
-      else if (entry.type === 'code') {
-        // ★ 新增：直接在弹窗中运行粘贴的代码
+      if (entry.type === 'scene') {
+        playScene(entry.id);
+      } else if (entry.type === 'minigame') {
+        openMinigame(entry.id);
+      } else if (entry.type === 'character') {
+        openCharacterMenu(entry.id);
+      } else if (entry.type === 'code') {
         NF.openModal({
           title: entry.name || '自定义交互',
-          body: '<div id="custom-code-container">' + entry.id + '</div>',
+          body: '<div id="custom-code-container" style="width:100%; height:100%;">' + entry.id + '</div>',
           footHTML: '<button class="btn primary" onclick="(function(){var l=document.getElementById(\'modalLayer\');l.classList.remove(\'open\');l.innerHTML=\'\';})()">关闭</button>',
           onMount: (w) => {
-            // 强行让弹窗里的 <script> 标签执行
             setTimeout(() => {
               const container = w.querySelector('#custom-code-container');
               if (container) {
@@ -1965,8 +1967,10 @@ function enterLocation(loc){
         });
       }
     };
+    
+    // 👇 ★★★ 就是这一行！之前漏了，现在补上！★★★
+    box.appendChild(el);
   });
-}
 
 function openMinigame(id){
   if (window.Minigames && window.Minigames.open) { window.Minigames.open(id); return; }
